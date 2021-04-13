@@ -77,6 +77,7 @@ gin::WrapperInfo WebOSServiceBridgeInjection::kWrapperInfo = {
 bool WebOSServiceBridgeInjection::is_closing_ = false;
 std::set<WebOSServiceBridgeInjection*>
     WebOSServiceBridgeInjection::waiting_responses_;
+bool WebOSServiceBridgeInjection::is_called_close_notify_ = false;
 
 WebOSServiceBridgeInjection::WebOSServiceBridgeInjection(std::string appid)
     : identifier_(std::move(appid))
@@ -173,6 +174,9 @@ void WebOSServiceBridgeInjection::CallJSHandler(const std::string& body) {
 
 void WebOSServiceBridgeInjection::Response(pal::mojom::ResponseStatus status,
                                            const std::string& body) {
+  if (WebOSServiceBridgeInjection::is_closing_)
+    waiting_responses_.erase(this);
+
   if (status == pal::mojom::ResponseStatus::kSuccess)
     CallJSHandler(body);
 
@@ -180,16 +184,15 @@ void WebOSServiceBridgeInjection::Response(pal::mojom::ResponseStatus status,
   if (!subscribed_)
     PreserveReferenceToInjectionObject(false);
 
-  if (!WebOSServiceBridgeInjection::is_closing_)
+  if (!WebOSServiceBridgeInjection::is_closing_ ||
+      !waiting_responses_.empty() ||
+      WebOSServiceBridgeInjection::is_called_close_notify_)
     return;
 
   VLOG(1) << "WebOSServiceBridge [Response][" << identifier_
           << "] body: " << body << " while closing";
 
-  waiting_responses_.erase(this);
-
-  if (waiting_responses_.empty())
-    CloseNotify();
+  CloseNotify();
 }
 
 gin::ObjectTemplateBuilder
@@ -340,6 +343,11 @@ bool WebOSServiceBridgeInjection::IsClosing() {
 // static
 void WebOSServiceBridgeInjection::SetAppInClosing(bool closing) {
   WebOSServiceBridgeInjection::is_closing_ = closing;
+}
+
+// static
+void WebOSServiceBridgeInjection::DidCloseNotify() {
+  WebOSServiceBridgeInjection::is_called_close_notify_ = true;
 }
 
 // static

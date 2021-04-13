@@ -481,11 +481,10 @@ void WebOSSystemInjection::NativePmLogInfoWithClock(gin::Arguments* args) {
 }
 
 void WebOSSystemInjection::OnCloseNotify(const std::string& param) {
-  // TODO(vladislav.mukulov): Migrate corresponded patch
-  //RAW_PMLOG_INFO(
-  // "[webOSSystem]", "webOSSystem.OnCloseNotify(%s)", param.c_str());
+  LOG(INFO) << "[webOSSystem] webOSSystem.OnCloseNotify(" << param << ")";
   std::vector<std::string> arguments = { param };
   SendCommand("onCloseNotify", arguments);
+  WebOSServiceBridgeInjection::DidCloseNotify();
 }
 
 void WebOSSystemInjection::Deactivate() {
