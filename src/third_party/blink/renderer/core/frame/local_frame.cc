@@ -2449,7 +2449,8 @@ void LocalFrame::SetContextPaused(bool is_paused) {
     return;
 
   // TODO(altimin): Move this to PageScheduler level.
-  GetFrameScheduler()->SetPaused(is_paused);
+  if (GetFrameScheduler())
+    GetFrameScheduler()->SetPaused(is_paused);
 }
 
 bool LocalFrame::SwapIn() {
