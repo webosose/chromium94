@@ -10,6 +10,7 @@
 #include "third_party/blink/renderer/core/scroll/smooth_scroll_sequencer.h"
 #include "third_party/blink/renderer/platform/animation/compositor_keyframe_model.h"
 #include "third_party/blink/renderer/platform/animation/compositor_scroll_offset_animation_curve.h"
+#include "third_party/blink/renderer/platform/animation/timing_function.h"
 #include "third_party/blink/renderer/platform/geometry/int_size.h"
 #include "third_party/blink/renderer/platform/graphics/graphics_layer.h"
 
@@ -65,9 +66,17 @@ void ProgrammaticScrollAnimator::AnimateToOffset(
   if (on_finish_)
     std::move(on_finish_).Run();
   on_finish_ = std::move(on_finish);
+  // If scrollTo() invokes very frequently, scroll velocity keeps very slow.
+  // So in that case, we change animation curve to EASE_OUT
+  CompositorScrollOffsetAnimationCurve::ScrollType scroll_type =
+      scrollable_area_->IsWebOSNativeScrollEnabled() &&
+              run_state_ != RunState::kIdle &&
+              run_state_ != RunState::kPostAnimationCleanup
+          ? CompositorScrollOffsetAnimationCurve::ScrollType::
+                kContinueProgrammatic
+          : CompositorScrollOffsetAnimationCurve::ScrollType::kProgrammatic;
   animation_curve_ = std::make_unique<CompositorScrollOffsetAnimationCurve>(
-      CompositorOffsetFromBlinkOffset(target_offset_),
-      CompositorScrollOffsetAnimationCurve::ScrollType::kProgrammatic);
+      CompositorOffsetFromBlinkOffset(target_offset_), scroll_type);
 
   scrollable_area_->RegisterForAnimation();
   if (!scrollable_area_->ScheduleAnimation()) {

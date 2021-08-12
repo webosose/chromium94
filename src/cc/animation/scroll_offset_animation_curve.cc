@@ -141,6 +141,7 @@ ScrollOffsetAnimationCurve::ScrollOffsetAnimationCurve(
       duration_behavior_(duration_behavior),
       has_set_initial_value_(false) {
   DCHECK_EQ((animation_type == AnimationType::kEaseInOut ||
+             animation_type == AnimationType::kEaseOut ||
              animation_type == AnimationType::kImpulse),
             duration_behavior.has_value());
   switch (animation_type) {
@@ -153,6 +154,10 @@ ScrollOffsetAnimationCurve::ScrollOffsetAnimationCurve(
       break;
     case AnimationType::kImpulse:
       timing_function_ = ImpulseCurveWithInitialSlope(0);
+      break;
+    case AnimationType::kEaseOut:
+      timing_function_ = CubicBezierTimingFunction::CreatePreset(
+          CubicBezierTimingFunction::EaseType::EASE_OUT);
       break;
   }
 }
@@ -168,6 +173,7 @@ ScrollOffsetAnimationCurve::ScrollOffsetAnimationCurve(
       duration_behavior_(duration_behavior),
       has_set_initial_value_(false) {
   DCHECK_EQ((animation_type == AnimationType::kEaseInOut ||
+             animation_type == AnimationType::kEaseOut ||
              animation_type == AnimationType::kImpulse),
             duration_behavior.has_value());
 }
@@ -230,6 +236,7 @@ base::TimeDelta ScrollOffsetAnimationCurve::SegmentDuration(
     absl::optional<double> velocity) {
   switch (animation_type_) {
     case AnimationType::kEaseInOut:
+    case AnimationType::kEaseOut:
       DCHECK(duration_behavior_.has_value());
       return EaseInOutSegmentDuration(delta, duration_behavior_.value(),
                                       delayed_by);
@@ -389,7 +396,8 @@ void ScrollOffsetAnimationCurve::UpdateTarget(
   base::TimeDelta delayed_by = std::max(base::TimeDelta(), last_retarget_ - t);
   t = std::max(t, last_retarget_);
 
-  if (animation_type_ == AnimationType::kEaseInOut &&
+  if ((animation_type_ == AnimationType::kEaseInOut ||
+       animation_type_ == AnimationType::kEaseOut) &&
       std::abs(MaximumDimension(target_value_.DeltaFrom(new_target))) <
           kEpsilon) {
     // Don't update the animation if the new target is the same as the old one.
