@@ -258,6 +258,9 @@ void DesktopWindowTreeHostPlatform::Init(const Widget::InitParams& params) {
   // https://crbug.com/442111.
   CreateCompositor(params.force_software_compositing ||
                    params.type == Widget::InitParams::TYPE_TOOLTIP);
+#if defined(OS_WEBOS)
+  compositor()->SetVisible(false);
+#endif
 
   WindowTreeHost::OnAcceleratedWidgetAvailable();
   InitHost();

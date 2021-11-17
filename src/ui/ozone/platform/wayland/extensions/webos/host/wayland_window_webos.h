@@ -72,6 +72,7 @@ class WaylandWindowWebos : public WaylandToplevelWindow {
   void SetInputArea(const std::vector<gfx::Rect>& region) override;
   void SetWindowProperty(const std::string& name,
                          const std::string& value) override;
+  void SetContentsBounds();
 
  private:
   WaylandExtensionsWebos* webos_extensions_;

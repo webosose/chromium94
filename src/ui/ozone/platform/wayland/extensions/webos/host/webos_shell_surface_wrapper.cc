@@ -21,8 +21,6 @@
 #include "base/check.h"
 #include "base/logging.h"
 #include "neva/logging.h"
-#include "ui/display/display.h"
-#include "ui/display/screen.h"
 #include "ui/ozone/platform/wayland/extensions/webos/host/wayland_extensions_webos.h"
 #include "ui/ozone/platform/wayland/extensions/webos/host/wayland_window_webos.h"
 #include "ui/ozone/platform/wayland/host/wayland_connection.h"
@@ -101,13 +99,7 @@ bool WebosShellSurfaceWrapper::Initialize() {
 }
 
 void WebosShellSurfaceWrapper::SetMaximized() {
-  // webOS shell surface interface doesn't support Configure notification
-  // with requested size for windows from compositor.
-  // Therefore, here we set the screen size for miximized screen mode.
-  display::Screen* screen = display::Screen::GetScreen();
-  if (screen)
-    wayland_window_->SetBounds(screen->GetPrimaryDisplay().bounds());
-
+  wayland_window_->SetContentsBounds();
   wl_webos_shell_surface_set_state(webos_shell_surface_.get(),
                                    WL_WEBOS_SHELL_SURFACE_STATE_MAXIMIZED);
 }
@@ -118,13 +110,7 @@ void WebosShellSurfaceWrapper::UnSetMaximized() {
 }
 
 void WebosShellSurfaceWrapper::SetFullscreen() {
-  // webOS shell surface interface doesn't support Configure notification
-  // with requested size for windows from compositor.
-  // Therefore, here we set the screen size for full screen mode.
-  display::Screen* screen = display::Screen::GetScreen();
-  if (screen)
-    wayland_window_->SetBounds(screen->GetPrimaryDisplay().bounds());
-
+  wayland_window_->SetContentsBounds();
   wl_webos_shell_surface_set_state(webos_shell_surface_.get(),
                                    WL_WEBOS_SHELL_SURFACE_STATE_FULLSCREEN);
 }

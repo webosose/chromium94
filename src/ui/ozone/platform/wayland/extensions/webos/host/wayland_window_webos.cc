@@ -17,6 +17,7 @@
 
 #include "ui/ozone/platform/wayland/extensions/webos/host/wayland_window_webos.h"
 
+#include "ui/display/screen.h"
 #include "ui/ozone/platform/wayland/extensions/webos/host/wayland_extensions_webos.h"
 #include "ui/ozone/platform/wayland/extensions/webos/host/webos_shell_surface_wrapper.h"
 #include "ui/ozone/platform/wayland/host/extended_input_wrapper.h"
@@ -250,6 +251,21 @@ void WaylandWindowWebos::SetWindowProperty(const std::string& name,
     webos_shell_surface->SetWindowProperty(name, value);
     connection()->ScheduleFlush();
   }
+}
+
+void WaylandWindowWebos::SetContentsBounds() {
+  if (HasValidContentsSize()) {
+    SetBounds(gfx::Rect(GetContentsSize()));
+    return;
+  }
+
+  // webOS shell surface interface doesn't support Configure notification
+  // with requested size for windows from compositor.
+  // Therefore, here we set the screen size for full screen mode.
+  display::Screen* screen = display::Screen::GetScreen();
+  if (!screen)
+    NOTREACHED() << "Unable to retrieve valid display::Screen";
+  SetBounds(screen->GetPrimaryDisplay().bounds());
 }
 
 }  // namespace ui

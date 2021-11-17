@@ -96,6 +96,9 @@ void WindowTreeHostPlatform::CreateAndSetPlatformWindow(
   if (features::IsUsingOzonePlatform()) {
     platform_window_ = ui::OzonePlatform::GetInstance()->CreatePlatformWindow(
         this, std::move(properties));
+#if defined(OS_WEBOS)
+    platform_window_->SetContentsSize(properties.bounds.size());
+#endif
     ///@name USE_NEVA_APPRUNTIME
     ///@{
     bool ime_enabled = base::CommandLine::ForCurrentProcess()->HasSwitch(
