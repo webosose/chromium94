@@ -2204,6 +2204,26 @@ void RenderWidgetHostViewAura::UpdateCursorIfOverSelf() {
   }
 }
 
+#if defined(OS_WEBOS)
+bool RenderWidgetHostViewAura::SynchronizeVisualPropertiesIgnoringPendingAck(
+    const cc::DeadlinePolicy& deadline_policy,
+    const absl::optional<viz::LocalSurfaceId>& child_local_surface_id) {
+  DCHECK(window_);
+  DCHECK(delegated_frame_host_) << "Cannot be invoked during destruction.";
+
+  window_->UpdateLocalSurfaceIdFromEmbeddedClient(child_local_surface_id);
+  // If the viz::LocalSurfaceId is invalid, we may have been evicted,
+  // allocate a new one to establish bounds.
+  if (!GetLocalSurfaceId().is_valid())
+    window_->AllocateLocalSurfaceId();
+
+  delegated_frame_host_->EmbedSurface(
+      GetLocalSurfaceId(), window_->bounds().size(), deadline_policy);
+
+  return host()->SynchronizeVisualPropertiesIgnoringPendingAck();
+}
+#endif
+
 bool RenderWidgetHostViewAura::SynchronizeVisualProperties(
     const cc::DeadlinePolicy& deadline_policy,
     const absl::optional<viz::LocalSurfaceId>& child_local_surface_id,
@@ -2373,19 +2393,19 @@ void RenderWidgetHostViewAura::InternalSetBounds(const gfx::Rect& rect) {
   // Even if not showing yet, we need to synchronize on size. As the renderer
   // needs to begin layout. Waiting until we show to start layout leads to
   // significant delays in embedding the first shown surface (500+ ms.)
-  bool ignore_pending_ack = false;
 #if defined(OS_WEBOS)
-  // In webOS some applications need changed bounds already when loading
-  // for the first time before showing.in order to determine layout style for
+  // In webOS some applications need changed bounds early when loading
+  // for the first time before showing in order to determine layout style for
   // the rest of the application life time. Thus ignore possibly pending
   // synchronize visual properties ack and force new visual properties to be
   // pushed to renderer.
   if (in_bounds_changed_ && !IsShowing())
-    ignore_pending_ack = true;
+    SynchronizeVisualPropertiesIgnoringPendingAck(
+        cc::DeadlinePolicy::UseDefaultDeadline(), window_->GetLocalSurfaceId());
+  else
 #endif
-  SynchronizeVisualProperties(cc::DeadlinePolicy::UseDefaultDeadline(),
-                              window_->GetLocalSurfaceId(),
-                              ignore_pending_ack);
+    SynchronizeVisualProperties(cc::DeadlinePolicy::UseDefaultDeadline(),
+                                window_->GetLocalSurfaceId());
 
 #if defined(OS_WIN)
   UpdateLegacyWin();

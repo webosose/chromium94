@@ -531,6 +531,11 @@ class CONTENT_EXPORT RenderWidgetHostViewAura
 
   void UpdateCursorIfOverSelf();
 
+#if defined(OS_WEBOS)
+  bool SynchronizeVisualPropertiesIgnoringPendingAck(
+      const cc::DeadlinePolicy& deadline_policy,
+      const absl::optional<viz::LocalSurfaceId>& child_local_surface_id);
+#endif
   bool SynchronizeVisualProperties(
       const cc::DeadlinePolicy& deadline_policy,
       const absl::optional<viz::LocalSurfaceId>& child_local_surface_id,

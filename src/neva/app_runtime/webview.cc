@@ -452,10 +452,6 @@ void WebView::CloseContents(content::WebContents* source) {
     webview_delegate_->Close();
 }
 
-gfx::Size WebView::GetSizeForNewRenderView(content::WebContents* web_contents) {
-  return gfx::Size(width_, height_);
-}
-
 bool WebView::ShouldSuppressDialogs(content::WebContents* source) {
   return should_suppress_dialogs_;
 }

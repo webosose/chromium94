@@ -204,8 +204,6 @@ class WebView : public content::WebContentsDelegate,
                               const std::u16string& message,
                               int32_t line_no,
                               const std::u16string& source_id) override;
-  gfx::Size GetSizeForNewRenderView(
-      content::WebContents* web_contents) override;
 
   void DidCompleteSwap() override;
   void DidFrameFocused() override;
