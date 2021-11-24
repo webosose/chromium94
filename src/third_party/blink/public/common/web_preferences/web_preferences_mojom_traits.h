@@ -727,6 +727,11 @@ struct BLINK_COMMON_EXPORT StructTraits<blink::mojom::WebPreferencesDataView,
       const blink::web_pref::WebPreferences& r) {
     return r.first_frame_policy;
   }
+
+  static blink::mojom::ThirdPartyCookiesPolicy third_party_cookies_policy(
+      const blink::web_pref::WebPreferences& r) {
+    return r.third_party_cookies_policy;
+  }
 #endif
 
 #if defined(USE_NEVA_MEDIA)

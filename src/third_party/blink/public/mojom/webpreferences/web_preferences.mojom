@@ -105,6 +105,17 @@ enum EffectiveConnectionType {
   kEffectiveConnectionTypeLast,
 };
 
+
+///@name USE_NEVA_APPRUNTIME
+///@{
+// Third party cookies policy. As optional is not allowed, use an enum.
+enum ThirdPartyCookiesPolicy {
+  kDefault,
+  kAllow,
+  kDeny,
+};
+///@}
+
 struct WebPreferences {
   map<string, mojo_base.mojom.String16> standard_font_family_map;
   map<string, mojo_base.mojom.String16> fixed_font_family_map;
@@ -396,6 +407,10 @@ struct WebPreferences {
   // Keep alive webapp.
   [EnableIf=neva_appruntime]
   bool keep_alive_webapp;
+
+  // Third party cookies policy
+  [EnableIf=neva_appruntime]
+  ThirdPartyCookiesPolicy third_party_cookies_policy;
   ///@}
 
   ///@name USE_NEVA_MEDIA

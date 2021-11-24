@@ -34,6 +34,7 @@
 #include "content/browser/renderer_host/frame_tree_node.h"
 #include "content/browser/renderer_host/navigation_request.h"
 #include "content/browser/renderer_host/navigation_request_info.h"
+#include "content/browser/renderer_host/render_frame_host_delegate.h"
 #include "content/browser/service_worker/service_worker_container_host.h"
 #include "content/browser/service_worker/service_worker_main_resource_handle.h"
 #include "content/browser/service_worker/service_worker_main_resource_loader_interceptor.h"
@@ -577,6 +578,24 @@ void NavigationURLLoaderImpl::MaybeStartLoader(
   uint32_t options = network::mojom::kURLLoadOptionNone;
   scoped_refptr<network::SharedURLLoaderFactory> factory =
       PrepareForNonInterceptedRequest(&options);
+
+#if defined(USE_NEVA_APPRUNTIME)
+  FrameTreeNode* frame_tree_node =
+      FrameTreeNode::GloballyFindByID(frame_tree_node_id_);
+  if (frame_tree_node && frame_tree_node->frame_tree()) {
+    RenderFrameHostDelegate* rfhd =
+        frame_tree_node->frame_tree()->render_frame_delegate();
+    if (rfhd) {
+      if (rfhd->GetOrCreateWebPreferences().third_party_cookies_policy ==
+          blink::mojom::ThirdPartyCookiesPolicy::kDeny)
+        options |= network::mojom::kURLLoadOptionBlockThirdPartyCookies;
+      else if (rfhd->GetOrCreateWebPreferences().third_party_cookies_policy ==
+               blink::mojom::ThirdPartyCookiesPolicy::kAllow)
+        options &= ~network::mojom::kURLLoadOptionBlockThirdPartyCookies;
+    }
+  }
+#endif
+
   url_loader_ = blink::ThrottlingURLLoader::CreateLoaderAndStart(
       std::move(factory), CreateURLLoaderThrottles(),
       global_request_id_.request_id, options, resource_request_.get(),

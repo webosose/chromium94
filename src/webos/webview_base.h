@@ -205,6 +205,7 @@ class WEBOS_EXPORT WebViewBase
 
   // WebPreferences
   void SetAllowRunningInsecureContent(bool enable);
+  void SetAllowThirdPartyCookies(bool enable);
   void SetAllowScriptsToCloseWindows(bool enable);
   void SetAllowUniversalAccessFromFileUrls(bool enable);
   void SetRequestQuotaEnabled(bool enable);

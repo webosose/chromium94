@@ -87,6 +87,7 @@ bool StructTraits<blink::mojom::WebPreferencesDataView,
 #endif
 #if defined(USE_NEVA_APPRUNTIME)
       || !data.ReadFirstFramePolicy(&out->first_frame_policy)
+      || !data.ReadThirdPartyCookiesPolicy(&out->third_party_cookies_policy)
 #endif
   )
     return false;

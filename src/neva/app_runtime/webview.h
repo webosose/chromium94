@@ -60,6 +60,7 @@ class WebView : public content::WebContentsDelegate,
  public:
   enum Attribute {
     AllowRunningInsecureContent,
+    AllowThirdPartyCookies,
     AllowScriptsToCloseWindows,
     AllowUniversalAccessFromFileUrls,
     RequestQuotaEnabled,

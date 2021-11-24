@@ -303,6 +303,7 @@ class APP_RUNTIME_EXPORT WebViewBase : public WebViewDelegate,
 
   // WebPreferences
   void SetAllowRunningInsecureContent(bool enable);
+  void SetAllowThirdPartyCookies(bool enable);
   void SetAllowScriptsToCloseWindows(bool enable);
   void SetAllowUniversalAccessFromFileUrls(bool enable);
   void SetRequestQuotaEnabled(bool enable);

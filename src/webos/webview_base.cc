@@ -494,6 +494,11 @@ void WebViewBase::RequestInjectionLoading(const std::string& injection_name) {
   webview_->RequestInjectionLoading(injection_name);
 }
 
+void WebViewBase::SetAllowThirdPartyCookies(bool enable) {
+  webview_->UpdatePreferencesAttribute(
+      neva_app_runtime::WebView::Attribute::AllowThirdPartyCookies, enable);
+}
+
 // WebPreferences
 void WebViewBase::SetAllowRunningInsecureContent(bool enable) {
   webview_->UpdatePreferencesAttribute(

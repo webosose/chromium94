@@ -709,6 +709,15 @@ void WebView::UpdatePreferencesAttributeForPrefs(
       // TODO(jose.dapena): patches not ported
       NOTIMPLEMENTED() << "patches not ported";
       break;
+    case Attribute::AllowThirdPartyCookies:
+      if (enable) {
+        web_preferences_->third_party_cookies_policy =
+            blink::mojom::ThirdPartyCookiesPolicy::kAllow;
+      } else {
+        web_preferences_->third_party_cookies_policy =
+            blink::mojom::ThirdPartyCookiesPolicy::kDeny;
+      }
+      break;
     default:
       break;
   }
@@ -1435,6 +1444,10 @@ void WebView::OverrideWebkitPrefs(blink::web_pref::WebPreferences* prefs) {
       web_preferences_->default_minimum_page_scale_factor;
 
   prefs->first_frame_policy = web_preferences_->first_frame_policy;
+
+  // Sync cookies policy
+  prefs->third_party_cookies_policy =
+      web_preferences_->third_party_cookies_policy;
 }
 
 bool WebView::DecidePolicyForResponse(bool is_main_frame,

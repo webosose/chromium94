@@ -4360,6 +4360,20 @@ void RenderFrameImpl::WillSendRequestInternal(
   url_request_extra_data->set_allow_cross_origin_auth_prompt(
       GetWebView()->GetRendererPreferences().allow_cross_origin_auth_prompt);
   url_request_extra_data->set_top_frame_origin(GetSecurityOriginOfTopFrame());
+#if defined(USE_NEVA_APPRUNTIME)
+  switch (GetBlinkPreferences().third_party_cookies_policy) {
+    case blink::mojom::ThirdPartyCookiesPolicy::kAllow:
+      url_request_extra_data->set_allow_third_party_cookies(true);
+      break;
+    case blink::mojom::ThirdPartyCookiesPolicy::kDeny:
+      url_request_extra_data->set_allow_third_party_cookies(false);
+      break;
+    case blink::mojom::ThirdPartyCookiesPolicy::kDefault:
+    default:
+      url_request_extra_data->reset_allow_third_party_cookies();
+      break;
+  }
+#endif
 
   request.SetDownloadToNetworkCacheOnly(is_for_no_state_prefetch &&
                                         !for_main_frame);

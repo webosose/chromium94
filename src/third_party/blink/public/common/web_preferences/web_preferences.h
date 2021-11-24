@@ -297,6 +297,10 @@ struct BLINK_COMMON_EXPORT WebPreferences {
   // Policy for when to display the first frame when launching a webapp.
   blink::FirstFramePolicy first_frame_policy =
       blink::FirstFramePolicy::kContents;
+
+  // Policy for third party cookies.
+  blink::mojom::ThirdPartyCookiesPolicy third_party_cookies_policy =
+      blink::mojom::ThirdPartyCookiesPolicy::kDefault;
 #endif
 
 #if defined(USE_NEVA_MEDIA)

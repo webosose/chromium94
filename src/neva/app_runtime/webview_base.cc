@@ -405,6 +405,11 @@ void WebViewBase::SetWebSecurityEnabled(bool enable) {
                                        enable);
 }
 
+void WebViewBase::SetAllowThirdPartyCookies(bool enable) {
+  webview_->UpdatePreferencesAttribute(
+      WebView::Attribute::AllowThirdPartyCookies, enable);
+}
+
 void WebViewBase::SetKeepAliveWebApp(bool enable) {
   webview_->UpdatePreferencesAttribute(WebView::Attribute::KeepAliveWebApp,
                                        enable);
