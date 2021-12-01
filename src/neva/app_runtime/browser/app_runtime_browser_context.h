@@ -21,6 +21,7 @@
 #include "components/local_storage_tracker/public/local_storage_tracker.h"
 #include "content/public/browser/browser_context.h"
 
+class PrefService;
 namespace neva_app_runtime {
 
 class BrowserContextAdapter;
@@ -67,6 +68,7 @@ class AppRuntimeBrowserContext : public content::BrowserContext {
 #if defined(USE_LOCAL_STORAGE_TRACKER)
   scoped_refptr<content::LocalStorageTracker> local_storage_tracker_;
 #endif
+  std::unique_ptr<PrefService> pref_service_;
 };
 
 }  // namespace neva_app_runtime

@@ -24,6 +24,13 @@
 #include "base/path_service.h"
 #include "base/task/post_task.h"
 #include "browser/app_runtime_browser_context_adapter.h"
+#include "components/pref_registry/pref_registry_syncable.h"
+#include "components/prefs/json_pref_store.h"
+#include "components/prefs/pref_filter.h"
+#include "components/prefs/pref_registry_simple.h"
+#include "components/prefs/pref_service.h"
+#include "components/prefs/pref_service_factory.h"
+#include "components/user_prefs/user_prefs.h"
 #include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/resource_context.h"
 #include "content/public/browser/storage_partition.h"
@@ -36,6 +43,9 @@
 #include "net/proxy_resolution/proxy_info.h"
 #include "net/proxy_resolution/proxy_resolution_service.h"
 #include "neva/app_runtime/browser/app_runtime_browser_switches.h"
+#include "neva/app_runtime/browser/push_messaging/push_messaging_app_identifier.h"
+#include "neva/app_runtime/browser/push_messaging/push_messaging_service_factory.h"
+#include "neva/app_runtime/browser/push_messaging/push_messaging_service_impl.h"
 #include "neva/user_agent/browser/client_hints.h"
 #include "services/network/public/mojom/cookie_manager.mojom.h"
 
@@ -49,6 +59,25 @@ AppRuntimeBrowserContext::AppRuntimeBrowserContext(
 #if defined(USE_LOCAL_STORAGE_TRACKER)
   local_storage_tracker_ = content::LocalStorageTracker::Create().release();
 #endif
+
+  base::FilePath filepath = path_.AppendASCII("wam_prefs.json");
+  LOG(INFO) << __func__ << " json_pref_store_path=" << filepath;
+  scoped_refptr<JsonPrefStore> pref_store =
+      base::MakeRefCounted<JsonPrefStore>(filepath);
+  pref_store->ReadPrefs();  // Synchronous.
+
+  PrefServiceFactory factory;
+  factory.set_user_prefs(pref_store);
+
+  user_prefs::PrefRegistrySyncable* pref_registry =
+      new user_prefs::PrefRegistrySyncable;
+
+  PushMessagingAppIdentifier::RegisterProfilePrefs(pref_registry);
+
+  pref_service_ = factory.Create(pref_registry);
+  user_prefs::UserPrefs::Set(this, pref_service_.get());
+
+  PushMessagingServiceImpl::InitializeForProfile(this);
 }
 
 AppRuntimeBrowserContext::~AppRuntimeBrowserContext() {}
@@ -110,7 +139,7 @@ AppRuntimeBrowserContext::GetSpecialStoragePolicy() {
 
 content::PushMessagingService*
 AppRuntimeBrowserContext::GetPushMessagingService() {
-  return nullptr;
+  return PushMessagingServiceFactory::GetForProfile(this);
 }
 
 content::StorageNotificationService*
