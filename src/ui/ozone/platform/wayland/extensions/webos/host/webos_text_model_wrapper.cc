@@ -350,8 +350,11 @@ void WebosTextModelWrapper::Leave(void* data, text_model* text_model) {
       static_cast<WebosTextModelWrapper*>(data);
   DCHECK(text_model_wrapper);
 
-  text_model_wrapper->is_activated_ = false;
-  text_model_wrapper->input_panel_->HideInputPanel();
+  if (text_model_wrapper->IsActivated()) {
+    text_model_wrapper->is_activated_ = false;
+    text_model_wrapper->input_panel_->HideInputPanel(
+        ImeHiddenType::kDeactivate);
+  }
 }
 
 void WebosTextModelWrapper::InputPanelState(void* data,

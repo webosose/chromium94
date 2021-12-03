@@ -37,7 +37,7 @@ class WebosInputPanel : public InputPanel {
   WebosInputPanel& operator=(const WebosInputPanel&) = delete;
   ~WebosInputPanel() override;
 
-  void HideInputPanel() override;
+  void HideInputPanel(ImeHiddenType hidden_type) override;
   void SetTextInputInfo(const TextInputInfo& text_input_info) override;
   void SetSurroundingText(const std::string& text,
                           std::size_t cursor_position,

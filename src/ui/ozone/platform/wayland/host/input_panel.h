@@ -22,6 +22,7 @@
 
 namespace ui {
 
+enum class ImeHiddenType;
 struct TextInputInfo;
 
 // The text input panel associated with an active window.
@@ -30,7 +31,7 @@ class InputPanel {
   virtual ~InputPanel() = default;
 
   // Hides the text input panel (virtual keyboard).
-  virtual void HideInputPanel() = 0;
+  virtual void HideInputPanel(ImeHiddenType hidden_type) = 0;
 
   // Sets |text_input_info| (content type, flags, etc.)
   // for the text input panel (virtual keyboard).

@@ -37,7 +37,7 @@ WaylandWindowWebos::WaylandWindowWebos(PlatformWindowDelegate* delegate,
 
 WaylandWindowWebos::~WaylandWindowWebos() {
   // Prevent possible VKB outliving the window
-  HideInputPanel();
+  HideInputPanel(ImeHiddenType::kDeactivate);
 };
 
 WaylandInputMethodContext* WaylandWindowWebos::GetInputMethodContext() {
@@ -137,7 +137,7 @@ void WaylandWindowWebos::ShowInputPanel() {
   }
 }
 
-void WaylandWindowWebos::HideInputPanel() {
+void WaylandWindowWebos::HideInputPanel(ImeHiddenType hidden_type) {
   InputPanelManager* input_panel_manager =
     webos_extensions_->GetInputPanelManager();
 
@@ -145,7 +145,7 @@ void WaylandWindowWebos::HideInputPanel() {
     InputPanel* input_panel = input_panel_manager->GetInputPanel(this);
 
     if (input_panel) {
-      input_panel->HideInputPanel();
+      input_panel->HideInputPanel(hidden_type);
       connection()->ScheduleFlush();
     }
   }
