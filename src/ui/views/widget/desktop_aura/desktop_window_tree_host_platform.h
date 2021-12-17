@@ -132,6 +132,8 @@ class VIEWS_EXPORT DesktopWindowTreeHostPlatform
                                std::int32_t y,
                                std::uint32_t width,
                                std::uint32_t height) override;
+  void BeginPrepareStackForWebApp() override;
+  void FinishPrepareStackForWebApp() override;
   ///@}
   void OnWindowStateChanged(ui::PlatformWindowState old_state,
                             ui::PlatformWindowState new_state) override;
