@@ -22,7 +22,6 @@
 
 #include "ui/ozone/platform/wayland/extensions/webos/common/wayland_webos_object.h"
 #include "ui/ozone/platform/wayland/extensions/webos/host/wayland_shell_surface_wrapper.h"
-#include "webos/common/webos_constants.h"
 
 namespace ui {
 
@@ -78,10 +77,10 @@ class WebosShellSurfaceWrapper : public WaylandShellSurfaceWrapper {
                                  uint32_t state);
 
  private:
-  std::uint32_t group_key_masks_ = webos::WebOSKeyMask::KEY_MASK_DEFAULT;
-  std::uint32_t applied_key_masks_ = webos::WebOSKeyMask::KEY_MASK_DEFAULT;
   WaylandWindowWebos* const wayland_window_;
   WaylandConnection* const connection_;
+  std::uint32_t group_key_masks_;
+  std::uint32_t applied_key_masks_;
   wl::Object<wl_webos_shell_surface> webos_shell_surface_;
 };
 

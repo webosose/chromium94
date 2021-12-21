@@ -67,7 +67,9 @@ WebosShellSurfaceWrapper::WebosShellSurfaceWrapper(
     WaylandConnection* connection)
     : WaylandShellSurfaceWrapper(wayland_window, connection),
       wayland_window_(wayland_window),
-      connection_(connection) {}
+      connection_(connection),
+      group_key_masks_(WL_WEBOS_SHELL_SURFACE_WEBOS_KEY_DEFAULT),
+      applied_key_masks_(WL_WEBOS_SHELL_SURFACE_WEBOS_KEY_DEFAULT) {}
 
 WebosShellSurfaceWrapper::~WebosShellSurfaceWrapper() = default;
 
