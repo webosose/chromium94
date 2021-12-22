@@ -351,6 +351,9 @@ void WaylandInputMethodContext::OnCommitString(base::StringPiece text) {
 
 void WaylandInputMethodContext::OnDeleteSurroundingText(int32_t index,
                                                         uint32_t length) {
+#if defined(OS_WEBOS)
+  ime_delegate_->OnDeleteSurroundingText(index, length);
+#else   // defined(OS_WEBOS)
   // |index| and |length| are expected to be in UTF8 form, so we convert these
   // into UTF16 form.
   // Here, we use the surrounding text stored in SetSurroundingText which should
@@ -376,6 +379,7 @@ void WaylandInputMethodContext::OnDeleteSurroundingText(int32_t index,
   ime_delegate_->OnDeleteSurroundingText(
       offsets_for_adjustment[0],
       offsets_for_adjustment[1] - offsets_for_adjustment[0]);
+#endif  // defined(OS_WEBOS)
 }
 
 void WaylandInputMethodContext::OnKeysym(uint32_t keysym,
