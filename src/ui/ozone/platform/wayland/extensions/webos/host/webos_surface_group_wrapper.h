@@ -23,11 +23,13 @@
 
 namespace ui {
 
+class WaylandConnection;
 class WaylandWindow;
 
 class WebosSurfaceGroupWrapper : public SurfaceGroupWrapper {
  public:
-  explicit WebosSurfaceGroupWrapper(wl_webos_surface_group* surface_group);
+  WebosSurfaceGroupWrapper(wl_webos_surface_group* surface_group,
+                           WaylandConnection* connection);
   WebosSurfaceGroupWrapper(const WebosSurfaceGroupWrapper&) = delete;
   WebosSurfaceGroupWrapper& operator=(const WebosSurfaceGroupWrapper&) = delete;
   ~WebosSurfaceGroupWrapper() override;
@@ -52,6 +54,7 @@ class WebosSurfaceGroupWrapper : public SurfaceGroupWrapper {
  private:
   wl::Object<wl_webos_surface_group> webos_surface_group_;
   std::string layer_name_;
+  WaylandConnection* const connection_;
 };
 
 }  // namespace ui

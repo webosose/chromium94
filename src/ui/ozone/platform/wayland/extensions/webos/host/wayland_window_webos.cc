@@ -268,4 +268,9 @@ void WaylandWindowWebos::SetContentsBounds() {
   SetBounds(screen->GetPrimaryDisplay().bounds());
 }
 
+void WaylandWindowWebos::HandleWindowClose(SurfaceGroupWrapper* surface_group) {
+  if (surface_group == surface_group_.get())
+    HandleWindowHostClose();
+}
+
 }  // namespace ui

@@ -24,8 +24,10 @@
 namespace ui {
 
 WebosSurfaceGroupCompositorWrapper::WebosSurfaceGroupCompositorWrapper(
-    wl_webos_surface_group_compositor* surface_group_compositor)
-    : webos_surface_group_compositor_(surface_group_compositor) {}
+    wl_webos_surface_group_compositor* surface_group_compositor,
+    WaylandConnection* connection)
+    : webos_surface_group_compositor_(surface_group_compositor),
+      connection_(connection) {}
 
 WebosSurfaceGroupCompositorWrapper::~WebosSurfaceGroupCompositorWrapper() =
     default;
@@ -39,7 +41,8 @@ WebosSurfaceGroupCompositorWrapper::CreateSurfaceGroup(
           webos_surface_group_compositor_.get(),
           parent->root_surface()->surface(), group_name.c_str());
 
-  return std::make_unique<WebosSurfaceGroupWrapper>(webos_surface_group);
+  return std::make_unique<WebosSurfaceGroupWrapper>(webos_surface_group,
+                                                    connection_);
 }
 
 std::unique_ptr<SurfaceGroupWrapper>
@@ -49,7 +52,8 @@ WebosSurfaceGroupCompositorWrapper::GetSurfaceGroup(
       wl_webos_surface_group_compositor_get_surface_group(
           webos_surface_group_compositor_.get(), group_name.c_str());
 
-  return std::make_unique<WebosSurfaceGroupWrapper>(webos_surface_group);
+  return std::make_unique<WebosSurfaceGroupWrapper>(webos_surface_group,
+                                                    connection_);
 }
 
 }  // namespace ui

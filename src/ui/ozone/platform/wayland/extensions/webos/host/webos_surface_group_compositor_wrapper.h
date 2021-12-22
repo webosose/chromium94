@@ -24,13 +24,15 @@
 namespace ui {
 
 class SurfaceGroupWrapper;
+class WaylandConnection;
 class WaylandWindow;
 
 class WebosSurfaceGroupCompositorWrapper
     : public SurfaceGroupCompositorWrapper {
  public:
-  explicit WebosSurfaceGroupCompositorWrapper(
-      wl_webos_surface_group_compositor* surface_group_compositor);
+  WebosSurfaceGroupCompositorWrapper(
+      wl_webos_surface_group_compositor* surface_group_compositor,
+      WaylandConnection* connection);
   WebosSurfaceGroupCompositorWrapper(
       const WebosSurfaceGroupCompositorWrapper&) = delete;
   WebosSurfaceGroupCompositorWrapper& operator=(
@@ -46,6 +48,8 @@ class WebosSurfaceGroupCompositorWrapper
 
  private:
   wl::Object<wl_webos_surface_group_compositor> webos_surface_group_compositor_;
+
+  WaylandConnection* const connection_;
 };
 
 }  // namespace ui

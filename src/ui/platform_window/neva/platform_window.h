@@ -43,6 +43,7 @@ class SkPath;
 namespace ui {
 
 struct TextInputInfo;
+class SurfaceGroupWrapper;
 
 namespace neva {
 
@@ -123,6 +124,7 @@ class PlatformWindow
   virtual void DetachGroup() {}
   virtual std::string GetDisplayId() { return "-1"; }
   virtual void OnInputPanelVisibilityChanged(bool state) {}
+  virtual void HandleWindowClose(SurfaceGroupWrapper* surface_group) {}
 };
 
 }  // namespace neva

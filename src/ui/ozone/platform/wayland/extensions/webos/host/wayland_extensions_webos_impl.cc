@@ -83,7 +83,7 @@ bool WaylandExtensionsWebosImpl::Bind(wl_registry* registry,
 
     surface_group_compositor_ =
         std::make_unique<WebosSurfaceGroupCompositorWrapper>(
-            surface_group_compositor.release());
+            surface_group_compositor.release(), connection_);
 
     return true;
   } else if (!text_model_factory_ &&

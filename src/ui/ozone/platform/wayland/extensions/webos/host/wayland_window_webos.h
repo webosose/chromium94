@@ -73,6 +73,7 @@ class WaylandWindowWebos : public WaylandToplevelWindow {
   void SetWindowProperty(const std::string& name,
                          const std::string& value) override;
   void SetContentsBounds();
+  void HandleWindowClose(SurfaceGroupWrapper* surface_group) override;
 
  private:
   WaylandExtensionsWebos* webos_extensions_;

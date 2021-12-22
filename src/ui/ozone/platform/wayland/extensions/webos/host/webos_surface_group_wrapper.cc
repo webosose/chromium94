@@ -18,6 +18,8 @@
 
 #include <wayland-webos-surface-group-client-protocol.h>
 
+#include "ui/ozone/platform/wayland/extensions/webos/host/wayland_window_webos.h"
+#include "ui/ozone/platform/wayland/host/wayland_connection.h"
 #include "ui/ozone/platform/wayland/host/wayland_window.h"
 
 namespace ui {
@@ -30,7 +32,9 @@ constexpr std::uint32_t kDisallowAnonymousLayers = 0;
 }  // namespace
 
 WebosSurfaceGroupWrapper::WebosSurfaceGroupWrapper(
-    wl_webos_surface_group* surface_group) {
+    wl_webos_surface_group* surface_group,
+    WaylandConnection* connection)
+    : connection_(connection) {
   webos_surface_group_.reset(surface_group);
 
   static const wl_webos_surface_group_listener webos_surface_group_listener = {
@@ -88,7 +92,24 @@ void WebosSurfaceGroupWrapper::FocusLayer() {
 void WebosSurfaceGroupWrapper::OwnerDestroyed(
     void* data,
     wl_webos_surface_group* wl_webos_surface_group) {
-  NOTIMPLEMENTED_LOG_ONCE();
+  WebosSurfaceGroupWrapper* surface_group_wrapper =
+      static_cast<WebosSurfaceGroupWrapper*>(data);
+  DCHECK(surface_group_wrapper);
+  DCHECK(surface_group_wrapper->connection_);
+
+  WaylandWindowManager* window_manager =
+      surface_group_wrapper->connection_->wayland_window_manager();
+
+  if (window_manager) {
+    // Need to get all windows from the window manager because it is not clear
+    // what window owns this surface.
+    auto windows_all = window_manager->GetAllWindows();
+    for (auto& window : windows_all) {
+      // Detach and destroy Surface and close window after destroy owner surface
+      if (window)
+        window->HandleWindowClose(surface_group_wrapper);
+    }
+  }
 }
 
 }  // namespace ui
