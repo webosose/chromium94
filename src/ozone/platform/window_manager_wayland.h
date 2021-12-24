@@ -24,7 +24,6 @@
 #include <string>
 #include <vector>
 
-#include "base/atomic_sequence_num.h"
 #include "base/file_descriptor_posix.h"
 #include "base/memory/scoped_refptr.h"
 #include "base/memory/weak_ptr.h"
@@ -292,8 +291,6 @@ class WindowManagerWayland : public PlatformEventSource,
   bool dragging_;
 
   SequentialIDGenerator touch_slot_generator_;
-  std::vector<ui::TouchscreenDevice> touch_device_;
-  base::AtomicSequenceNumber touch_device_id_seq_;
 
   // Support weak pointers for attach & detach callbacks.
   base::WeakPtrFactory<WindowManagerWayland> weak_ptr_factory_;

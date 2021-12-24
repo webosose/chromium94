@@ -41,6 +41,10 @@
 
 namespace ui {
 
+namespace {
+const int kDefaultMaxTouchPoints = 1;
+}
+
 WindowManagerWayland::WindowManagerWayland(OzoneGpuPlatformSupportHost* proxy)
     : proxy_(proxy),
       keyboard_(KeyboardEvdevNeva::Create(&modifiers_,
@@ -765,7 +769,7 @@ void WindowManagerWayland::NotifyTouchscreenAdded(int id,
   base::CommandLine* command_line = base::CommandLine::ForCurrentProcess();
   if (command_line->HasSwitch(switches::kIgnoreTouchDevices))
     return;
-  int max_touch_points = 1;
+  int max_touch_points = kDefaultMaxTouchPoints;
   std::string override_max_touch_points =
       command_line->GetSwitchValueASCII(switches::kForceMaxTouchPoints);
   if (!override_max_touch_points.empty()) {

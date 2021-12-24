@@ -76,6 +76,12 @@
 #include "ui/ozone/platform/wayland/host/wayland_extensions.h"
 ///@}
 
+#if defined(USE_NEVA_APPRUNTIME)
+#include "base/command_line.h"
+#include "base/strings/string_number_conversions.h"
+#include "ui/events/event_switches.h"
+#endif
+
 namespace ui {
 
 namespace {
@@ -94,6 +100,10 @@ constexpr uint32_t kMaxTextInputManagerVersion = 1;
 constexpr uint32_t kMaxExplicitSyncVersion = 2;
 constexpr uint32_t kMaxXdgDecorationVersion = 1;
 constexpr uint32_t kMaxExtendedDragVersion = 1;
+
+#if defined(USE_NEVA_APPRUNTIME)
+const int kDefaultMaxTouchPoints = 1;
+#endif  // defined(USE_NEVA_APPRUNTIME)
 
 int64_t ConvertTimespecToMicros(const struct timespec& ts) {
   // On 32-bit systems, the calculation cannot overflow int64_t.
@@ -362,6 +372,40 @@ WaylandCursorPosition* WaylandConnection::wayland_cursor_position() const {
   if (seat_manager_->GetFirstSeat())
     return seat_manager_->GetFirstSeat()->cursor_position();
   return nullptr;
+}
+
+void WaylandConnection::OnTouchAdded(int touch_id) {
+  auto* command_line = base::CommandLine::ForCurrentProcess();
+  if (command_line->HasSwitch(switches::kIgnoreTouchDevices))
+    return;
+
+  const std::string device_name = "touch-" + std::to_string(touch_id);
+
+  int touch_points = kDefaultMaxTouchPoints;
+  std::string override_max_touch_points =
+      command_line->GetSwitchValueASCII(switches::kForceMaxTouchPoints);
+  if (!override_max_touch_points.empty()) {
+    int max_touch_points;
+    if (base::StringToInt(override_max_touch_points, &max_touch_points))
+      touch_points = max_touch_points;
+  }
+
+  touchscreen_devices_.emplace_back(
+      TouchscreenDevice(touch_id, InputDeviceType::INPUT_DEVICE_INTERNAL,
+                        device_name, gfx::Size(), touch_points));
+
+  GetHotplugEventObserver()->OnTouchscreenDevicesUpdated(touchscreen_devices_);
+}
+
+void WaylandConnection::OnTouchRemoved(int touch_id) {
+  auto* command_line = base::CommandLine::ForCurrentProcess();
+  if (command_line->HasSwitch(switches::kIgnoreTouchDevices))
+    return;
+
+  base::EraseIf(touchscreen_devices_, [touch_id](const auto& device) {
+    return device.id == touch_id;
+  });
+  GetHotplugEventObserver()->OnTouchscreenDevicesUpdated(touchscreen_devices_);
 }
 #endif  // defined(USE_NEVA_APPRUNTIME)
 

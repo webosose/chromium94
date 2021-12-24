@@ -21,6 +21,7 @@
 #include "ui/ozone/platform/wayland/host/wayland_window_manager.h"
 
 #if defined(USE_NEVA_APPRUNTIME)
+#include "ui/events/devices/touchscreen_device.h"
 #include "ui/ozone/platform/wayland/host/wayland_seat.h"
 #include "ui/ozone/platform/wayland/host/wayland_seat_manager.h"
 #endif  // defined(USE_NEVA_APPRUNTIME)
@@ -173,6 +174,9 @@ class WaylandConnection {
   }
   wl_seat* seat() const;
   WaylandSeatManager* seat_manager() const { return seat_manager_.get(); }
+
+  void OnTouchAdded(int touch_id);
+  void OnTouchRemoved(int touch_id);
 #else   // defined(USE_NEVA_APPRUNTIME)
   wl_seat* seat() const { return seat_.get(); }
 #endif  // !defined(USE_NEVA_APPRUNTIME)
@@ -424,6 +428,7 @@ class WaylandConnection {
 #if defined(USE_NEVA_APPRUNTIME)
   // Manages Wayland seats.
   std::unique_ptr<WaylandSeatManager> seat_manager_;
+  std::vector<TouchscreenDevice> touchscreen_devices_;
 #else  // defined(USE_NEVA_APPRUNTIME)
   // Input device objects.
   std::unique_ptr<WaylandKeyboard> keyboard_;

@@ -26,12 +26,6 @@
 #include "ui/ozone/platform/wayland/host/wayland_pointer.h"
 #include "ui/ozone/platform/wayland/host/wayland_touch.h"
 
-#if defined(USE_NEVA_APPRUNTIME)
-#include "base/command_line.h"
-#include "base/strings/string_number_conversions.h"
-#include "ui/events/event_switches.h"
-#endif
-
 namespace ui {
 
 WaylandSeat::WaylandSeat(WaylandConnection* connection,
@@ -95,63 +89,19 @@ void WaylandSeat::UpdateInputDevices(wl_seat* seat,
     touch_.reset();
 
 #if defined(USE_NEVA_APPRUNTIME)
-    NotifyTouchscreenRemoved();
+    connection_->OnTouchRemoved(seat_id_);
 #endif
   } else if (wl_touch* touch = wl_seat_get_touch(seat)) {
     touch_ = std::make_unique<WaylandTouch>(touch, connection_,
                                             connection_->event_source());
 
 #if defined(USE_NEVA_APPRUNTIME)
-    NotifyTouchscreenAdded();
+    connection_->OnTouchAdded(seat_id_);
 #endif
   } else {
     LOG(ERROR) << "Failed to get wl_touch from seat";
   }
 }
-
-#if defined(USE_NEVA_APPRUNTIME)
-void WaylandSeat::NotifyTouchscreenAdded() {
-  auto* command_line = base::CommandLine::ForCurrentProcess();
-  if (command_line->HasSwitch(switches::kIgnoreTouchDevices))
-    return;
-
-  const int device_id = touch_device_id_seq_.GetNext();
-  const std::string device_name = "touch-" + std::to_string(device_id);
-  const int default_touch_points = 1;
-  const int touch_points = OverrideMaxTouchPoints(default_touch_points);
-  touch_device_.clear();
-  touch_device_.emplace_back(
-      TouchscreenDevice(device_id, InputDeviceType::INPUT_DEVICE_INTERNAL,
-                        device_name, gfx::Size(), touch_points));
-
-  DeviceHotplugEventObserver* device_data_manager =
-      DeviceDataManager::GetInstance();
-  device_data_manager->OnTouchscreenDevicesUpdated(touch_device_);
-}
-
-int WaylandSeat::OverrideMaxTouchPoints(int default_value) {
-  auto* command_line = base::CommandLine::ForCurrentProcess();
-  std::string str =
-      command_line->GetSwitchValueASCII(switches::kForceMaxTouchPoints);
-
-  int max_touch_points;
-  if (!str.empty() && base::StringToInt(str, &max_touch_points))
-    return max_touch_points;
-
-  return default_value;
-}
-
-void WaylandSeat::NotifyTouchscreenRemoved() {
-  if (touch_device_.empty()) {
-    return;
-  }
-
-  touch_device_.clear();
-  DeviceHotplugEventObserver* device_data_manager =
-      DeviceDataManager::GetInstance();
-  device_data_manager->OnTouchscreenDevicesUpdated(touch_device_);
-}
-#endif
 
 // static
 void WaylandSeat::Capabilities(void* data,

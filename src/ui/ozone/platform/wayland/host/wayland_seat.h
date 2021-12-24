@@ -22,11 +22,6 @@
 
 #include "ui/ozone/platform/wayland/common/wayland_object.h"
 
-#if defined(USE_NEVA_APPRUNTIME)
-#include "base/atomic_sequence_num.h"
-#include "ui/events/devices/device_data_manager.h"
-#endif
-
 namespace ui {
 
 class WaylandConnection;
@@ -62,11 +57,6 @@ class WaylandSeat {
 
  private:
   void UpdateInputDevices(wl_seat* seat, std::uint32_t capabilities);
-#if defined(USE_NEVA_APPRUNTIME)
-  void NotifyTouchscreenAdded();
-  int OverrideMaxTouchPoints(int default_value);
-  void NotifyTouchscreenRemoved();
-#endif
 
   // wl_seat_listener
   static void Capabilities(void* data,
@@ -84,11 +74,6 @@ class WaylandSeat {
   std::unique_ptr<WaylandKeyboard> keyboard_;
   std::unique_ptr<WaylandPointer> pointer_;
   std::unique_ptr<WaylandTouch> touch_;
-
-#if defined(USE_NEVA_APPRUNTIME)
-  std::vector<TouchscreenDevice> touch_device_;
-  base::AtomicSequenceNumber touch_device_id_seq_;
-#endif
 };
 
 }  // namespace ui
