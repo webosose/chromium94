@@ -1,0 +1,9 @@
+{
+    "project": "chromium-m94",
+    "project_title": "Chromium M94",
+    "ref": "refs/branch-heads/4606",
+    "chrome_project": "chrome-m94",
+    "branch_types": [
+        "cros-lts"
+    ]
+}
