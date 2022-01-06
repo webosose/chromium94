@@ -1000,6 +1000,10 @@ void RenderThreadImpl::RegisterSchemes() {
   // googlechrome:
   WebString google_chrome_scheme(WebString::FromASCII(kGoogleChromeScheme));
   WebSecurityPolicy::RegisterURLSchemeAsDisplayIsolated(google_chrome_scheme);
+
+#if defined(USE_NEVA_APPRUNTIME)
+  GetContentClient()->renderer()->RegisterSchemes();
+#endif
 }
 
 void RenderThreadImpl::RecordAction(const base::UserMetricsAction& action) {

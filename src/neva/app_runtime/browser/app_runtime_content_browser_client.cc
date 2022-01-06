@@ -26,11 +26,13 @@
 #include "cc/base/switches_neva.h"
 #include "components/network_session_configurator/common/network_switches.h"
 #include "components/viz/common/switches.h"
+#include "content/browser/loader/file_url_loader_factory.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "content/public/browser/devtools_manager_delegate.h"
 #include "content/public/browser/login_delegate.h"
 #include "content/public/browser/network_service_instance.h"
 #include "content/public/browser/render_frame_host.h"
+#include "content/public/browser/shared_cors_origin_access_list.h"
 #include "content/public/browser/storage_partition.h"
 #include "content/public/common/content_neva_switches.h"
 #include "content/public/common/content_switches.h"
@@ -409,6 +411,38 @@ void AppRuntimeContentBrowserClient::GetAdditionalAllowedSchemesForFileSystem(
   if (base::CommandLine::ForCurrentProcess()->HasSwitch(
           switches::kEnableFileAPIDirectoriesAndSystem))
     additional_schemes->push_back(url::kFileScheme);
+}
+
+void AppRuntimeContentBrowserClient::
+    RegisterNonNetworkServiceWorkerUpdateURLLoaderFactories(
+        BrowserContext* browser_context,
+        NonNetworkURLLoaderFactoryMap* factories) {
+  if (browser_context) {
+    factories->emplace(url::kFileScheme,
+                       content::FileURLLoaderFactory::Create(
+                           browser_context->GetPath(),
+                           browser_context->GetSharedCorsOriginAccessList(),
+                           base::TaskPriority::USER_VISIBLE));
+  }
+}
+
+void AppRuntimeContentBrowserClient::
+    RegisterNonNetworkSubresourceURLLoaderFactories(
+        int render_process_id,
+        int render_frame_id,
+        NonNetworkURLLoaderFactoryMap* factories) {
+  content::RenderProcessHost* process =
+      RenderProcessHost::FromID(render_process_id);
+  if (process) {
+    content::BrowserContext* browser_context = process->GetBrowserContext();
+    if (browser_context) {
+      factories->emplace(url::kFileScheme,
+                         content::FileURLLoaderFactory::Create(
+                             browser_context->GetPath(),
+                             browser_context->GetSharedCorsOriginAccessList(),
+                             base::TaskPriority::USER_VISIBLE));
+    }
+  }
 }
 
 std::unique_ptr<content::LoginDelegate>

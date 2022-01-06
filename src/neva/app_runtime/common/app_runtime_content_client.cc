@@ -69,6 +69,12 @@ void AppRuntimeContentClient::AddContentDecryptionModules(
 #endif
 }
 
+void AppRuntimeContentClient::AddAdditionalSchemes(Schemes* schemes) {
+  // Allow service worker to use file scheme from content
+  // layer(content/browser/service_worker)
+  schemes->service_worker_schemes.push_back(url::kFileScheme);
+}
+
 void AppRuntimeContentClient::ExposeInterfacesToBrowser(
     scoped_refptr<base::SequencedTaskRunner> io_task_runner,
     mojo::BinderMap* binders) {

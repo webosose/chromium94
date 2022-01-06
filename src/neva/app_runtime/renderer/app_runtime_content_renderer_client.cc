@@ -31,9 +31,11 @@
 #include "neva/app_runtime/renderer/app_runtime_page_load_timing_render_frame_observer.h"
 #include "neva/app_runtime/renderer/app_runtime_render_frame_observer.h"
 #include "third_party/blink/public/mojom/fetch/fetch_api_request.mojom.h"
+#include "third_party/blink/public/platform/web_string.h"
 #include "third_party/blink/public/platform/web_url_error.h"
 #include "third_party/blink/public/web/web_console_message.h"
 #include "third_party/blink/public/web/web_local_frame.h"
+#include "third_party/blink/public/web/web_security_policy.h"
 #include "third_party/blink/public/web/web_view.h"
 #include "ui/base/resource/resource_bundle.h"
 #include "ui/base/webui/jstemplate_builder.h"
@@ -118,6 +120,14 @@ bool AppRuntimeContentRendererClient::IsAccessAllowedForURL(
     return file_access_controller->IsAccessAllowed(file_path, webview_info_);
 
   return false;
+}
+
+void AppRuntimeContentRendererClient::RegisterSchemes() {
+  // webapp needs the file scheme to register a service worker. Used from
+  // third_party/blink/renderer/modules/service_worker/service_worker_container.cc
+  blink::WebString file_scheme(blink::WebString::FromASCII(url::kFileScheme));
+  blink::WebSecurityPolicy::RegisterURLSchemeAsAllowingServiceWorkers(
+      file_scheme);
 }
 
 void AppRuntimeContentRendererClient::WillSendRequest(
