@@ -464,9 +464,9 @@ AppRuntimeContentBrowserClient::CreateLoginDelegate(
   return nullptr;
 }
 
-PlatformNotificationService*
+content::PlatformNotificationService*
 AppRuntimeContentBrowserClient::GetPlatformNotificationService(
-    BrowserContext* browser_context) {
+    content::BrowserContext* browser_context) {
   return PlatformNotificationServiceFactory::GetForProfile(browser_context);
 }
 

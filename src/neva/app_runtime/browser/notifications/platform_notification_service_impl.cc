@@ -1,98 +1,139 @@
-// Copyright 2022 LG Electronics, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// SPDX-License-Identifier: Apache-2.0
+// Copyright 2014 The Chromium Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+// Based on //chrome/browser/notifications/platform_notification_service_impl.cc
+// and //chrome/common/pref_names.cc.
+
 #include "neva/app_runtime/browser/notifications/platform_notification_service_impl.h"
 
-#include "base/callback.h"
-#include "base/callback_helpers.h"
-#include "base/logging.h"
-#include "content/public/browser/notification_event_dispatcher.h"
+#include "base/strings/utf_string_conversions.h"
+#include "components/pref_registry/pref_registry_syncable.h"
+#include "components/prefs/pref_service.h"
+#include "components/user_prefs/user_prefs.h"
+#include "content/public/browser/browser_context.h"
+#include "neva/app_runtime/browser/notifications/notification_display_service.h"
+#include "neva/app_runtime/browser/notifications/notification_display_service_factory.h"
+#include "neva/app_runtime/browser/push_messaging/push_messaging_app_identifier.h"
+#include "ui/message_center/public/cpp/notification.h"
 
 namespace neva_app_runtime {
+
+namespace {
+
+// Integer that holds the value of the next persistent notification ID to be
+// used.
+const char kNotificationNextPersistentId[] = "persistent_notifications.next_id";
+
+}  // namespace
+
+// static
+void PlatformNotificationServiceImpl::RegisterProfilePrefs(
+    user_prefs::PrefRegistrySyncable* registry) {
+  // The first persistent ID is registered as 10000 rather than 1 to prevent the
+  // reuse of persistent notification IDs, which must be unique. Reuse of
+  // notification IDs may occur as they were previously stored in a different
+  // data store.
+  registry->RegisterIntegerPref(kNotificationNextPersistentId, 10000);
+}
 
 PlatformNotificationServiceImpl::PlatformNotificationServiceImpl(
     content::BrowserContext* context)
     : context_(context) {}
 
+PlatformNotificationServiceImpl::~PlatformNotificationServiceImpl() = default;
+
+// TODO(awdf): Rename to DisplayNonPersistentNotification (Similar for Close)
 void PlatformNotificationServiceImpl::DisplayNotification(
     const std::string& notification_id,
     const GURL& origin,
     const GURL& document_url,
     const blink::PlatformNotificationData& notification_data,
     const blink::NotificationResources& notification_resources) {
-  LOG(INFO) << __func__ << " NOTIMPLEMENTED";
+  NOTIMPLEMENTED();
 }
 
-// Displays the persistent notification described in |notification_data| to
-// the user. This method must be called on the UI thread.
 void PlatformNotificationServiceImpl::DisplayPersistentNotification(
     const std::string& notification_id,
-    const GURL& service_worker_origin,
+    const GURL& service_worker_scope,
     const GURL& origin,
     const blink::PlatformNotificationData& notification_data,
-    const blink::NotificationResources& notification_resources) {
-  LOG(INFO) << __func__ << " NOTIMPLEMENTED";
+    const blink::NotificationResources& notification_resources,
+    const int64_t service_worker_registration_id) {
+  message_center::RichNotificationData optional_fields;
+
+  optional_fields.settings_button_handler =
+      message_center::SettingsButtonHandler::INLINE;
+
+  // TODO(peter): Handle different screen densities instead of always using the
+  // 1x bitmap - crbug.com/585815.
+  message_center::Notification notification(
+      message_center::NOTIFICATION_TYPE_SIMPLE, notification_id,
+      notification_data.title, notification_data.body,
+      gfx::Image::CreateFrom1xBitmap(notification_resources.notification_icon),
+      base::UTF8ToUTF16(origin.host()), origin,
+      message_center::NotifierId(origin), optional_fields,
+      nullptr /* delegate */);
+
+  auto metadata = std::make_unique<PersistentNotificationMetadata>();
+  metadata->service_worker_scope = service_worker_scope;
+  PrefService* pref_service = user_prefs::UserPrefs::Get(context_);
+  if (!pref_service) {
+    return;
+  }
+  PushMessagingAppIdentifier app_identifier =
+      PushMessagingAppIdentifier::FindByServiceWorker(
+          pref_service, origin, service_worker_registration_id);
+  if (app_identifier.web_app_id().empty()) {
+    return;
+  }
+  metadata->web_app_id = app_identifier.web_app_id();
+
+  NotificationDisplayServiceFactory::GetForProfile(context_)->Display(
+      NotificationHandler::Type::WEB_PERSISTENT, notification,
+      std::move(metadata));
 }
 
-// Closes the notification identified by |notification_id|. This method must
-// be called on the UI thread.
 void PlatformNotificationServiceImpl::CloseNotification(
     const std::string& notification_id) {
-  LOG(INFO) << __func__ << " NOTIMPLEMENTED";
+  NOTIMPLEMENTED();
 }
 
-// Closes the persistent notification identified by |notification_id|. This
-// method must be called on the UI thread.
 void PlatformNotificationServiceImpl::ClosePersistentNotification(
     const std::string& notification_id) {
-  LOG(INFO) << __func__ << " NOTIMPLEMENTED";
+  NOTIMPLEMENTED();
 }
 
-// Retrieves the ids of all currently displaying notifications and
-// posts |callback| with the result.
 void PlatformNotificationServiceImpl::GetDisplayedNotifications(
     DisplayedNotificationsCallback callback) {
-  LOG(INFO) << __func__ << " NOTIMPLEMENTED";
-  std::set<std::string> displayed_notifications;
-  std::move(callback).Run(std::move(displayed_notifications), true);
+  NOTIMPLEMENTED();
 }
 
-// Schedules a job to run at |timestamp| and call TriggerNotifications
-// on all PlatformNotificationContext instances.
 void PlatformNotificationServiceImpl::ScheduleTrigger(base::Time timestamp) {
-  LOG(INFO) << __func__ << " NOTIMPLEMENTED";
+  NOTIMPLEMENTED();
 }
 
-// Reads the value of the next notification trigger time for this profile.
-// This will return base::Time::Max if there is no trigger set.
 base::Time PlatformNotificationServiceImpl::ReadNextTriggerTimestamp() {
-  LOG(INFO) << __func__ << " NOTIMPLEMENTED";
+  NOTIMPLEMENTED();
   return base::Time::Max();
 }
 
-// Reads the value of the next persistent notification ID from the profile and
-// increments the value, as it is called once per notification write.
 int64_t PlatformNotificationServiceImpl::ReadNextPersistentNotificationId() {
-  LOG(INFO) << __func__ << " NOTIMPLEMENTED";
-  return 0;
+  PrefService* prefs = user_prefs::UserPrefs::Get(context_);
+
+  if (!prefs)
+    return 0;
+
+  int64_t current_id = prefs->GetInteger(kNotificationNextPersistentId);
+  int64_t next_id = current_id + 1;
+
+  prefs->SetInteger(kNotificationNextPersistentId, next_id);
+  return next_id;
 }
 
-// Records a given notification to UKM.
 void PlatformNotificationServiceImpl::RecordNotificationUkmEvent(
     const content::NotificationDatabaseData& data) {
-  LOG(INFO) << __func__ << " NOTIMPLEMENTED";
+  NOTIMPLEMENTED();
 }
 
 }  // namespace neva_app_runtime

@@ -43,6 +43,7 @@
 #include "net/proxy_resolution/proxy_info.h"
 #include "net/proxy_resolution/proxy_resolution_service.h"
 #include "neva/app_runtime/browser/app_runtime_browser_switches.h"
+#include "neva/app_runtime/browser/notifications/platform_notification_service_impl.h"
 #include "neva/app_runtime/browser/permissions/permission_manager_factory.h"
 #include "neva/app_runtime/browser/push_messaging/push_messaging_app_identifier.h"
 #include "neva/app_runtime/browser/push_messaging/push_messaging_service_factory.h"
@@ -73,6 +74,7 @@ AppRuntimeBrowserContext::AppRuntimeBrowserContext(
   user_prefs::PrefRegistrySyncable* pref_registry =
       new user_prefs::PrefRegistrySyncable;
 
+  PlatformNotificationServiceImpl::RegisterProfilePrefs(pref_registry);
   PushMessagingAppIdentifier::RegisterProfilePrefs(pref_registry);
 
   pref_service_ = factory.Create(pref_registry);
