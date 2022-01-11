@@ -228,8 +228,10 @@ void RootWindowController::OnHostCloseRequested(aura::WindowTreeHost* host) {
 ///@{
 void RootWindowController::OnWindowHostStateChanged(aura::WindowTreeHost* host,
                                                     ui::WidgetState new_state) {
-  if (app_windows_.empty())
+  if (app_windows_.empty() || new_state == window_host_state_)
     return;
+
+  window_host_state_ = new_state;
 
   if (new_state == ui::WidgetState::MINIMIZED ||
       new_state == ui::WidgetState::MAXIMIZED ||

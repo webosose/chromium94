@@ -106,6 +106,10 @@ class RootWindowController : public aura::client::WindowParentingClient,
  private:
   void DestroyWindowTreeHost();
 
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  ui::WidgetState window_host_state_ = ui::WidgetState::UNINITIALIZED;
+  ///@}
 #if defined(OS_WEBOS)
   void ComputeScaleFactor(int window_height);
   int CalculateTextInputOverlappedHeight(aura::WindowTreeHost* host,
