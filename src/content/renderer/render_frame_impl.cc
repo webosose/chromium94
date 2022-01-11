@@ -3501,7 +3501,12 @@ RenderFrameImpl::CreateServiceWorkerProvider() {
     // The context can be null when the frame is sandboxed.
     return nullptr;
   }
+#if defined(USE_NEVA_APPRUNTIME)
+  return std::make_unique<WebServiceWorkerProviderImpl>(
+      provider->context(), GetRendererPreferences().application_id);
+#else
   return std::make_unique<WebServiceWorkerProviderImpl>(provider->context());
+#endif
 }
 
 blink::AssociatedInterfaceProvider*

@@ -86,6 +86,7 @@ message ServiceWorkerRegistrationData {
       [default = NONE_OR_NOT_EXIST];
   optional string cross_origin_embedder_policy_report_only_reporting_endpoint =
       20;
+  optional string app_id = 21;
 }
 
 message ServiceWorkerResourceRecord {

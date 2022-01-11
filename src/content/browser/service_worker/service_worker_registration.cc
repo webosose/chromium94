@@ -49,6 +49,9 @@ ServiceWorkerRegistration::ServiceWorkerRegistration(
     int64_t registration_id,
     base::WeakPtr<ServiceWorkerContextCore> context)
     : scope_(options.scope),
+#if defined(USE_NEVA_APPRUNTIME)
+      app_id_(options.app_id),
+#endif
       key_(key),
       update_via_cache_(options.update_via_cache),
       registration_id_(registration_id),

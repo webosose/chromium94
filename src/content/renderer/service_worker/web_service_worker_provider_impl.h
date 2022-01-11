@@ -33,6 +33,10 @@ class CONTENT_EXPORT WebServiceWorkerProviderImpl
     : public blink::WebServiceWorkerProvider {
  public:
   explicit WebServiceWorkerProviderImpl(ServiceWorkerProviderContext* context);
+#if defined(USE_NEVA_APPRUNTIME)
+  explicit WebServiceWorkerProviderImpl(ServiceWorkerProviderContext* context,
+                                        const std::string& application_id);
+#endif
   ~WebServiceWorkerProviderImpl() override;
 
   void SetClient(blink::WebServiceWorkerProviderClient* client) override;
@@ -98,6 +102,9 @@ class CONTENT_EXPORT WebServiceWorkerProviderImpl
   // the same context, but could live longer until the context is GC'ed)
   blink::WebServiceWorkerProviderClient* provider_client_;
 
+#if defined(USE_NEVA_APPRUNTIME)
+  std::string application_id_;
+#endif
   base::WeakPtrFactory<WebServiceWorkerProviderImpl> weak_factory_{this};
 
   DISALLOW_COPY_AND_ASSIGN(WebServiceWorkerProviderImpl);
