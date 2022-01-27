@@ -58,3 +58,9 @@ const char kProxyBypassList[] = "proxy-bypass-list";
 // Disable DropAllPeerConnections call for WebRTC
 const char kDisableDropAllPeerConnections[] =
     "disable-drop-all-peer-connections";
+
+// Configure default JavaScriptFlags and allow appruntime append on this flags.
+// This flag is added because upstream is changed propagate command-line flags
+// after added by content::ContentBrowserClient::AppendExtraCommandLineSwitches.
+// (see https://chromium-review.googlesource.com/c/chromium/src/+/2910481)
+const char kWebOSJavaScriptFlags[] = "webos-js-flags";

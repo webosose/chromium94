@@ -244,17 +244,23 @@ void AppRuntimeContentBrowserClient::AppendExtraCommandLineSwitches(
     v8_snapshot_pathes_.erase(iter);
   }
 
+  absl::optional<std::string> js_flags;
+  const base::CommandLine& browser_command_line =
+      *base::CommandLine::ForCurrentProcess();
+  if (browser_command_line.HasSwitch(kWebOSJavaScriptFlags)) {
+    js_flags = browser_command_line.GetSwitchValueASCII(kWebOSJavaScriptFlags);
+  }
   // Append v8 extra flags if exists
   iter = v8_extra_flags_.find(child_process_id);
   if (iter != v8_extra_flags_.end()) {
-    std::string js_flags = iter->second;
+    std::string extra_js_flags = iter->second;
     // If already has, append it also
-    if (command_line->HasSwitch(switches::kJavaScriptFlags)) {
-      js_flags.append(" ");
-      js_flags.append(
-          command_line->GetSwitchValueASCII(switches::kJavaScriptFlags));
+    if (js_flags.has_value()) {
+      (*js_flags).append(" ");
+      (*js_flags).append(extra_js_flags);
+    } else {
+      js_flags = extra_js_flags;
     }
-    command_line->AppendSwitchASCII(switches::kJavaScriptFlags, js_flags);
     v8_extra_flags_.erase(iter);
   }
 
@@ -306,6 +312,9 @@ void AppRuntimeContentBrowserClient::AppendExtraCommandLineSwitches(
 
     use_native_scroll_map_.erase(iter_ns);
   }
+
+  if (js_flags.has_value())
+    command_line->AppendSwitchASCII(switches::kJavaScriptFlags, *js_flags);
 
   if (base::CommandLine::ForCurrentProcess()->HasSwitch(
           switches::kUseOzoneWaylandVkb))
