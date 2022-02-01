@@ -342,6 +342,7 @@ void ResourceLoader::CodeCacheRequest::DidReceiveResponse(
     bool use_isolated_code_cache,
     ResourceLoader* resource_loader,
     const base::Time& file_last_modified_time) {
+  resource_response_arrived_ = true;
   resource_response_time_ = resource_response_time;
   use_isolated_code_cache_ = use_isolated_code_cache;
   file_last_modified_time_ = file_last_modified_time;

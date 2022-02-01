@@ -82,13 +82,11 @@ bool CheckSecurityForAccessingCodeCacheData(const GURL& resource_url,
 #if defined(USE_FILESCHEME_CODECACHE)
   if (content::neva::IsFileSchemeSupportedForCodeCache(resource_url))
     return true;
-  else if (operation == Operation::kWrite)
-    mojo::ReportBadMessage("Invalid URL scheme for code cache.");
-#else
+#endif
+
   if (operation == Operation::kWrite) {
     mojo::ReportBadMessage("Invalid URL scheme for code cache.");
   }
-#endif
   return false;
 }
 
