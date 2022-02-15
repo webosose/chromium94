@@ -23,6 +23,10 @@
 #include "media/base/timestamp_constants.h"
 #include "media/base/unaligned_shared_memory.h"
 
+#if defined(USE_NEVA_WEBRTC)
+#include "third_party/webrtc/api/video/encoded_image.h"
+#endif
+
 namespace media {
 
 // A specialized buffer for interfacing with audio / video decoders.
@@ -122,6 +126,10 @@ class MEDIA_EXPORT DecoderBuffer
       return static_cast<const uint8_t*>(shared_mem_mapping_->memory());
     if (shm_)
       return static_cast<uint8_t*>(shm_->memory());
+#if defined(USE_NEVA_WEBRTC)
+    if (encoded_data_)
+      return encoded_data_->data();
+#endif
     return data_.get();
   }
 
@@ -135,6 +143,10 @@ class MEDIA_EXPORT DecoderBuffer
 
   size_t data_size() const {
     DCHECK(!end_of_stream());
+#if defined(USE_NEVA_WEBRTC)
+    if (encoded_data_)
+      return encoded_data_->size();
+#endif
     return size_;
   }
 
@@ -171,8 +183,18 @@ class MEDIA_EXPORT DecoderBuffer
     decrypt_config_ = std::move(decrypt_config);
   }
 
+#if defined(USE_NEVA_WEBRTC)
+  void set_encoded_data(
+      rtc::scoped_refptr<webrtc::EncodedImageBufferInterface> encoded_data) {
+    encoded_data_ = encoded_data;
+  }
+  bool end_of_stream() const {
+    return !shared_mem_mapping_ && !shm_ && !data_ && !encoded_data_;
+  }
+#else
   // If there's no data in this buffer, it represents end of stream.
   bool end_of_stream() const { return !shared_mem_mapping_ && !shm_ && !data_; }
+#endif
 
   bool is_key_frame() const {
     DCHECK(!end_of_stream());
@@ -247,6 +269,10 @@ class MEDIA_EXPORT DecoderBuffer
 
   // Whether the frame was marked as a keyframe in the container.
   bool is_key_frame_;
+
+#if defined(USE_NEVA_WEBRTC)
+  rtc::scoped_refptr<webrtc::EncodedImageBufferInterface> encoded_data_;
+#endif
 
   // Constructor helper method for memory allocations.
   void Initialize();

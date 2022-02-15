@@ -23,8 +23,10 @@
 namespace media {
 
 NevaWebRtcVideoDecoderFactory::NevaWebRtcVideoDecoderFactory(
-    scoped_refptr<base::SequencedTaskRunner> main_task_runner)
-    : main_task_runner_(main_task_runner) {
+    scoped_refptr<base::SequencedTaskRunner> main_task_runner,
+    scoped_refptr<base::SequencedTaskRunner> media_task_runner)
+    : main_task_runner_(main_task_runner),
+      media_task_runner_(media_task_runner) {
   // TODO(neva, sync-to-91):
   // We cannot hold empty supported format list because DecoderAdapter
   // requires precise supported format.
@@ -41,8 +43,8 @@ NevaWebRtcVideoDecoderFactory::GetSupportedFormats() const {
 std::unique_ptr<webrtc::VideoDecoder>
 NevaWebRtcVideoDecoderFactory::CreateVideoDecoder(
     const webrtc::SdpVideoFormat& format) {
-  return std::move(
-      WebRtcPassThroughVideoDecoder::Create(main_task_runner_, format));
+  return std::move(WebRtcPassThroughVideoDecoder::Create(
+      main_task_runner_, media_task_runner_, format));
 }
 
 }  // namespace media

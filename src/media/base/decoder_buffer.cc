@@ -12,6 +12,10 @@ namespace media {
 
 DecoderBuffer::DecoderBuffer(size_t size)
     : size_(size), side_data_size_(0), is_key_frame_(false) {
+#if defined(USE_NEVA_WEBRTC)
+  if (!size)
+    return;
+#endif
   Initialize();
 }
 

@@ -187,9 +187,10 @@ class WebMediaPlayerMS::FrameDeliverer {
     DCHECK_CALLED_ON_VALID_THREAD(io_thread_checker_);
 
 #if defined(USE_NEVA_WEBRTC)
-    if (render_frame_suspended_ ||
-        (player_ && player_->HandleVideoFrame(frame)))
+    if (!player_->HandleVideoFrame(frame) &&
+        frame->metadata().is_transparent_frame) {
       return;
+    }
 #endif
 
 // On Android, stop passing frames.
@@ -1148,14 +1149,14 @@ void WebMediaPlayerMS::SetVolumeMultiplier(double multiplier) {
 }
 
 #if defined(USE_NEVA_WEBRTC)
-void WebMediaPlayerMS::EnqueueHoleFrame(
-    scoped_refptr<media::VideoFrame>& hole_frame) {
+void WebMediaPlayerMS::EnqueueFrame(scoped_refptr<media::VideoFrame> frame) {
   if (frame_deliverer_) {
+    int original_frame_id = frame->unique_id();
     PostCrossThreadTask(
         *io_task_runner_, FROM_HERE,
         CrossThreadBindOnce(&FrameDeliverer::EnqueueFrame,
                             CrossThreadUnretained(frame_deliverer_.get()),
-                            hole_frame->unique_id(), hole_frame));
+                            original_frame_id, std::move(frame)));
   }
 }
 #endif
