@@ -268,6 +268,7 @@ bool WaylandToplevelWindow::ShouldUseNativeFrame() const {
 ///@name USE_NEVA_APPRUNTIME
 ///@{
 void WaylandToplevelWindow::HandleStateChanged(PlatformWindowState state) {
+  previous_state_ = state_;
   state_ = state;
   VLOG(1) << __PRETTY_FUNCTION__;
   delegate()->OnWindowStateChanged(previous_state_, state_);
