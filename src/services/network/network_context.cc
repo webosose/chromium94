@@ -353,7 +353,7 @@ class ExtraHeaderNetworkDelegate : public NetworkServiceNetworkDelegate,
     // Extra WebSocket headers should be applied for WebSocket requests only
     if (request->url().SchemeIsWSOrWSS()) {
       for (const auto& pair : extra_websocket_headers_) {
-        auto non_const_headers = const_cast<net::HttpRequestHeaders&>(headers);
+        auto& non_const_headers = const_cast<net::HttpRequestHeaders&>(headers);
         non_const_headers.SetHeader(pair.first, pair.second);
       }
     }
