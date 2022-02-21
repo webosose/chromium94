@@ -348,7 +348,10 @@ class LocalStorageImpl::StorageAreaHolder final
 
   void PurgeStorageUsageForStorageKey(
       std::vector<mojom::StorageUsageInfoPtr> usage) {
-    context_->DeleteStorage(storage_key_, base::DoNothing());
+    for (const auto& info : usage) {
+      context_->DeleteStorage(blink::StorageKey(info->origin),
+                              base::DoNothing());
+    }
   }
 #endif
 
