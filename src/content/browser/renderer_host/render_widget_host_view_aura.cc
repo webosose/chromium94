@@ -2542,8 +2542,6 @@ void RenderWidgetHostViewAura::CreateSelectionController() {
 void RenderWidgetHostViewAura::OnDidNavigateMainFrameToNewPage() {
   DCHECK(delegated_frame_host_) << "Cannot be invoked during destruction.";
 
-  // Invalidate the surface so that we don't attempt to evict it multiple times.
-  window_->InvalidateLocalSurfaceId();
     delegated_frame_host_->OnNavigateToNewPage();
   CancelActiveTouches();
 }
