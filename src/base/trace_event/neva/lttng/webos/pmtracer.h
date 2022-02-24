@@ -24,34 +24,34 @@
 
 #if defined(USE_LTTNG)
 
-#include "base/trace_event/neva/lttng/webos/webossystem_lttng_provider.h"
+#include <stdlib.h>
 
 // PMTRACE_LOG is for free form tracing. Provide a string in
 // "label" which uniquely identifies your trace point.
 #define PMTRACE_LOG(label) \
-    tracepoint(webossystem_lttng_provider, message, label)
+    pmtracer::PmTraceTraceMessage(label)
 
 // PMTRACE_ITEM is for tracing (name, value) pairs.
 // Both name and value are strings.
 #define PMTRACE_ITEM(name, value) \
-    tracepoint(webossystem_lttng_provider, item, name, value)
+    pmtracer::PmTraceTraceItem(name, value)
 
 // PMTRACE_BEFORE / AFTER is for tracing a time duration
 // which is not contained within a scope (curly braces) or function,
 // or in C code where there is no mechanism to automatically detect
 // exiting a scope or function.
 #define PMTRACE_BEFORE(label) \
-    tracepoint(webossystem_lttng_provider, before, label)
+    pmtracer::PmTraceTraceBefore(label)
 #define PMTRACE_AFTER(label) \
-    tracepoint(webossystem_lttng_provider, after, label)
+    pmtracer::PmTraceTraceAfter(label)
 
 // PMTRACE_SCOPE* is for tracing a the duration of a scope.  In
 // C++ code use PMTRACE_SCOPE only, in C code use the
 // ENTRY/EXIT macros and be careful to catch all exit cases.
 #define PMTRACE_SCOPE_ENTRY(label) \
-    tracepoint(webossystem_lttng_provider, scope_entry, label)
+    pmtracer::PmTraceTraceScopeEntry(label)
 #define PMTRACE_SCOPE_EXIT(label) \
-    tracepoint(webossystem_lttng_provider, scope_exit, label)
+    pmtracer::PmTraceTraceScopeExit(label)
 #define PMTRACE_SCOPE(label) \
     PmTraceTraceScope traceScope(label)
 
@@ -59,11 +59,25 @@
 // In C++ code use PMTRACE_FUNCTION only, in C code use the
 // ENTRY/EXIT macros and be careful to catch all exit cases.
 #define PMTRACE_FUNCTION_ENTRY(label) \
-    tracepoint(webossystem_lttng_provider, function_entry, label)
+    pmtracer::PmTraceTraceFunctionEntry(label)
 #define PMTRACE_FUNCTION_EXIT(label) \
-    tracepoint(webossystem_lttng_provider, function_exit, label)
+    pmtracer::PmTraceTraceFunctionExit(label)
 #define PMTRACE_FUNCTION \
     PmTraceTraceFunction traceFunction(const_cast<char*>(Q_FUNC_INFO))
+
+namespace pmtracer {
+
+  // New wrapper api using tracepoint macro
+  void PmTraceTraceMessage(char* label);
+  void PmTraceTraceItem(char* name, char* value);
+  void PmTraceTraceBefore(char* label);
+  void PmTraceTraceAfter(char* label);
+  void PmTraceTraceScopeEntry(char* label);
+  void PmTraceTraceScopeExit(char* label);
+  void PmTraceTraceFunctionEntry(char* label);
+  void PmTraceTraceFunctionExit(char* label);
+
+}  // namespace pmtracer
 
 class PmTraceTraceScope {
  public:

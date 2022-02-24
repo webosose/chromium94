@@ -19,7 +19,7 @@
 
 #if defined(USE_LTTNG) && !defined(OS_NACL)
 
-#include "base/trace_event/neva/lttng/chromium_lttng_provider.h"
+#include <stdlib.h>
 
 #define LTTNG_TRACE_EVENT0(category_group, name) \
   LTTNG_TRACE_SCOPE(category_group, name);
@@ -30,11 +30,19 @@
   LTTNG_TRACE_SCOPE_EXIT(category_group, name);
 
 #define LTTNG_TRACE_SCOPE_ENTRY(category_group, name) \
-  tracepoint(chromium_lttng_provider, scope_entry, category_group, name)
+  lttng_trace_scope::LttngTraceScopeEntry(category_group, name)
 #define LTTNG_TRACE_SCOPE_EXIT(category_group, name) \
-  tracepoint(chromium_lttng_provider, scope_exit, category_group, name)
+  lttng_trace_scope::LttngTraceScopeExit(category_group, name)
 #define LTTNG_TRACE_SCOPE(category_group, name) \
   lttng_trace_event::LttngTraceScope(category_group, name)
+
+namespace lttng_trace_scope {
+
+  // New wrapper api using tracepoint macro
+  void LttngTraceScopeEntry(const char* category_group, const char* name);
+  void LttngTraceScopeExit(const char* category_group, const char* name);
+
+}  // namespace lttng_trace_scope
 
 namespace lttng_trace_event {
 
@@ -42,7 +50,7 @@ class LttngTraceScope {
  public:
   LttngTraceScope(const char* category_group, const char* name)
       : category_group_(category_group), name_(name) {
-    LTTNG_TRACE_SCOPE_ENTRY(category_group, name);
+    LTTNG_TRACE_SCOPE_ENTRY(category_group_, name_);
   }
 
   ~LttngTraceScope() { LTTNG_TRACE_SCOPE_EXIT(category_group_, name_); }

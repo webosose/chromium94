@@ -21,6 +21,7 @@ source_set("chromium_lttng_provider") {
     "chromium_lttng_provider.c",
     "chromium_lttng_provider.h",
     "lttng_trace_event.h",
+    "lttng_trace_event.cc",
   ]
 
   deps = [ ":lttng_provider" ]
@@ -31,6 +32,7 @@ source_set("webossystem_lttng_provider") {
     "webos/webossystem_lttng_provider.h",
     "webos/webossystem_lttng_provider.c",
     "webos/pmtracer.h",
+    "webos/pmtracer.cc",
   ]
 
   deps = [ ":lttng_provider" ]
