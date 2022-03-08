@@ -71,6 +71,8 @@ DisplayScheduler::DisplayScheduler(BeginFrameSource* begin_frame_source,
 #if defined(USE_NEVA_APPRUNTIME)
       use_viz_fmp_with_timeout_(use_viz_fmp_with_timeout),
       viz_fmp_timeout_(viz_fmp_timeout),
+      activate_eventually_timeout_(
+          base::TimeDelta::FromMilliseconds(kActivateEventuallyTimeoutMs)),
 #endif
       wait_for_all_surfaces_before_draw_(wait_for_all_surfaces_before_draw),
       observing_begin_frame_source_(false) {
@@ -94,14 +96,15 @@ void DisplayScheduler::SetVisible(bool visible) {
 #if defined(USE_NEVA_APPRUNTIME)
   if (use_viz_fmp_with_timeout_) {
     if (visible_ && !first_surface_activated_) {
-      notify_first_activation_eventually_task_.Reset(base::BindOnce(
-          base::IgnoreResult(
-              &DisplayScheduler::NotifyFirstSetVisibleActivationTimeout),
-          base::Unretained(this)));
-      task_runner_->PostDelayedTask(
-          FROM_HERE, notify_first_activation_eventually_task_.callback(),
-          base::TimeDelta::FromMilliseconds(kActivateEventuallyTimeoutMs));
-
+      if (notify_first_activation_eventually_task_.IsCancelled()) {
+        notify_first_activation_eventually_task_.Reset(base::BindOnce(
+            base::IgnoreResult(
+                &DisplayScheduler::NotifyFirstSetVisibleActivationTimeout),
+            base::Unretained(this)));
+        task_runner_->PostDelayedTask(
+            FROM_HERE, notify_first_activation_eventually_task_.callback(),
+            activate_eventually_timeout_);
+      }
       return;  // No point to continue at this state
     }
   }
@@ -227,6 +230,19 @@ void DisplayScheduler::NotifyFirstSetVisibleActivationTimeout() {
 void DisplayScheduler::RenderProcessGone() {
   first_surface_activated_ = false;
 }
+
+void DisplayScheduler::SetFirstActivateTimeout(base::TimeDelta timeout) {
+  activate_eventually_timeout_ = timeout;
+
+  notify_first_activation_eventually_task_.Reset(base::BindOnce(
+        base::IgnoreResult(
+          &DisplayScheduler::NotifyFirstSetVisibleActivationTimeout),
+        base::Unretained(this)));
+  task_runner_->PostDelayedTask(
+      FROM_HERE, notify_first_activation_eventually_task_.callback(),
+      activate_eventually_timeout_);
+}
+
 #endif
 
 void DisplayScheduler::OnDisplayDamaged(SurfaceId surface_id) {

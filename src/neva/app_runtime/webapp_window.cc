@@ -907,6 +907,13 @@ void WebAppWindow::FinishPrepareStackForWebApp() {
   host_->AsWindowTreeHost()->FinishPrepareStackForWebApp();
 }
 
+void WebAppWindow::SetFirstActivateTimeout(base::TimeDelta timeout) {
+  if (!host_)
+    return;
+
+  host_->AsWindowTreeHost()->SetFirstActivateTimeout(timeout);
+}
+
 void WebAppWindow::CreateGroup(const WindowGroupConfiguration& config) {
   if (!host_)
     return;

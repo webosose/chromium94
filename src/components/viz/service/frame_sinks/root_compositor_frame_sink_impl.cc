@@ -353,6 +353,11 @@ void RootCompositorFrameSinkImpl::SetDelegatedInkPointRenderer(
 void RootCompositorFrameSinkImpl::RenderProcessGone() {
   display_->RenderProcessGone();
 }
+
+void RootCompositorFrameSinkImpl::SetFirstActivateTimeout(
+    base::TimeDelta timeout) {
+  display_->SetFirstActivateTimeout(timeout);
+}
 #endif
 
 void RootCompositorFrameSinkImpl::SetNeedsBeginFrame(bool needs_begin_frame) {

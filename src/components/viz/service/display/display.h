@@ -201,6 +201,7 @@ class VIZ_SERVICE_EXPORT Display : public DisplaySchedulerClient,
 
 #if defined(USE_NEVA_APPRUNTIME)
   void RenderProcessGone();
+  void SetFirstActivateTimeout(base::TimeDelta timeout);
 #endif
 
   // If the platform supports delegated ink trails, then forward the pending

@@ -307,6 +307,12 @@ void WebAppWindowBase::DetachWindowGroup() {
   webapp_window_->DetachGroup();
 }
 
+void WebAppWindowBase::SetFirstActivateTimeoutMs(
+    uint32_t timeout) {
+  webapp_window_->SetFirstActivateTimeout(
+      base::TimeDelta::FromMilliseconds(timeout));
+}
+
 void WebAppWindowBase::OnWindowClosing() {
 }
 

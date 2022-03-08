@@ -63,6 +63,7 @@ class VIZ_SERVICE_EXPORT DisplayScheduler : public DisplaySchedulerBase {
                                bool did_reset_container_state,
                                bool seen_first_contentful_paint) override;
   void RenderProcessGone() override;
+  void SetFirstActivateTimeout(base::TimeDelta timeout) override;
 #endif
 
  protected:
@@ -149,6 +150,7 @@ class VIZ_SERVICE_EXPORT DisplayScheduler : public DisplaySchedulerBase {
 #if defined(USE_NEVA_APPRUNTIME)
   bool use_viz_fmp_with_timeout_;
   uint32_t viz_fmp_timeout_;
+  base::TimeDelta activate_eventually_timeout_;
 #endif
   bool wait_for_all_surfaces_before_draw_;
 

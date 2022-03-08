@@ -119,6 +119,7 @@ class WebAppWindow : public views::NativeEventDelegate,
   int GetHeight() const;
   void BeginPrepareStackForWebApp();
   void FinishPrepareStackForWebApp();
+  void SetFirstActivateTimeout(base::TimeDelta timeout);
 
   // Overridden from views::NativeEventDelegate
   void CursorVisibilityChanged(bool visible) override;

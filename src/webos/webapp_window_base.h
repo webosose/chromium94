@@ -95,6 +95,12 @@ class WEBOS_EXPORT WebAppWindowBase : public WebAppWindowDelegate,
   void FocusWindowGroupLayer();
   void DetachWindowGroup();
 
+  // Set timeout for first display activate incase webview does not meet the
+  // condition for activation. (e.g FCP is not detected)
+  // Timeout doesn't change the visibility so it still needs to call Show()
+  // to set display visible. (e.g by FMP)
+  void SetFirstActivateTimeoutMs(uint32_t timeout);
+
   // Overridden from WebAppWindowObserver
   void OnWindowClosing() override;
 

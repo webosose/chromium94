@@ -601,6 +601,12 @@ void Display::RenderProcessGone() {
   if (scheduler_)
     scheduler_->RenderProcessGone();
 }
+
+void Display::SetFirstActivateTimeout(base::TimeDelta timeout) {
+  if (scheduler_)
+    scheduler_->SetFirstActivateTimeout(timeout);
+}
+
 #endif
 
 bool Display::HasPendingSurfaces(const BeginFrameArgs& args) const {

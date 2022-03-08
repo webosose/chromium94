@@ -1302,6 +1302,11 @@ void DesktopWindowTreeHostOzone::FinishPrepareStackForWebApp() {
 #endif
 }
 
+void DesktopWindowTreeHostOzone::SetFirstActivateTimeout(base::TimeDelta timeout) {
+  if (compositor())
+    compositor()->SetDisplayFirstActivateTimeout(timeout);
+}
+
 void DesktopWindowTreeHostOzone::OnShowIme() {
   platform_window_->ShowInputPanel();
 }

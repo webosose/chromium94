@@ -79,6 +79,7 @@ class AURA_EXPORT WindowTreeHost
 
   virtual void BeginPrepareStackForWebApp() {}
   virtual void FinishPrepareStackForWebApp() {}
+  virtual void SetFirstActivateTimeout(base::TimeDelta timeout) {}
 };
 
 }  // namespace neva

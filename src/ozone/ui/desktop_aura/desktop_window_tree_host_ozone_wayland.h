@@ -199,6 +199,7 @@ class VIEWS_EXPORT DesktopWindowTreeHostOzone
   void DetachGroup() override;
   void BeginPrepareStackForWebApp() override;
   void FinishPrepareStackForWebApp() override;
+  void SetFirstActivateTimeout(base::TimeDelta timeout) override;
 
   // Overridden from ui::PlatformWindowDelegate:
   void OnBoundsChanged(const BoundsChange& change) override;

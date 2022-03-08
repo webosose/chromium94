@@ -90,6 +90,7 @@ class RootCompositorFrameSinkImpl : public mojom::CompositorFrameSink,
 
 #if defined(USE_NEVA_APPRUNTIME)
   void RenderProcessGone() override;
+  void SetFirstActivateTimeout(base::TimeDelta timeout) override;
 #endif
 
   // mojom::CompositorFrameSink:

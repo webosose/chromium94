@@ -336,6 +336,7 @@ void Compositor::SetLayerTreeFrameSink(
     disabled_swap_until_resize_ = false;
     display_private_->Resize(size());
 #if defined(USE_NEVA_APPRUNTIME)
+    display_private_->SetFirstActivateTimeout(display_first_activate_timeout_);
     if (display_visibility_enabled_)
       display_private_->SetDisplayVisible(host_->IsVisible());
 #else
@@ -890,6 +891,12 @@ void Compositor::RenderProcessGone() {
 
 void Compositor::SetDisplayVisibilityEnabled(bool enabled) {
   display_visibility_enabled_ = enabled;
+}
+
+void Compositor::SetDisplayFirstActivateTimeout(base::TimeDelta timeout) {
+  display_first_activate_timeout_ = timeout;
+  if (display_private_)
+    display_private_->SetFirstActivateTimeout(display_first_activate_timeout_);
 }
 #endif
 
