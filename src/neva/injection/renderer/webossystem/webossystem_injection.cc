@@ -484,7 +484,7 @@ void WebOSSystemInjection::OnCloseNotify(const std::string& param) {
   LOG(INFO) << "[webOSSystem] webOSSystem.OnCloseNotify(" << param << ")";
   std::vector<std::string> arguments = { param };
   SendCommand("onCloseNotify", arguments);
-  WebOSServiceBridgeInjection::DidCloseNotify();
+  WebOSServiceBridgeInjection::DidCloseNotify(param);
 }
 
 void WebOSSystemInjection::Deactivate() {

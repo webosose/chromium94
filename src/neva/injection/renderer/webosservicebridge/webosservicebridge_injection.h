@@ -52,7 +52,7 @@ class WebOSServiceBridgeInjection
   static bool HasWaitingRequests();
   static bool IsClosing();
   static void SetAppInClosing(bool closing);
-  static void DidCloseNotify();
+  static void DidCloseNotify(const std::string& param);
 
   explicit WebOSServiceBridgeInjection(std::string appid);
   WebOSServiceBridgeInjection(const WebOSServiceBridgeInjection&) = delete;
@@ -63,7 +63,7 @@ class WebOSServiceBridgeInjection
   // To handle luna call in webOSSystem.onclose callback
   static std::set<WebOSServiceBridgeInjection*> waiting_responses_;
   static bool is_closing_;
-  static bool is_called_close_notify_;
+  static bool sent_did_run_on_close_callback_;
 
  private:
   static void WebOSServiceBridgeConstructorCallback(

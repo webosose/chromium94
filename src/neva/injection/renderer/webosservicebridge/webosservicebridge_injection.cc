@@ -77,7 +77,7 @@ gin::WrapperInfo WebOSServiceBridgeInjection::kWrapperInfo = {
 bool WebOSServiceBridgeInjection::is_closing_ = false;
 std::set<WebOSServiceBridgeInjection*>
     WebOSServiceBridgeInjection::waiting_responses_;
-bool WebOSServiceBridgeInjection::is_called_close_notify_ = false;
+bool WebOSServiceBridgeInjection::sent_did_run_on_close_callback_ = false;
 
 WebOSServiceBridgeInjection::WebOSServiceBridgeInjection(std::string appid)
     : identifier_(std::move(appid))
@@ -186,7 +186,7 @@ void WebOSServiceBridgeInjection::Response(pal::mojom::ResponseStatus status,
 
   if (!WebOSServiceBridgeInjection::is_closing_ ||
       !waiting_responses_.empty() ||
-      WebOSServiceBridgeInjection::is_called_close_notify_)
+      WebOSServiceBridgeInjection::sent_did_run_on_close_callback_)
     return;
 
   VLOG(1) << "WebOSServiceBridge [Response][" << identifier_
@@ -346,8 +346,9 @@ void WebOSServiceBridgeInjection::SetAppInClosing(bool closing) {
 }
 
 // static
-void WebOSServiceBridgeInjection::DidCloseNotify() {
-  WebOSServiceBridgeInjection::is_called_close_notify_ = true;
+void WebOSServiceBridgeInjection::DidCloseNotify(const std::string& param) {
+  if (param == "didRunOnCloseCallback")
+    WebOSServiceBridgeInjection::sent_did_run_on_close_callback_ = true;
 }
 
 // static
