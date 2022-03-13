@@ -219,10 +219,8 @@ void AXRelationCache::UnmapOwnedChildren(const AXObject* owner,
       // Don't do this if it's also in the newly owned ids, as it's about to
       // get a new parent, and we want to avoid accidentally pruning it.
       if (!newly_owned_ids.Contains(removed_child_id)) {
-        if (AXObject* real_parent =
-                object_cache_->RestoreParentOrPrune(removed_child)) {
-          ChildrenChanged(real_parent);
-        }
+        MaybeRestoreParentOfOwnedChild(removed_child);
+
         // Now that the child is not owned, it's "included in tree" state must
         // be recomputed because while owned children are always included in the
         // tree, unowned children may not be included.
@@ -543,16 +541,22 @@ void AXRelationCache::RemoveAXID(AXID obj_id) {
 
   // |obj_id| owned others:
   if (aria_owner_to_children_mapping_.Contains(obj_id)) {
-    // |obj_id| longer owns anything.
+    // |obj_id| no longer owns anything.
     Vector<AXID> child_axids = aria_owner_to_children_mapping_.at(obj_id);
     aria_owned_child_to_owner_mapping_.RemoveAll(child_axids);
     // Owned children are no longer owned by |obj_id|
     aria_owner_to_children_mapping_.erase(obj_id);
-    for (const auto& child_axid : child_axids) {
-      if (AXObject* owned_child = ObjectFromAXID(child_axid)) {
-        owned_child->DetachFromParent();
-        if (AXObject* real_parent = owned_child->ParentObject())
-          ChildrenChanged(real_parent);
+    // When removing nodes in AXObjectCacheImpl::Dispose we do not need to
+    // reparent (that could anyway fail trying to attach to an already removed
+    // node.
+    // TODO(jdapena@igalia.com): explore if we can skip all processing of the
+    // mappings in AXRelationCache in dispose case.
+    if (!object_cache_->HasBeenDisposed()) {
+      for (const auto& child_axid : child_axids) {
+        if (AXObject* owned_child = ObjectFromAXID(child_axid)) {
+          owned_child->DetachFromParent();
+          MaybeRestoreParentOfOwnedChild(owned_child);
+        }
       }
     }
   }
@@ -604,6 +608,14 @@ void AXRelationCache::LabelChanged(Node* node) {
         object_cache_->MarkAXObjectDirtyWithCleanLayout(obj);
     }
   }
+}
+
+void AXRelationCache::MaybeRestoreParentOfOwnedChild(AXObject* child) {
+  DCHECK(child);
+  if (child->IsDetached())
+    return;
+  if (AXObject* new_parent = object_cache_->RestoreParentOrPrune(child))
+    ChildrenChanged(new_parent);
 }
 
 }  // namespace blink
