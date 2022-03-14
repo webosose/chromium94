@@ -231,9 +231,22 @@ void DesktopWindowTreeHostPlatform::Init(const Widget::InitParams& params) {
   ui::PlatformWindowInitProperties properties =
       ConvertWidgetInitParamsToInitProperties(params);
   AddAdditionalInitProperties(params, &properties);
+#if defined(USE_NEVA_APPRUNTIME)
+  // In some situations, views tries to make a zero sized window, and that
+  // makes us crash. Make sure we have valid sizes.
+  // work as IOW (desktop_window_tree_host_ozone_wayland.cc)
+  gfx::Rect bounds = params.bounds;
+  if (bounds.width() == 0)
+    bounds.set_width(GetWorkAreaBoundsInScreen().width());
+  if (bounds.height() == 0)
+    bounds.set_height(GetWorkAreaBoundsInScreen().height());
 
   // Calculate initial bounds.
+  properties.bounds = ToPixelRect(bounds);
+#else
+  // Calculate initial bounds.
   properties.bounds = ToPixelRect(params.bounds);
+#endif  // defined(USE_NEVA_APPRUNTIME)
 
   // Set extensions delegate.
   DCHECK(!properties.workspace_extension_delegate);
