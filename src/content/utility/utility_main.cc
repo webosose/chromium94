@@ -156,7 +156,8 @@ int UtilityMain(const MainFunctionParams& parameters) {
     default:
       break;
   }
-  if (parameters.zygote_child || !pre_sandbox_hook.is_null()) {
+  if (sandbox_type != sandbox::policy::SandboxType::kNoSandbox &&
+      (parameters.zygote_child || !pre_sandbox_hook.is_null())) {
     sandbox::policy::Sandbox::Initialize(
         sandbox_type, std::move(pre_sandbox_hook),
         sandbox::policy::SandboxLinux::Options());
