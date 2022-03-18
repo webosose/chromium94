@@ -120,10 +120,10 @@ WebAppWindowBase::~WebAppWindowBase() {
 void WebAppWindowBase::InitWindow(int width, int height) {
   // We may call InitWindow again when the web app window size has changed.
   // I.e. this happens when we launch an application with a custom window size.
-  // In this case we just destroy the previous window and create a new one.
+  // In this case we just resize the previous window.
   if (webapp_window_) {
-    webapp_window_->SetDelegate(nullptr);
-    webapp_window_->Close();
+    webapp_window_->Resize(width, height);
+    return;
   }
 
   neva_app_runtime::WebAppWindow::CreateParams params;
