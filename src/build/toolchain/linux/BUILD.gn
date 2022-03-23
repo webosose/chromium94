@@ -23,7 +23,7 @@ clang_toolchain("clang_arm") {
 }
 
 clang_toolchain("clang_webos_arm") {
-  toolprefix = "arm-starfishmllib32-linux-gnueabi-"
+  toolprefix = "aarch64-webos-linux-"
   toolchain_args = {
     current_cpu = "arm"
     current_os = "linux"
