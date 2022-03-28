@@ -228,18 +228,16 @@ void WindowTreeHostPlatform::SetCursorNative(gfx::NativeCursor cursor) {
   // is called instead of SetCursor to substitute default pointer cursor
   // (black arrow) to default LSM cursor (pink plectrum).
   ui::mojom::CursorType native_type = cursor.type();
-  if (native_type == ui::mojom::CursorType::kPointer) {
+  if (native_type != ui::mojom::CursorType::kNone) {
     platform_window_->SetCustomCursor(neva_app_runtime::CustomCursorType::kNotUse,
                                       "", 0, 0, false);
-    return;
-  } else if (native_type == ui::mojom::CursorType::kNone) {
-    // Hiding of the cursor after some time is handled by LSM, but some sites
-    // for video playback are also have such functionality in JavaScript.
-    // And in case when cursor was hidden firstly by LSM and then by
-    // JavaScript, it no longer could be restored.
-    // To fix such situations hiding cursor by JavaScript is ignored.
-    return;
   }
+  // Hiding of the cursor after some time is handled by LSM, but some sites
+  // for video playback are also have such functionality in JavaScript.
+  // And in case when cursor was hidden firstly by LSM and then by
+  // JavaScript, it no longer could be restored.
+  // To fix such situations hiding cursor by JavaScript is ignored.
+  return;
 #endif
 
   platform_window_->SetCursor(cursor.platform());
