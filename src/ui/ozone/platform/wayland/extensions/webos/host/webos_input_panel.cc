@@ -35,20 +35,17 @@ void WebosInputPanel::HideInputPanel(ImeHiddenType hidden_type) {
     return;
 
   if (hidden_type == ImeHiddenType::kDeactivate) {
-    if (webos_text_model_->IsActivated()) {
-      webos_text_model_->Reset();
-      webos_text_model_->Deactivate();
-    } else {
-      webos_text_model_.reset();
-    }
+    webos_text_model_->Reset();
+    webos_text_model_->Deactivate();
+    webos_text_model_.reset();
   } else {
     webos_text_model_->HideInputPanel();
+  }
 
-    input_panel_rect_.SetRect(0, 0, 0, 0);
-    if (window_) {
-      window_->OnInputPanelVisibilityChanged(false);
-      window_->HandleInputPanelRectangleChange(0, 0, 0, 0);
-    }
+  input_panel_rect_.SetRect(0, 0, 0, 0);
+  if (window_) {
+    window_->OnInputPanelVisibilityChanged(false);
+    window_->HandleInputPanelRectangleChange(0, 0, 0, 0);
   }
 }
 
