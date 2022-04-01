@@ -64,3 +64,9 @@ const char kDisableDropAllPeerConnections[] =
 // after added by content::ContentBrowserClient::AppendExtraCommandLineSwitches.
 // (see https://chromium-review.googlesource.com/c/chromium/src/+/2910481)
 const char kWebOSJavaScriptFlags[] = "webos-js-flags";
+
+// This is opposite flag of android one 'kWebViewEnableModernCookieSameSite'
+// Disables modern SameSite cookie behavior.
+// This disables the same-site-by-default-cookies,
+// cookies-without-SameSite-must-be-secure, and schemeful-same-site features.
+const char kDisableModernCookieSameSite[] = "disable-modern-cookie-same-site";

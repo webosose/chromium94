@@ -31,5 +31,6 @@ extern const char kSharedMemSystemMemReductionFactor[];
 extern const char kProxyBypassList[];
 extern const char kDisableDropAllPeerConnections[];
 extern const char kWebOSJavaScriptFlags[];
+extern const char kDisableModernCookieSameSite[];
 
 #endif  // NEVA_APP_RUNTIME_BROWSER_APP_RUNTIME_BROWSER_SWITCHES_H_

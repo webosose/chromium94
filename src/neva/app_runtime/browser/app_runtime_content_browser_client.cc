@@ -491,6 +491,15 @@ void AppRuntimeContentBrowserClient::ConfigureNetworkContextParams(
   network_context_params->http_cache_max_size = disk_cache_size;
   network_context_params->http_cache_path =
       context->GetPath().Append(kCacheStoreFile);
+
+  if (cmd_line->HasSwitch(kDisableModernCookieSameSite)) {
+    if (!network_context_params->cookie_manager_params) {
+      network_context_params->cookie_manager_params =
+          network::mojom::CookieManagerParams::New();
+    }
+    network_context_params->cookie_manager_params->cookie_access_delegate_type =
+        network::mojom::CookieAccessDelegateType::ALWAYS_LEGACY;
+  }
 }
 
 void AppRuntimeContentBrowserClient::SetProxyServer(
