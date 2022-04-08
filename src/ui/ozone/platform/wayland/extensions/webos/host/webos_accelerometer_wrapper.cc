@@ -20,6 +20,8 @@
 
 #include "base/notreached.h"
 
+#include <cstdint>
+
 namespace ui {
 
 namespace {
