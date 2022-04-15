@@ -545,6 +545,8 @@ void WebAppWindow::ShiftContentByY(int shift_height) {
 }
 
 void WebAppWindow::UpdateViewportYCallback() {
+  if (!web_contents_)
+    return;
   gfx::Rect bounds = web_contents_->GetContentNativeView()->bounds();
   web_contents_->GetContentNativeView()->SetBounds(gfx::Rect(
       bounds.x(), shift_y_, bounds.width(), bounds.height()));
