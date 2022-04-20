@@ -3,6 +3,7 @@ import("//build/config/chrome_build.gni")
 import("//build/config/chromeos/ui_mode.gni")
 import("//build/config/dcheck_always_on.gni")
 import("//buildtools/deps_revisions.gni")
+import("//neva/neva.gni")
 
 assert(use_custom_libcxx, "should only be used if use_custom_libcxx is set")
 
@@ -50,7 +51,7 @@ config("runtime_library") {
     #
     # Windows doesn't need to set _LIBCPP_ABI_VERSION since there's no system
     # C++ library we could conflict with.
-    if (libcxx_abi_unstable && !is_win) {
+    if (libcxx_abi_unstable && !is_win && !is_webos) {
       defines += [ "_LIBCPP_ABI_VERSION=Cr" ]
     }
   } else {
