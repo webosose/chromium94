@@ -35,6 +35,9 @@ if (use_cbe) {
     if (target_cpu == "arm" && symbol_level == 2) {
       ldflags += [ "-Wl,--long-plt" ]
     }
+    if (is_clang && is_webos) {
+      ldflags += [ "-Wl,-rpath,/usr/lib/cbe"]
+    }
 
     if (is_chrome_cbe) {
       sources += [
