@@ -24,8 +24,9 @@
 #include "storage/browser/quota/quota_settings.h"
 
 namespace content {
-struct GlobalRequestID;
 class LoginDelegate;
+class PlatformNotificationService;
+struct GlobalRequestID;
 }  // namespace content
 
 namespace neva_app_runtime {
@@ -99,6 +100,13 @@ class AppRuntimeContentBrowserClient : public content::ContentBrowserClient {
       scoped_refptr<net::HttpResponseHeaders> response_headers,
       bool first_auth_attempt,
       LoginAuthRequiredCallback auth_required_callback) override;
+
+  // Returns the platform notification service, capable of displaying Web
+  // Notifications to the user. The embedder can return a nullptr if they don't
+  // support this functionality. Must be called on the UI thread.
+  // TODO(knollr): move this to the BrowserContext.
+  content::PlatformNotificationService* GetPlatformNotificationService(
+      content::BrowserContext* browser_context) override;
 
   std::string GetUserAgent() override;
 

@@ -42,6 +42,8 @@
 #include "neva/app_runtime/browser/app_runtime_quota_permission_context.h"
 #include "neva/app_runtime/browser/app_runtime_quota_permission_delegate.h"
 #include "neva/app_runtime/browser/app_runtime_web_contents_view_delegate_creator.h"
+#include "neva/app_runtime/browser/notifications/platform_notification_service_factory.h"
+#include "neva/app_runtime/browser/notifications/platform_notification_service_impl.h"
 #include "neva/app_runtime/common/app_runtime_file_access_controller.h"
 #include "neva/app_runtime/public/proxy_settings.h"
 #include "neva/app_runtime/webview.h"
@@ -426,6 +428,12 @@ AppRuntimeContentBrowserClient::CreateLoginDelegate(
     return std::make_unique<content::LoginDelegate>();
   }
   return nullptr;
+}
+
+PlatformNotificationService*
+AppRuntimeContentBrowserClient::GetPlatformNotificationService(
+    BrowserContext* browser_context) {
+  return PlatformNotificationServiceFactory::GetForProfile(browser_context);
 }
 
 void AppRuntimeContentBrowserClient::SetV8SnapshotPath(
