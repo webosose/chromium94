@@ -4,6 +4,7 @@
 
 import("//build/config/chromecast_build.gni")
 import("//build/config/sanitizers/sanitizers.gni")
+import("//neva/neva.gni")
 
 # Sanitizers replace the allocator, don't use our own.
 _is_using_sanitizers = is_asan || is_hwasan || is_lsan || is_tsan || is_msan
@@ -13,8 +14,9 @@ _is_using_sanitizers = is_asan || is_hwasan || is_lsan || is_tsan || is_msan
 #   wrapping), and has not been validated on others.
 # - Windows: debug CRT is not compatible, see below.
 # - Chromecast on Android: causes issues with crash reporting, see b/178423326.
+# - webOS: memory regressions because of fragmentation. Check again after m100
 _disable_partition_alloc =
-    is_component_build || (is_win && is_debug) || (is_android && is_chromecast)
+    is_component_build || (is_win && is_debug) || (is_android && is_chromecast) || is_webos
 _is_partition_alloc_platform = is_android || is_win || is_linux || is_chromeos
 
 # The debug CRT on Windows has some debug features that are incompatible with
