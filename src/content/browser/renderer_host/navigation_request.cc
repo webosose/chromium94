@@ -2910,21 +2910,6 @@ void NavigationRequest::OnResponseStarted(
         response_head_->headers->response_code() != 205 &&
         !ShouldRenderFallbackContentForResponse(*response_head_->headers)));
 
-#if defined(USE_NEVA_APPRUNTIME)
-  if (response_head_->headers.get() &&
-      response_head_->headers->response_code() >= 400) {
-    WebContents* web_contents = WebContents::FromRenderFrameHost(
-        frame_tree_node_->current_frame_host());
-    const bool has_policy = web_contents->DecidePolicyForResponse(
-        frame_tree_node_->IsMainFrame(),
-        response_head_->headers->response_code(),
-        common_params_->url.spec(),
-        response_head_->headers->GetStatusText());
-    if (has_policy)
-      response_should_be_rendered_ = false;
-  }
-#endif
-
   // Response that will not commit should be marked as aborted in the
   // NavigationHandle.
   if (!response_should_be_rendered_)
@@ -6831,6 +6816,16 @@ bool NavigationRequest::MaybeCancelFailedNavigation() {
     frame_tree_node_->ResetNavigationRequest(false);
     return true;
   }
+
+#if defined(USE_NEVA_APPRUNTIME)
+  WebContents* web_contents =
+      WebContents::FromRenderFrameHost(frame_tree_node_->current_frame_host());
+  if (web_contents->DecidePolicyForResponse(
+          IsInMainFrame(), net_error_, common_params_->url.spec(),
+          net::ErrorToShortString(net_error_))) {
+    return true;
+  }
+#endif
 
   return false;
 }
