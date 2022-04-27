@@ -543,10 +543,6 @@ void WebView::SetSecurityOrigin(const std::string& identifier) {
   }
 
   web_contents_->SyncRendererPrefs();
-
-  // Set changed origin mode for browser process
-  if (!identifier.empty())
-    url::Origin::SetFileOriginChanged(true);
 }
 
 void WebView::SetAcceptLanguages(const std::string& languages) {

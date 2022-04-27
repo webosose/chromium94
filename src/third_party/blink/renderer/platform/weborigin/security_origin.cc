@@ -65,14 +65,6 @@ const String& EnsureNonNull(const String& string) {
 
 }  // namespace
 
-#if defined(USE_NEVA_APPRUNTIME)
-// static
-std::string& SecurityOrigin::MutableLocalOrigin() {
-  DEFINE_THREAD_SAFE_STATIC_LOCAL(std::string, local_origin, ());
-  return local_origin;
-}
-#endif
-
 bool SecurityOrigin::ShouldUseInnerURL(const KURL& url) {
   // FIXME: Blob URLs don't have inner URLs. Their form is
   // "blob:<inner-origin>/<UUID>", so treating the part after "blob:" as a URL
@@ -155,15 +147,7 @@ SecurityOrigin::SecurityOrigin(const KURL& url)
           // an origin with an effective port of 0.
           (url.HasPort() || !url.IsValid() || !url.IsHierarchical())
               ? url.Port()
-#if !defined(USE_NEVA_APPRUNTIME)
               : DefaultPortForProtocol(url.Protocol())) {}
-#else
-              : DefaultPortForProtocol(url.Protocol())) {
-  if (IsLocal() && !MutableLocalOrigin().empty() && !url.IsEmpty() &&
-      ToString() != url.GetString())
-    host_ = MutableLocalOrigin().c_str();
-}
-#endif
 
 SecurityOrigin::SecurityOrigin(const String& protocol,
                                const String& host,
@@ -497,7 +481,7 @@ AtomicString SecurityOrigin::ToAtomicString() const {
     return AtomicString("null");
 
 #if defined(USE_NEVA_APPRUNTIME)
-  if (protocol_ == "file" && MutableLocalOrigin().empty())
+  if (protocol_ == "file" && host_.IsEmpty())
 #else
   if (protocol_ == "file")
 #endif
@@ -510,7 +494,7 @@ AtomicString SecurityOrigin::ToAtomicString() const {
 
 String SecurityOrigin::ToRawString() const {
 #if defined(USE_NEVA_APPRUNTIME)
-  if (protocol_ == "file" && MutableLocalOrigin().empty())
+  if (protocol_ == "file" && host_.IsEmpty())
 #else
   if (protocol_ == "file")
 #endif
