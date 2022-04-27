@@ -10,6 +10,7 @@
 
 #include "third_party/khronos/EGL/egl.h"
 #include "ui/gfx/presentation_feedback.h"
+#include "ui/gl/gl_surface_presentation_helper.h"
 #include "ui/ozone/common/egl_util.h"
 #include "ui/ozone/platform/wayland/host/wayland_window.h"
 
@@ -73,8 +74,12 @@ EGLConfig GLSurfaceWayland::GetConfig() {
 gfx::SwapResult GLSurfaceWayland::SwapBuffers(PresentationCallback callback) {
   UpdateVisualSize();
   if (!window_->IsSurfaceConfigured()) {
-    std::move(callback).Run(gfx::PresentationFeedback::Failure());
-    return gfx::SwapResult::SWAP_NAK_RECREATE_BUFFERS;
+    // The presentation |callback| must be called after gfx::SwapResult is sent.
+    // Thus, use a scoped swap buffers object that will send the feedback later.
+    gl::GLSurfacePresentationHelper::ScopedSwapBuffers scoped_swap_buffers(
+        presentation_helper(), std::move(callback));
+    scoped_swap_buffers.set_result(gfx::SwapResult::SWAP_NAK_RECREATE_BUFFERS);
+    return scoped_swap_buffers.result();
   }
   ///@name USE_NEVA_APPRUNTIME
   ///@{
@@ -96,8 +101,12 @@ gfx::SwapResult GLSurfaceWayland::PostSubBuffer(int x,
                                                 PresentationCallback callback) {
   UpdateVisualSize();
   if (!window_->IsSurfaceConfigured()) {
-    std::move(callback).Run(gfx::PresentationFeedback::Failure());
-    return gfx::SwapResult::SWAP_NAK_RECREATE_BUFFERS;
+    // The presentation |callback| must be called after gfx::SwapResult is sent.
+    // Thus, use a scoped swap buffers object that will send the feedback later.
+    gl::GLSurfacePresentationHelper::ScopedSwapBuffers scoped_swap_buffers(
+        presentation_helper(), std::move(callback));
+    scoped_swap_buffers.set_result(gfx::SwapResult::SWAP_NAK_RECREATE_BUFFERS);
+    return scoped_swap_buffers.result();
   }
   return gl::NativeViewGLSurfaceEGL::PostSubBuffer(x, y, width, height,
                                                    std::move(callback));
