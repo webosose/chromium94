@@ -209,7 +209,6 @@ void WebosTextModelWrapper::Commit() {
 }
 
 void WebosTextModelWrapper::ShowInputPanel() {
-  if (!IsActivated())
     text_model_show_input_panel(text_model_.get());
 }
 
