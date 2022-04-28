@@ -41,7 +41,7 @@ class WebosTextModelWrapper {
                         WaylandWindowWebos* window);
   WebosTextModelWrapper(const WebosTextModelWrapper&) = delete;
   WebosTextModelWrapper& operator=(const WebosTextModelWrapper&) = delete;
-  ~WebosTextModelWrapper() = default;
+  ~WebosTextModelWrapper();
 
   // Sets a surrounding text around the input position.
   void SetSurroundingText(const std::string& text,

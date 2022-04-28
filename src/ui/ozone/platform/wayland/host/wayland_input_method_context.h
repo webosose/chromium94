@@ -19,6 +19,9 @@ namespace ui {
 
 class WaylandConnection;
 class ZWPTextInputWrapper;
+#if defined(OS_WEBOS)
+class WebosTextModelWrapper;
+#endif
 
 class WaylandInputMethodContext : public LinuxInputMethodContext,
                                   public WaylandWindowObserver,
@@ -36,6 +39,11 @@ class WaylandInputMethodContext : public LinuxInputMethodContext,
   ~WaylandInputMethodContext() override;
 
   void Init(bool initialize_for_testing = false);
+
+#if defined(OS_WEBOS)
+  // Add or remove related text model to delegate
+  void SetTextModelWrapper(WebosTextModelWrapper* webos_text_model_wrapper);
+#endif  // OS_WEBOS
 
   // LinuxInputMethodContext overrides:
   bool DispatchKeyEvent(const ui::KeyEvent& key_event) override;
@@ -91,6 +99,12 @@ class WaylandInputMethodContext : public LinuxInputMethodContext,
   size_t surrounding_text_offset_ = 0;
   // The string in SetSurroundingText.
   std::string surrounding_text_;
+
+#if defined(OS_WEBOS)
+  // for information about finish ime composition save pointer to
+  // text_model
+  WebosTextModelWrapper* webos_text_model_wrapper_ = nullptr;
+#endif  // OS_WEBOS
 };
 
 }  // namespace ui

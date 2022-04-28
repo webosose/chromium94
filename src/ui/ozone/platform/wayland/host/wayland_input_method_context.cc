@@ -27,6 +27,10 @@
 #include "ui/ozone/platform/wayland/host/zwp_text_input_wrapper_v1.h"
 #include "ui/ozone/public/ozone_switches.h"
 
+#if defined(OS_WEBOS)
+#include "ui/ozone/platform/wayland/extensions/webos/host/webos_text_model_wrapper.h"
+#endif
+
 #if BUILDFLAG(USE_XKBCOMMON)
 #include "ui/events/ozone/layout/keyboard_layout_engine_manager.h"
 #include "ui/events/ozone/layout/xkb/xkb_keyboard_layout_engine.h"
@@ -184,6 +188,11 @@ void WaylandInputMethodContext::Reset() {
   character_composer_.Reset();
   if (text_input_)
     text_input_->Reset();
+
+#if defined(OS_WEBOS)
+  if (webos_text_model_wrapper_)
+    webos_text_model_wrapper_->Reset();
+#endif  // OS_WEBOS
 }
 
 void WaylandInputMethodContext::Focus() {
@@ -467,5 +476,12 @@ void WaylandInputMethodContext::MaybeUpdateActivated() {
     text_input_->HideInputPanel();
   }
 }
+
+#if defined(OS_WEBOS)
+void WaylandInputMethodContext::SetTextModelWrapper(
+    WebosTextModelWrapper* webos_text_model_wrapper) {
+  webos_text_model_wrapper_ = webos_text_model_wrapper;
+}
+#endif
 
 }  // namespace ui

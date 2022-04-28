@@ -144,7 +144,8 @@ WebosTextModelWrapper::WebosTextModelWrapper(text_model* text_model,
       seat_(seat),
       window_(window) {
   text_model_.reset(text_model);
-
+  if (input_method_context_)
+    input_method_context_->SetTextModelWrapper(this);
   static const text_model_listener text_model_listener = {
       WebosTextModelWrapper::CommitString,
       WebosTextModelWrapper::PreeditString,
@@ -160,6 +161,11 @@ WebosTextModelWrapper::WebosTextModelWrapper(text_model* text_model,
       WebosTextModelWrapper::InputPanelRect};
 
   text_model_add_listener(text_model_.get(), &text_model_listener, this);
+}
+
+WebosTextModelWrapper::~WebosTextModelWrapper() {
+  if (input_method_context_)
+    input_method_context_->SetTextModelWrapper(nullptr);
 }
 
 void WebosTextModelWrapper::SetSurroundingText(const std::string& text,
