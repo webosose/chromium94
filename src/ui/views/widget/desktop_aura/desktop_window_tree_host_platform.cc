@@ -717,7 +717,13 @@ bool DesktopWindowTreeHostPlatform::ShouldUpdateWindowTransparency() const {
 
 bool DesktopWindowTreeHostPlatform::ShouldUseDesktopNativeCursorManager()
     const {
+#if defined(USE_NEVA_APPRUNTIME)
+  // NEVA_APPRUNTIME provides its own cursor manager and there is not
+  // need to create another one
+  return false;
+#else
   return true;
+#endif
 }
 
 bool DesktopWindowTreeHostPlatform::ShouldCreateVisibilityController() const {
