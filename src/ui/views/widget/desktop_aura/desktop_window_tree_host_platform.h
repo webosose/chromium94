@@ -116,6 +116,10 @@ class VIEWS_EXPORT DesktopWindowTreeHostPlatform
   gfx::Transform GetRootTransform() const override;
   void ShowImpl() override;
   void HideImpl() override;
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  void SetFirstActivateTimeout(base::TimeDelta timeout) override;
+  ///@}
 
   // PlatformWindowDelegate:
   void OnClosed() override;

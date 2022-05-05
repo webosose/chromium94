@@ -779,6 +779,17 @@ void DesktopWindowTreeHostPlatform::HideImpl() {
   native_widget_delegate_->OnNativeWidgetVisibilityChanged(false);
 }
 
+///@name USE_NEVA_APPRUNTIME
+///@{
+void DesktopWindowTreeHostPlatform::SetFirstActivateTimeout(
+    base::TimeDelta timeout) {
+#if defined(USE_NEVA_APPRUNTIME)
+  if (compositor())
+    compositor()->SetDisplayFirstActivateTimeout(timeout);
+#endif  // defined(USE_NEVA_APPRUNTIME)
+}
+///@}
+
 void DesktopWindowTreeHostPlatform::OnClosed() {
   wm::SetWindowMoveClient(window(), nullptr);
   SetWmDropHandler(platform_window(), nullptr);
