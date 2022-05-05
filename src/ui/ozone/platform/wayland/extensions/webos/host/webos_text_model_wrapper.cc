@@ -170,12 +170,16 @@ void WebosTextModelWrapper::SetSurroundingText(const std::string& text,
 }
 
 void WebosTextModelWrapper::Activate() {
+  // This log should be kept for compliance to existing TCs scenarios.
+  VLOG(1) << "ActivateTextModel";
   text_model_activate(text_model_.get(), kSerial, seat_->seat(),
                       window_->root_surface()->surface());
   is_activated_ = true;
 }
 
 void WebosTextModelWrapper::Deactivate() {
+  // This log should be kept for compliance to existing TCs scenarios.
+  VLOG(1) << "DeactivateTextModel";
   if (IsActivated()) {
     text_model_deactivate(text_model_.get(), seat_->seat());
     is_activated_ = false;
