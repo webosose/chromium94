@@ -904,6 +904,10 @@ void DesktopWindowTreeHostPlatform::FinishPrepareStackForWebApp() {
   }
 #endif  // defined(USE_NEVA_APPRUNTIME)
 }
+
+void DesktopWindowTreeHostPlatform::SetCursorVisibility(bool visible) {
+  platform_window()->SetCursorVisibility(visible);
+}
 ///@}
 
 void DesktopWindowTreeHostPlatform::OnWindowStateChanged(

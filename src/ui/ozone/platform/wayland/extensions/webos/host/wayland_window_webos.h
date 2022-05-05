@@ -67,6 +67,7 @@ class WaylandWindowWebos : public WaylandToplevelWindow {
   void XInputInvokeAction(std::uint32_t keysym,
                           XInputKeySymbolType symbol_type,
                           XInputEventType event_type) override;
+  void SetCursorVisibility(bool visible) override;
   void SetGroupKeyMask(KeyMask key_mask) override;
   void SetKeyMask(KeyMask key_mask, bool set) override;
   void SetInputArea(const std::vector<gfx::Rect>& region) override;

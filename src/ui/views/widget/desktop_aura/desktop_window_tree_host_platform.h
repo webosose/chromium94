@@ -138,6 +138,9 @@ class VIEWS_EXPORT DesktopWindowTreeHostPlatform
                                std::uint32_t height) override;
   void BeginPrepareStackForWebApp() override;
   void FinishPrepareStackForWebApp() override;
+
+  // aura::WindowTreeHostPlatform
+  void SetCursorVisibility(bool visible) override;
   ///@}
   void OnWindowStateChanged(ui::PlatformWindowState old_state,
                             ui::PlatformWindowState new_state) override;

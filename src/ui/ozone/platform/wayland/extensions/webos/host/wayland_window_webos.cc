@@ -19,6 +19,7 @@
 
 #include "ui/display/screen.h"
 #include "ui/ozone/platform/wayland/extensions/webos/host/wayland_extensions_webos.h"
+#include "ui/ozone/platform/wayland/extensions/webos/host/webos_input_manager_wrapper.h"
 #include "ui/ozone/platform/wayland/extensions/webos/host/webos_shell_surface_wrapper.h"
 #include "ui/ozone/platform/wayland/host/extended_input_wrapper.h"
 #include "ui/ozone/platform/wayland/host/input_panel.h"
@@ -208,6 +209,14 @@ void WaylandWindowWebos::XInputInvokeAction(std::uint32_t keysym,
 
   if (extended_input) {
     extended_input->InvokeAction(keysym, symbol_type, event_type);
+    connection()->ScheduleFlush();
+  }
+}
+
+void WaylandWindowWebos::SetCursorVisibility(bool visible) {
+  InputManagerWrapper* input_manager = webos_extensions_->GetInputManager();
+  if (input_manager) {
+    input_manager->SetCursorVisibility(visible);
     connection()->ScheduleFlush();
   }
 }
