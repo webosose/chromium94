@@ -39,7 +39,9 @@ copy("weboswebruntime") {
     ":locales",
     ":headers",
     ":debugging_buildflags_header",
-    ":logging_buildflags_header"
+    ":logging_buildflags_header",
+    ":tracing_buildflags_header",
+    ":target_buildflags_header"
   ]
   if (use_cbe) {
     deps += [ ":cbe" ]                          # for libcbe.so
@@ -160,6 +162,26 @@ copy("logging_buildflags_header") {
 
 copy("debugging_buildflags_header") {
   sources = debugging_buildflags_header
+  outputs = []
+
+  foreach(file, rebase_path(sources, root_gen_dir)) {
+    outputs += [ "$image_path/$includedir/webruntime/" + file ]
+  }
+  deps = generated_headers_deps
+}
+
+copy("tracing_buildflags_header") {
+  sources = tracing_buildflags_header
+  outputs = []
+
+  foreach(file, rebase_path(sources, root_gen_dir)) {
+    outputs += [ "$image_path/$includedir/webruntime/" + file ]
+  }
+  deps = generated_headers_deps
+}
+
+copy("target_buildflags_header") {
+  sources = target_buildflags_header
   outputs = []
 
   foreach(file, rebase_path(sources, root_gen_dir)) {

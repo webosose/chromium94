@@ -28,13 +28,26 @@ headers = [
   "//base/check.h",
   "//base/check_op.h",
   "//base/compiler_specific.h",
+  "//base/containers/checked_iterators.h",
   "//base/containers/circular_deque.h",
+  "//base/containers/contains.h",
+  "//base/containers/contiguous_iterator.h",
+  "//base/containers/span.h",
   "//base/containers/stack.h",
   "//base/containers/util.h",
   "//base/containers/vector_buffer.h",
+  "//base/cxx17_backports.h",
+  "//base/cxx20_to_address.h",
   "//base/dcheck_is_on.h",
   "//base/debug/alias.h",
   "//base/debug/debugger.h",
+  "//base/files/file.h",
+  "//base/files/file_path.h",
+  "//base/files/file_tracing.h",
+  "//base/files/platform_file.h",
+  "//base/files/scoped_file.h",
+  "//base/functional/identity.h",
+  "//base/functional/invoke.h",
   "//base/gtest_prod_util.h",
   "//base/immediate_crash.h",
   "//base/lazy_instance_helpers.h",
@@ -64,13 +77,18 @@ headers = [
   "//base/notreached.h",
   "//base/observer_list.h",
   "//base/pending_task.h",
+  "//base/ranges/algorithm.h",
+  "//base/ranges/functional.h",
+  "//base/ranges/ranges.h",
   "//base/scoped_clear_last_error.h",
+  "//base/scoped_generic.h",
   "//base/sequence_checker.h",
   "//base/sequence_checker_impl.h",
   "//base/sequenced_task_runner.h",
   "//base/sequenced_task_runner_helpers.h",
   "//base/single_thread_task_runner.h",
   "//base/stl_util.h",
+  "//base/strings/char_traits.h",
   "//base/strings/string_number_conversions.h",
   "//base/strings/string_piece.h",
   "//base/strings/string_piece_forward.h",
@@ -88,6 +106,7 @@ headers = [
   "//base/threading/thread_collision_warner.h",
   "//base/threading/thread_restrictions.h",
   "//base/time/time.h",
+  "//base/trace_event/base_tracing_forward.h",
   "//base/tuple.h",
   "//build/build_config.h",
   "//build/buildflag.h",
@@ -111,6 +130,7 @@ headers = [
   "//testing/gtest/include/gtest/gtest_prod.h",
   "//third_party/abseil-cpp/absl/types/optional.h",
   "//third_party/googletest/src/googletest/include/gtest/gtest_prod.h",
+  "//third_party/perfetto/include/perfetto/tracing/traced_value_forward.h",
   "//third_party/skia/include/core/SkBitmap.h",
   "//third_party/skia/include/core/SkBlurTypes.h",
   "//third_party/skia/include/core/SkCanvas.h",
@@ -208,7 +228,18 @@ logging_buildflags_header = [
   "$root_gen_dir/base/logging_buildflags.h"
 ]
 
+tracing_buildflags_header = [
+  "$root_gen_dir/base/tracing_buildflags.h"
+]
+
+target_buildflags_header = [
+  "$root_gen_dir/build/chromeos_buildflags.h"
+]
+
 generated_headers_deps = [
   "//base:debugging_buildflags",
-  "//base:logging_buildflags"
+  "//base:logging_buildflags",
+  "//base:tracing_buildflags",
+  "//build:chromeos_buildflags"
 ]
+
