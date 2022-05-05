@@ -154,6 +154,8 @@ void WaylandKeyboard::Enter(void* data,
                             uint32_t serial,
                             wl_surface* surface,
                             wl_array* keys) {
+  // This log should be kept for compliance to existing TCs scenarios.
+  VLOG(1) << "OnKeyboardEnter";
   // wl_surface might have been destroyed by this time.
   if (auto* window = wl::RootWindowFromWlSurface(surface)) {
     auto* self = static_cast<WaylandKeyboard*>(data);
@@ -176,6 +178,8 @@ void WaylandKeyboard::Leave(void* data,
                             wl_keyboard* obj,
                             uint32_t serial,
                             wl_surface* surface) {
+  // This log should be kept for compliance to existing TCs scenarios.
+  VLOG(1) << "OnKeyboardLeave";
   // wl_surface might have been destroyed by this time.
   auto* self = static_cast<WaylandKeyboard*>(data);
   if (auto* window = wl::RootWindowFromWlSurface(surface))
@@ -202,6 +206,11 @@ void WaylandKeyboard::Key(void* data,
                           uint32_t time,
                           uint32_t key,
                           uint32_t state) {
+  // This log should be kept for compliance to existing TCs scenarios.
+  VLOG(1) << "OnKeyNotify"
+          << " KEY:" << key << " TYPE:"
+          << (state == WL_KEYBOARD_KEY_STATE_RELEASED ? "KeyRelease"
+                                                      : "KeyPress");
   WaylandKeyboard* keyboard = static_cast<WaylandKeyboard*>(data);
   DCHECK(keyboard);
   keyboard->OnKey(serial, time, key, state, KeyEventKind::kKey);
