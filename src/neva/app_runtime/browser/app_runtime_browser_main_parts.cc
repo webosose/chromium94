@@ -35,6 +35,7 @@
 #include "neva/app_runtime/browser/app_runtime_devtools_manager_delegate.h"
 #include "neva/app_runtime/browser/app_runtime_shared_memory_manager.h"
 #include "neva/app_runtime/browser/net/app_runtime_network_change_notifier.h"
+#include "neva/app_runtime/browser/permissions/neva_permissions_client.h"
 #include "ui/views/linux_ui/linux_ui.h"
 #include "ui/views/widget/desktop_aura/neva/views_delegate_stub.h"
 
@@ -357,6 +358,12 @@ void AppRuntimeBrowserMainParts::WillRunMainMessageLoop(
       std::unique_ptr<base::RunLoop>& run_loop) {
   for (auto* extra_part : app_runtime_extra_parts_)
     extra_part->WillRunMainMessageLoop(run_loop);
+}
+
+int AppRuntimeBrowserMainParts::PreCreateThreads() {
+  // Make sure permissions client has been set.
+  NevaPermissionsClient::GetInstance();
+  return content::RESULT_CODE_NORMAL_EXIT;
 }
 
 void AppRuntimeBrowserMainParts::PostCreateThreads() {

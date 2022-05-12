@@ -43,6 +43,7 @@
 #include "net/proxy_resolution/proxy_info.h"
 #include "net/proxy_resolution/proxy_resolution_service.h"
 #include "neva/app_runtime/browser/app_runtime_browser_switches.h"
+#include "neva/app_runtime/browser/permissions/permission_manager_factory.h"
 #include "neva/app_runtime/browser/push_messaging/push_messaging_app_identifier.h"
 #include "neva/app_runtime/browser/push_messaging/push_messaging_service_factory.h"
 #include "neva/app_runtime/browser/push_messaging/push_messaging_service_impl.h"
@@ -159,7 +160,7 @@ AppRuntimeBrowserContext::CreateZoomLevelDelegate(const base::FilePath&) {
 
 content::PermissionControllerDelegate*
 AppRuntimeBrowserContext::GetPermissionControllerDelegate() {
-  return nullptr;
+  return PermissionManagerFactory::GetForBrowserContext(this);
 }
 
 content::BackgroundFetchDelegate* AppRuntimeBrowserContext::GetBackgroundFetchDelegate() {

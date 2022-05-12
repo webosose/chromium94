@@ -506,6 +506,8 @@ void PermissionUmaUtil::PermissionPromptResolved(
     // ContentSettingsType, as otherwise they don't support GetGestureType.
     if (permission == ContentSettingsType::DEFAULT)
       continue;
+    if (!autoblocker)
+      continue;
 
     PermissionRequestGestureType gesture_type = request->GetGestureType();
     const GURL& requesting_origin = request->requesting_origin();
@@ -526,6 +528,7 @@ void PermissionUmaUtil::PermissionPromptResolved(
     RecordPermissionPromptPriorCount(
         permission, priorIgnorePrefix,
         autoblocker->GetIgnoreCount(requesting_origin, permission));
+
 #if defined(OS_ANDROID)
     if (permission == ContentSettingsType::GEOLOCATION &&
         permission_action != PermissionAction::IGNORED) {

@@ -74,6 +74,7 @@ class AppRuntimeBrowserMainParts : public content::BrowserMainParts {
   void ToolkitInitialized() override;
   void PreCreateMainMessageLoop() override;
   void PostCreateMainMessageLoop() override;
+  int PreCreateThreads() override;
   void PostCreateThreads() override;
   int PreMainMessageLoopRun() override;
   void WillRunMainMessageLoop(
