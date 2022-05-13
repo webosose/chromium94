@@ -7,6 +7,7 @@
 #include "neva/app_runtime/browser/permissions/neva_permissions_client.h"
 
 #include "components/content_settings/core/browser/cookie_settings.h"
+#include "neva/app_runtime/browser/host_content_settings_map_factory.h"
 #include "neva/app_runtime/browser/permissions/permission_manager_factory.h"
 #include "neva/app_runtime/browser/permissions/permission_prompt.h"
 #include "neva/app_runtime/browser/permissions/permission_prompt_webos.h"
@@ -19,7 +20,8 @@ NevaPermissionsClient* NevaPermissionsClient::GetInstance() {
 
 HostContentSettingsMap* NevaPermissionsClient::GetSettingsMap(
     content::BrowserContext* browser_context) {
-  return nullptr;
+  return neva_app_runtime::HostContentSettingsMapFactory::GetForBrowserContext(
+      browser_context);
 }
 
 scoped_refptr<content_settings::CookieSettings>

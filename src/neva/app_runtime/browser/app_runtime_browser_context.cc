@@ -24,6 +24,7 @@
 #include "base/path_service.h"
 #include "base/task/post_task.h"
 #include "browser/app_runtime_browser_context_adapter.h"
+#include "components/content_settings/core/browser/host_content_settings_map.h"
 #include "components/pref_registry/pref_registry_syncable.h"
 #include "components/prefs/json_pref_store.h"
 #include "components/prefs/pref_filter.h"
@@ -76,6 +77,7 @@ AppRuntimeBrowserContext::AppRuntimeBrowserContext(
 
   PlatformNotificationServiceImpl::RegisterProfilePrefs(pref_registry);
   PushMessagingAppIdentifier::RegisterProfilePrefs(pref_registry);
+  HostContentSettingsMap::RegisterProfilePrefs(pref_registry);
 
   pref_service_ = factory.Create(pref_registry);
   user_prefs::UserPrefs::Set(this, pref_service_.get());
