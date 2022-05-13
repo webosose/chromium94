@@ -680,6 +680,11 @@ class FileURLLoader : public network::mojom::URLLoader {
       head->mime_type.assign(new_type);
       head->did_mime_sniff = true;
     }
+
+    if (!head->headers) {
+      head->headers =
+          base::MakeRefCounted<net::HttpResponseHeaders>("HTTP/1.1 200 OK");
+    }
     if (head->headers) {
       head->headers->AddHeader(net::HttpRequestHeaders::kContentType,
                                head->mime_type);
