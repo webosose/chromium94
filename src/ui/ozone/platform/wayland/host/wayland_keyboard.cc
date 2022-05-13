@@ -228,6 +228,8 @@ void WaylandKeyboard::RepeatInfo(void* data,
                                  wl_keyboard* obj,
                                  int32_t rate,
                                  int32_t delay) {
+// FIXME(neva): auto-repeat is turned off by default on webOS
+#if !defined(OS_WEBOS)
   // Negative values for either rate or delay are illegal.
   if (rate < 0 || delay < 0) {
     VLOG(1) << "Ignoring wl_keyboard.repeat_info event with illegal "
@@ -246,6 +248,7 @@ void WaylandKeyboard::RepeatInfo(void* data,
     handler.SetAutoRepeatRate(base::TimeDelta::FromMilliseconds(delay),
                               base::TimeDelta::FromSecondsD(1.0 / rate));
   }
+#endif
 }
 
 void WaylandKeyboard::FlushInput(base::OnceClosure closure) {
