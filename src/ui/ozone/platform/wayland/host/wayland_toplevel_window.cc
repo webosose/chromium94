@@ -269,6 +269,7 @@ bool WaylandToplevelWindow::ShouldUseNativeFrame() const {
 ///@{
 void WaylandToplevelWindow::HandleStateChanged(PlatformWindowState state) {
   state_ = state;
+  VLOG(1) << __PRETTY_FUNCTION__;
   delegate()->OnWindowStateChanged(previous_state_, state_);
 
 #if defined(USE_NEVA_MEDIA)

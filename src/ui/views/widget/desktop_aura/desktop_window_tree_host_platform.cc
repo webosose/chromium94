@@ -900,8 +900,15 @@ void DesktopWindowTreeHostPlatform::OnWindowStateChanged(
 #if defined(USE_NEVA_APPRUNTIME)
   NativeEventDelegate* delegate =
       desktop_native_widget_aura_->GetNativeEventDelegate();
-  if (delegate)
+  if (delegate) {
     delegate->WindowHostStateChanged(ToWidgetState(new_state));
+    VLOG(1) << __PRETTY_FUNCTION__
+            << ": state=" << static_cast<uint32_t>(ToWidgetState(new_state));
+  } else {
+    VLOG(1) << __PRETTY_FUNCTION__
+            << ": state=" << static_cast<uint32_t>(ToWidgetState(new_state))
+            << ", but no native event delegate";
+  }
 #endif  // defined(USE_NEVA_APPRUNTIME)
 }
 

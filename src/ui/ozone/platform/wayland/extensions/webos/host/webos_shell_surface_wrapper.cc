@@ -28,6 +28,23 @@
 #include "ui/ozone/platform/wayland/host/wayland_connection.h"
 #include "ui/views/widget/desktop_aura/neva/ui_constants.h"
 
+namespace {
+
+const char* StateToString(uint32_t state) {
+  switch (state) {
+    case WL_WEBOS_SHELL_SURFACE_STATE_MINIMIZED:
+      return "MINIMIZED";
+    case WL_WEBOS_SHELL_SURFACE_STATE_MAXIMIZED:
+      return "MAXIMIZED";
+    case WL_WEBOS_SHELL_SURFACE_STATE_FULLSCREEN:
+      return "FULLSCREEN";
+    default:
+      return "UNINITIALIZED";
+  }
+}
+
+}  // namespace
+
 namespace ui {
 
 PlatformWindowState ToPlatformWindowState(uint32_t state) {
@@ -170,14 +187,21 @@ void WebosShellSurfaceWrapper::StateChanged(
     void* data,
     wl_webos_shell_surface* webos_shell_surface,
     uint32_t state) {
+  VLOG(1) << __PRETTY_FUNCTION__ << " State changed(" << StateToString(state)
+          << ") from LSM";
   WebosShellSurfaceWrapper* shell_surface_wrapper =
       static_cast<WebosShellSurfaceWrapper*>(data);
   DCHECK(shell_surface_wrapper);
   DCHECK(shell_surface_wrapper->wayland_window_);
 
-  if (shell_surface_wrapper->wayland_window_)
+  if (shell_surface_wrapper->wayland_window_) {
+    VLOG(1) << __PRETTY_FUNCTION__ << ": state=" << state;
     shell_surface_wrapper->wayland_window_->HandleStateChanged(
         ToPlatformWindowState(state));
+  } else {
+    LOG(INFO) << __PRETTY_FUNCTION__ << ": state=" << state
+              << ", but no window for this shell";
+  }
 }
 
 void WebosShellSurfaceWrapper::PositionChanged(
