@@ -36,6 +36,7 @@ class BLINK_PLATFORM_EXPORT WebMediaPlayerParamsNeva {
   ~WebMediaPlayerParamsNeva();
 
   WebString application_id() const { return application_id_; }
+  WebString file_security_origin() const { return file_security_origin_; }
 
   bool use_unlimited_media_policy() const {
     return use_unlimited_media_policy_;
@@ -51,6 +52,10 @@ class BLINK_PLATFORM_EXPORT WebMediaPlayerParamsNeva {
 
   void set_application_id(const WebString application_id) {
     application_id_ = application_id;
+  }
+
+  void set_file_security_origin(const WebString file_security_origin) {
+    file_security_origin_ = file_security_origin;
   }
 
   void set_use_unlimited_media_policy(const bool use_unlimited_media_policy) {
@@ -74,6 +79,7 @@ class BLINK_PLATFORM_EXPORT WebMediaPlayerParamsNeva {
  protected:
   CreateVideoWindowCB create_video_window_cb_;
   WebString application_id_;
+  WebString file_security_origin_;
   bool use_unlimited_media_policy_ = false;
   media::CreateMediaPlayerNevaCB override_create_media_player_neva_;
   media::CreateMediaPlatformAPICB override_create_media_platform_api_;

@@ -429,6 +429,7 @@ class BLINK_PLATFORM_EXPORT WebMediaPlayerNeva
   WebMediaPlayer::RenderMode render_mode_;
 
   std::string app_id_;
+  std::string file_security_origin_;
 
   bool is_loading_;
   LoadType pending_load_type_ = WebMediaPlayer::kLoadTypeURL;

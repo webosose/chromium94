@@ -204,6 +204,7 @@ WebMediaPlayerNeva::WebMediaPlayerNeva(
                                   : base::ThreadTaskRunnerHandle::Get()),
       render_mode_(WebMediaPlayer::RenderModeNone),
       app_id_(params_neva->application_id().Utf8().data()),
+      file_security_origin_(params_neva->file_security_origin().Utf8().data()),
       is_loading_(false),
       create_video_window_cb_(params_neva->get_create_video_window_callback()) {
   NEVA_DCHECK(main_task_runner_->BelongsToCurrentThread());
@@ -389,8 +390,17 @@ void WebMediaPlayerNeva::LoadMedia() {
   pending_request_.pending_load_ = absl::nullopt;
 #endif
 
+  std::string media_uri = url_.spec();
+  // Drop host part if url is local resource
+  if (url_.host() == file_security_origin_) {
+    url::Replacements<char> replacement;
+    replacement.ClearHost();
+    replacement.ClearPort();
+    media_uri = url_.ReplaceComponents(replacement).spec();
+  }
+
   player_api_->Initialize(
-      GetClient()->IsVideo(), CurrentTime(), url_.spec(),
+      GetClient()->IsVideo(), CurrentTime(), media_uri,
       std::string(GetClient()->ContentMIMEType().Utf8().data()),
       std::string(GetClient()->Referrer().Utf8().data()),
       std::string(GetClient()->UserAgent().Utf8().data()),
