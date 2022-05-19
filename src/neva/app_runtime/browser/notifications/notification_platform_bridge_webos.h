@@ -19,13 +19,9 @@
 
 #include <string>
 
+#include "mojo/public/cpp/bindings/remote.h"
 #include "neva/app_runtime/browser/notifications/notification_platform_bridge.h"
-
-namespace pal {
-namespace luna {
-class Client;
-}  // namespace luna
-}  // namespace pal
+#include "neva/pal_service/public/mojom/system_servicebridge.mojom.h"
 
 namespace neva_app_runtime {
 
@@ -51,7 +47,11 @@ class NotificationPlatformBridgeWebos : public NotificationPlatformBridge {
   void DisplayServiceShutDown(content::BrowserContext* profile) override;
 
  private:
-  std::unique_ptr<pal::luna::Client> luna_client_;
+  void DisplayInternal(const std::string& params);
+
+  mojo::Remote<pal::mojom::SystemServiceBridge> remote_system_bridge_;
+
+  base::WeakPtrFactory<NotificationPlatformBridgeWebos> weak_factory_{this};
 };
 
 }  // namespace neva_app_runtime

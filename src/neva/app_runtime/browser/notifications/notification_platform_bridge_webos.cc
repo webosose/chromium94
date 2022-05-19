@@ -19,7 +19,7 @@
 #include "base/json/json_writer.h"
 #include "base/strings/utf_string_conversions.h"
 #include "base/values.h"
-#include "neva/pal_service/luna/luna_client.h"
+#include "neva/pal_service/pal_service.h"
 #include "ui/message_center/public/cpp/notification.h"
 
 namespace neva_app_runtime {
@@ -45,11 +45,11 @@ void NotificationPlatformBridgeWebos::Display(
     content::BrowserContext* profile,
     const message_center::Notification& notification,
     std::unique_ptr<NotificationCommon::Metadata> metadata) {
-  if (!luna_client_) {
-    pal::luna::Client::Params params;
-    params.name = "com.webos.notification.client";
-    luna_client_ = pal::luna::CreateClient(params);
+  if (metadata->web_app_id.empty()) {
+    LOG(INFO) << __func__ << " is called with the empty app_id";
+    return;
   }
+
   base::Value dict(base::Value::Type::DICTIONARY);
   dict.SetStringKey("sourceId", metadata->web_app_id);
   std::string message = "[" + base::UTF16ToUTF8(notification.title()) + "]";
@@ -61,7 +61,45 @@ void NotificationPlatformBridgeWebos::Display(
   dict.SetBoolKey("persistent", true);
   std::string param;
   base::JSONWriter::Write(dict, &param);
-  luna_client_->Call("luna://com.webos.notification/createToast", param);
+
+  if (!remote_system_bridge_) {
+    mojo::Remote<pal::mojom::SystemServiceBridgeProvider> provider;
+    pal::GetPalService().BindSystemServiceBridgeProvider(
+        provider.BindNewPipeAndPassReceiver());
+
+    provider->GetSystemServiceBridge(
+        remote_system_bridge_.BindNewPipeAndPassReceiver());
+
+    auto params = pal::mojom::ConnectionParams::New(
+        absl::make_optional<std::string>(),
+        absl::make_optional<std::string>(metadata->web_app_id), -1);
+
+    remote_system_bridge_->Connect(
+        std::move(params),
+        base::BindOnce(
+            [](base::WeakPtr<NotificationPlatformBridgeWebos> bridge,
+               std::string payload,
+               mojo::PendingAssociatedReceiver<
+                   pal::mojom::SystemServiceBridgeClient> client) {
+              if (bridge)
+                bridge->DisplayInternal(payload);
+            },
+            weak_factory_.GetWeakPtr(), param));
+    return;
+  }
+
+  DisplayInternal(param);
+}
+
+void NotificationPlatformBridgeWebos::DisplayInternal(
+    const std::string& payload) {
+  if (!remote_system_bridge_) {
+    LOG(ERROR) << __func__ << " remote_system_bridge_ is not bound.";
+    return;
+  }
+
+  remote_system_bridge_->Call("luna://com.webos.notification/createToast",
+                              payload);
 }
 
 void NotificationPlatformBridgeWebos::Close(
