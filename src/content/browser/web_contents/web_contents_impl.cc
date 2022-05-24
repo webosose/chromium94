@@ -2730,6 +2730,22 @@ const blink::web_pref::WebPreferences WebContentsImpl::ComputeWebPreferences() {
 
   prefs.v8_cache_options = GetV8CacheOptions();
 
+#if defined(USE_NEVA_APPRUNTIME)
+  if (command_line.HasSwitch(switches::kEnableV8CacheForWebappList)) {
+    std::string whitelist =
+        command_line.GetSwitchValueASCII(switches::kEnableV8CacheForWebappList);
+    std::vector<base::StringPiece> webapps = base::SplitStringPiece(
+        whitelist, ",", base::TRIM_WHITESPACE, base::SPLIT_WANT_NONEMPTY);
+    if (base::Contains(webapps, GetRendererPrefs().application_id)) {
+      prefs.v8_cache_options = blink::mojom::V8CacheOptions::kCode;
+    } else {
+      prefs.v8_cache_options = blink::mojom::V8CacheOptions::kNone;
+    }
+    VLOG(1) << __func__ << " " << GetRendererPrefs().application_id
+            << " v8-cache-options=" << prefs.v8_cache_options;
+  }
+#endif
+
   prefs.user_gesture_required_for_presentation = !command_line.HasSwitch(
       switches::kDisableGestureRequirementForPresentation);
 

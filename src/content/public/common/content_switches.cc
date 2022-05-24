@@ -1104,6 +1104,13 @@ const char kMaxActivatedMediaPlayers[] = "max-activated-media-players";
 
 const char kMaxTimeupdateEventFrequency[] = "max-timeupdate-event-frequency";
 #endif
+
+#if defined(USE_NEVA_APPRUNTIME)
+// Enabling v8 cache for specified webapp. This option is used for testing
+// purpose to test v8 cache is produced and used.
+const char kEnableV8CacheForWebappList[] = "enable-v8-cache-for-webapp-list";
+#endif
+
 // Don't dump stuff here, follow the same order as the header.
 
 }  // namespace switches
