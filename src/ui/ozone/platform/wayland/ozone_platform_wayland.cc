@@ -97,7 +97,10 @@ class OzonePlatformWayland : public OzonePlatform {
     // Disable key-repeat flag synthesizing. On Wayland, key repeat events are
     // generated inside Chrome, and the flag is properly set.
     // See also WaylandEventSource.
+#if !defined(OS_WEBOS)
+    // WebOS uses synthesized key-repeat flag
     KeyEvent::SetSynthesizeKeyRepeatEnabled(false);
+#endif
   }
 
   OzonePlatformWayland(const OzonePlatformWayland&) = delete;
