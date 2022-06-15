@@ -421,6 +421,7 @@ void DesktopWindowTreeHostPlatform::SetSize(const gfx::Size& size) {
   auto bounds_in_pixels = GetBoundsInPixels();
   bounds_in_pixels.set_size(size_in_pixels);
   WindowTreeHostPlatform::SetBoundsInPixels(bounds_in_pixels);
+  platform_window()->SetContentsSize(size_in_pixels);
 }
 
 void DesktopWindowTreeHostPlatform::StackAbove(aura::Window* window) {
