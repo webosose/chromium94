@@ -41,6 +41,16 @@
 namespace ui {
 namespace {
 
+#if defined(USE_NEVA_APPRUNTIME)
+constexpr SkColor kPreeditHighlightColor =
+#if defined(OS_WEBOS)
+    // specified by UX team
+    SkColorSetARGB(0xFF, 198, 176, 186);
+#else
+    SK_ColorTRANSPARENT;
+#endif  // defined(OS_WEBOS)
+#endif  // defined(USE_NEVA_APPRUNTIME)
+
 absl::optional<size_t> OffsetFromUTF8Offset(const base::StringPiece& text,
                                             uint32_t offset) {
   if (offset > text.length())
@@ -290,6 +300,21 @@ void WaylandInputMethodContext::OnPreeditString(
     base::StringPiece text,
     const std::vector<SpanStyle>& spans,
     int32_t preedit_cursor) {
+#if defined(USE_NEVA_APPRUNTIME)
+  ui::CompositionText composition_text;
+  if (base::IsStringUTF8(text)) {
+    composition_text.text = base::UTF8ToUTF16(text);
+    composition_text.selection = gfx::Range(0, composition_text.text.length());
+    composition_text.ime_text_spans.push_back(ui::ImeTextSpan(
+        ui::ImeTextSpan::Type::kComposition, 0, composition_text.text.length(),
+        ui::ImeTextSpan::Thickness::kNone,
+        ui::ImeTextSpan::UnderlineStyle::kNone, kPreeditHighlightColor));
+  } else {
+    composition_text.text = base::ASCIIToUTF16(text);
+  }
+
+  ime_delegate_->OnPreeditChanged(composition_text);
+#else   // !defined(USE_NEVA_APPRUNTIME)
   ui::CompositionText composition_text;
   composition_text.text = base::UTF8ToUTF16(text);
   for (const auto& span : spans) {
@@ -343,6 +368,7 @@ void WaylandInputMethodContext::OnPreeditString(
   }
 
   ime_delegate_->OnPreeditChanged(composition_text);
+#endif  // defined(USE_NEVA_APPRUNTIME)
 }
 
 void WaylandInputMethodContext::OnCommitString(base::StringPiece text) {
@@ -352,7 +378,7 @@ void WaylandInputMethodContext::OnCommitString(base::StringPiece text) {
 void WaylandInputMethodContext::OnDeleteSurroundingText(int32_t index,
                                                         uint32_t length) {
 #if defined(USE_NEVA_APPRUNTIME)
-  ime_delegate_->OnDeleteSurroundingText(index, length);
+  ime_delegate_->OnDeleteRange(index, length);
 #else   // defined(USE_NEVA_APPRUNTIME)
   // |index| and |length| are expected to be in UTF8 form, so we convert these
   // into UTF16 form.
