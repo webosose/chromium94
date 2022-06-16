@@ -351,7 +351,9 @@ void DesktopWindowTreeHostOzone::SetSize(const gfx::Size& requested_size) {
   gfx::Rect new_bounds = platform_window_->GetBounds();
   new_bounds.set_size(size_in_pixels);
   platform_window_->SetBounds(new_bounds);
+#if defined(OS_WEBOS)
   platform_window_->SetContentsSize(size_in_pixels);
+#endif
 }
 
 void DesktopWindowTreeHostOzone::StackAbove(aura::Window* window) {
