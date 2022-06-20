@@ -213,7 +213,11 @@ void WebosTextModelWrapper::Commit() {
 }
 
 void WebosTextModelWrapper::ShowInputPanel() {
+  if (state_ == TextModelState::kShown && window_) {
+    window_->OnInputPanelVisibilityChanged(true);
+  } else {
     text_model_show_input_panel(text_model_.get());
+  }
 }
 
 void WebosTextModelWrapper::HideInputPanel() {
@@ -355,6 +359,7 @@ void WebosTextModelWrapper::Leave(void* data, text_model* text_model) {
 
   if (text_model_wrapper->IsActivated()) {
     text_model_wrapper->is_activated_ = false;
+    text_model_wrapper->state_ = TextModelState::kHidden;
     text_model_wrapper->input_panel_->HideInputPanel(
         ImeHiddenType::kDeactivate);
   }
@@ -366,6 +371,7 @@ void WebosTextModelWrapper::InputPanelState(void* data,
   WebosTextModelWrapper* text_model_wrapper =
       static_cast<WebosTextModelWrapper*>(data);
   DCHECK(text_model_wrapper);
+  text_model_wrapper->state_ = static_cast<TextModelState>(state);
 
   if (state == 0) {  // hidden
     text_model_wrapper->window_->OnInputPanelVisibilityChanged(false);

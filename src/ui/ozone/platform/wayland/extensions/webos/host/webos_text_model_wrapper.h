@@ -167,6 +167,8 @@ class WebosTextModelWrapper {
   WaylandInputMethodContext* const input_method_context_;
   WaylandSeat* const seat_;
   WaylandWindowWebos* const window_;
+  enum class TextModelState { kHidden, kShown, kShowing };
+  TextModelState state_ = TextModelState::kHidden;
 
   bool is_activated_ = false;
   std::int32_t preedit_cursor_ = 0;
