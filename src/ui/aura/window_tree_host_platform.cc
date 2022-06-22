@@ -97,7 +97,7 @@ void WindowTreeHostPlatform::CreateAndSetPlatformWindow(
     platform_window_ = ui::OzonePlatform::GetInstance()->CreatePlatformWindow(
         this, std::move(properties));
 #if defined(OS_WEBOS)
-    platform_window_->SetContentsSize(properties.bounds.size());
+    platform_window_->SetContentsSize(bounds_in_pixels_.size());
 #endif
     ///@name USE_NEVA_APPRUNTIME
     ///@{
