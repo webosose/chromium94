@@ -539,15 +539,10 @@ void WaylandWindow::SetCustomCursor(neva_app_runtime::CustomCursorType type,
   if (type == neva_app_runtime::CustomCursorType::kPath)
     CHECK(allowed_cursor_overriding);
 
-  // The origin of the following check in ozone_wayland_window.cc seems unclear.
-  // It might be defined by implementation specifics where IOW stores platform
-  // cursor in WindowManager & invalidates it when custom cursor is set.
-  // Unless the check doesn't respond to some use case scenario, it is not
-  // needed here, but better leave it commented in case it does.
-  // if (type != neva_app_runtime::CustomCursorType::kPath &&
-  //     type == cursor_type_ &&
-  //     window_manager_->GetPlatformCursor() == nullptr)
-  //   return;
+  // Without this check in some modes we fall into repeating calling of
+  // WaylandCursor::UpdateBitmap and sending wayland requests
+  if (type != neva_app_runtime::CustomCursorType::kPath && type == cursor_type_)
+    return;
 
   cursor_type_ = type;
   allowed_cursor_overriding_ = allowed_cursor_overriding;
@@ -579,10 +574,12 @@ void WaylandWindow::SetCustomCursor(neva_app_runtime::CustomCursorType type,
     // BLANK : Disable cursor(hiding cursor)
     connection_->SetCursorBitmap(std::vector<SkBitmap>(),
                                  lsm_cursor_hide_hotspot, window_scale());
+    cursor_.reset();
   } else if (type == neva_app_runtime::CustomCursorType::kNotUse) {
     // NOT_USE : Restore cursor(wayland cursor or IM's cursor)
     connection_->SetCursorBitmap(std::vector<SkBitmap>(),
                                  lsm_cursor_restore_hotspot, window_scale());
+    cursor_.reset();
 #endif  // defined(OS_WEBOS)
   }
 #else   // defined(USE_NEVA_APPRUNTIME)
