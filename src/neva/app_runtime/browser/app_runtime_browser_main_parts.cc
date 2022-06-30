@@ -247,6 +247,14 @@ void AppRuntimeBrowserMainParts::PreCreateMainMessageLoop() {
 
 void AppRuntimeBrowserMainParts::PostCreateMainMessageLoop() {
   app_runtime_mem_manager_.reset(new AppRuntimeSharedMemoryManager);
+#if defined(USE_OZONE)
+  auto shutdown_cb = base::BindOnce([] {
+    base::Process::TerminateCurrentProcessImmediately(1);
+    LOG(FATAL) << "Browser failed to shutdown.";
+  });
+  ui::OzonePlatform::GetInstance()->PostCreateMainMessageLoop(
+      std::move(shutdown_cb));
+#endif  // defined(USE_OZONE)
 }
 
 int AppRuntimeBrowserMainParts::PreMainMessageLoopRun() {
