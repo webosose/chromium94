@@ -19,6 +19,7 @@
 
 #include <memory>
 
+#include "base/no_destructor.h"
 #include "mojo/public/cpp/bindings/pending_remote.h"
 #include "mojo/public/cpp/bindings/remote.h"
 #include "net/extras/sqlite/cookie_crypto_delegate.h"
@@ -28,8 +29,10 @@ namespace cookie_config {
 
 class CookieNevaCryptoDelegate : public net::CookieCryptoDelegate {
  public:
-  CookieNevaCryptoDelegate();
+  CookieNevaCryptoDelegate(const CookieNevaCryptoDelegate&) = delete;
+  CookieNevaCryptoDelegate& operator=(const CookieNevaCryptoDelegate&) = delete;
 
+  bool HasOSCrypt();
   void SetOSCrypt(mojo::PendingRemote<pal::mojom::OSCrypt> os_crypt);
   void SetDefaultCryptoDelegate(net::CookieCryptoDelegate*);
 
@@ -41,9 +44,15 @@ class CookieNevaCryptoDelegate : public net::CookieCryptoDelegate {
                      std::string* plaintext) override;
 
  private:
+  friend base::NoDestructor<CookieNevaCryptoDelegate>;
+
+  CookieNevaCryptoDelegate();
+
   net::CookieCryptoDelegate* default_delegate_ = nullptr;
   mojo::Remote<pal::mojom::OSCrypt> os_crypt_;
 };
+
+CookieNevaCryptoDelegate* GetCookieNevaCryptoDelegate();
 
 }  // namespace cookie_config
 

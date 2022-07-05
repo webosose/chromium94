@@ -794,9 +794,6 @@ class COMPONENT_EXPORT(NETWORK_SERVICE) NetworkContext
            base::UniquePtrComparator>
       url_loader_factories_;
 
-  std::unique_ptr<cookie_config::CookieNevaCryptoDelegate>
-      cookie_crypto_delegate_;
-
   base::WeakPtrFactory<NetworkContext> weak_factory_{this};
 
   DISALLOW_COPY_AND_ASSIGN(NetworkContext);

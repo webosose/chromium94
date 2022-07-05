@@ -480,9 +480,6 @@ NetworkContext::NetworkContext(
           url_loader_factory_for_cert_net_fetcher
               .InitWithNewPipeAndPassReceiver();
 
-  cookie_crypto_delegate_ =
-      std::make_unique<cookie_config::CookieNevaCryptoDelegate>();
-
   scoped_refptr<SessionCleanupCookieStore> session_cleanup_cookie_store =
       MakeSessionCleanupCookieStore();
 
@@ -2433,7 +2430,7 @@ NetworkContext::MakeSessionCleanupCookieStore() const {
           {base::MayBlock(), net::GetCookieStoreBackgroundSequencePriority(),
            base::TaskShutdownBehavior::BLOCK_SHUTDOWN});
 
-  net::CookieCryptoDelegate* crypto_delegate = nullptr;
+  cookie_config::CookieNevaCryptoDelegate* crypto_delegate = nullptr;
   if (params_->enable_encrypted_cookies) {
 #if (defined(OS_LINUX) || BUILDFLAG(IS_CHROMEOS_LACROS)) && \
     !BUILDFLAG(IS_CHROMECAST)
@@ -2441,9 +2438,9 @@ NetworkContext::MakeSessionCleanupCookieStore() const {
         << "NetworkService::SetCryptConfig must be called before creating a "
            "NetworkContext with encrypted cookies.";
 #endif
-    cookie_crypto_delegate_->SetDefaultCryptoDelegate(
+    crypto_delegate = cookie_config::GetCookieNevaCryptoDelegate();
+    crypto_delegate->SetDefaultCryptoDelegate(
         cookie_config::GetCookieCryptoDelegate());
-    crypto_delegate = cookie_crypto_delegate_.get();
   }
   scoped_refptr<net::SQLitePersistentCookieStore> sqlite_store(
       new net::SQLitePersistentCookieStore(
@@ -2653,7 +2650,10 @@ void NetworkContext::CreateTrustedUrlLoaderFactoryForNetworkService(
 
 void NetworkContext::SetOSCrypt(
     mojo::PendingRemote<pal::mojom::OSCrypt> os_crypt) {
-  cookie_crypto_delegate_->SetOSCrypt(std::move(os_crypt));
+  if (cookie_config::GetCookieNevaCryptoDelegate()->HasOSCrypt()) {
+    return;
+  }
+  cookie_config::GetCookieNevaCryptoDelegate()->SetOSCrypt(std::move(os_crypt));
 }
 
 }  // namespace network

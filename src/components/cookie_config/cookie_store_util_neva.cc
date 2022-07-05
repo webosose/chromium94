@@ -22,6 +22,10 @@ namespace cookie_config {
 
 CookieNevaCryptoDelegate::CookieNevaCryptoDelegate() = default;
 
+bool CookieNevaCryptoDelegate::HasOSCrypt() {
+  return os_crypt_.is_bound() && os_crypt_.is_connected();
+}
+
 void CookieNevaCryptoDelegate::SetOSCrypt(
     mojo::PendingRemote<pal::mojom::OSCrypt> os_crypt) {
   VLOG(3) << __func__ << ": attached remote mojo OSCrypt";
@@ -35,14 +39,14 @@ void CookieNevaCryptoDelegate::SetDefaultCryptoDelegate(
 }
 
 bool CookieNevaCryptoDelegate::ShouldEncrypt() {
-  if (os_crypt_.is_bound() && os_crypt_.is_connected())
+  if (HasOSCrypt())
     return true;
   return default_delegate_ ? default_delegate_->ShouldEncrypt() : false;
 }
 
 bool CookieNevaCryptoDelegate::EncryptString(const std::string& plaintext,
                                              std::string* ciphertext) {
-  if (os_crypt_.is_bound() && os_crypt_.is_connected()) {
+  if (HasOSCrypt()) {
     bool success = true;
     base::WaitableEvent finished(
         base::WaitableEvent::ResetPolicy::MANUAL,
@@ -72,7 +76,7 @@ bool CookieNevaCryptoDelegate::EncryptString(const std::string& plaintext,
 
 bool CookieNevaCryptoDelegate::DecryptString(const std::string& ciphertext,
                                              std::string* plaintext) {
-  if (os_crypt_.is_bound() && os_crypt_.is_connected()) {
+  if (HasOSCrypt()) {
     bool success = true;
     base::WaitableEvent finished(
         base::WaitableEvent::ResetPolicy::MANUAL,
@@ -98,6 +102,11 @@ bool CookieNevaCryptoDelegate::DecryptString(const std::string& ciphertext,
   return default_delegate_
              ? default_delegate_->DecryptString(ciphertext, plaintext)
              : false;
+}
+
+CookieNevaCryptoDelegate* GetCookieNevaCryptoDelegate() {
+  static base::NoDestructor<CookieNevaCryptoDelegate> instance;
+  return instance.get();
 }
 
 }  // namespace cookie_config

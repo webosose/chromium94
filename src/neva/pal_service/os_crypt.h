@@ -14,8 +14,8 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef NEVA_PAL_SERVICE_OS_CRYPT_
-#define NEVA_PAL_SERVICE_OS_CRYPT_
+#ifndef NEVA_PAL_SERVICE_OS_CRYPT_H_
+#define NEVA_PAL_SERVICE_OS_CRYPT_H_
 
 #include <memory>
 
@@ -49,4 +49,4 @@ class OSCryptImpl : public mojom::OSCrypt {
 
 }  // namespace pal
 
-#endif  // NEVA_PAL_SERVICE_PLATFORM_SYSTEM_HANDLER_
+#endif  // NEVA_PAL_SERVICE_OS_CRYPT_H_
