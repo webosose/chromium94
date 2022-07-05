@@ -910,6 +910,12 @@ void WidgetBase::UpdateTextInputStateInternal(bool show_virtual_keyboard,
       params->ime_text_spans_info =
           frame_widget->GetImeTextSpansInfo(new_info.ime_text_spans);
     }
+
+#if defined(USE_NEVA_APPRUNTIME)
+    params->input_panel_rectangle = new_info.input_panel_rectangle;
+    params->max_length = new_info.max_length;
+#endif  // defined(USE_NEVA_APPRUNTIME)
+
 #if defined(OS_ANDROID)
     if (next_previous_flags_ == kInvalidNextPreviousFlagsValue) {
       // Due to a focus change, values will be reset by the frame.
@@ -942,6 +948,7 @@ void WidgetBase::UpdateTextInputStateInternal(bool show_virtual_keyboard,
     params->show_ime_if_needed = show_virtual_keyboard;
     params->always_hide_ime = always_hide_ime;
     params->reply_to_request = reply_to_request;
+    params->bounds = new_info.bounds;
     widget_host_->TextInputStateChanged(std::move(params));
 
     text_input_info_ = new_info;

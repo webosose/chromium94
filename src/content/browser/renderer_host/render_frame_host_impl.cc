@@ -225,6 +225,10 @@
 #include "url/origin.h"
 #include "url/url_constants.h"
 
+#if defined(USE_LOCAL_STORAGE_TRACKER)
+#include "components/local_storage_tracker/browser/local_storage_tracker_mojo_impl.h"
+#endif
+
 #if defined(OS_ANDROID)
 #include "content/browser/android/content_url_loader_factory.h"
 #include "content/browser/android/java_interfaces_impl.h"
@@ -234,6 +238,10 @@
 #include "content/browser/hid/hid_service.h"
 #include "content/browser/host_zoom_map_impl.h"
 #include "content/browser/serial/serial_service.h"
+#endif
+
+#if defined(USE_NEVA_APPRUNTIME)
+#include "content/public/browser/web_contents.h"
 #endif
 
 #if defined(OS_MAC)
@@ -859,6 +867,14 @@ void WriteRenderFrameImplDeletion(perfetto::EventContext& ctx,
       rfh->HasPendingCommitForCrossDocumentNavigation());
   data->set_frame_tree_node_id(rfh->GetFrameTreeNodeId());
   data->set_intent(FrameDeleteIntentionToProto(intent));
+}
+
+static bool IsFileAccessAllowedFromNetwork() {
+#if defined(USE_NEVA_APPRUNTIME)
+  return GetContentClient()->browser()->IsFileAccessAllowedFromNetwork();
+#else
+  return false;
+#endif
 }
 
 // Returns an experimental process shutdown delay if the SubframeShutdownDelay
@@ -2380,7 +2396,9 @@ void RenderFrameHostImpl::ExecuteJavaScriptMethod(
 void RenderFrameHostImpl::ExecuteJavaScript(const std::u16string& javascript,
                                             JavaScriptResultCallback callback) {
   DCHECK_CURRENTLY_ON(BrowserThread::UI);
+#if !defined(USE_NEVA_APPRUNTIME)
   CHECK(CanExecuteJavaScript());
+#endif
 
   const bool wants_result = !callback.is_null();
   GetAssociatedLocalFrame()->JavaScriptExecuteRequest(javascript, wants_result,
@@ -2537,6 +2555,11 @@ void RenderFrameHostImpl::OnAssociatedInterfaceRequest(
           this, interface_name, &handle)) {
     return;
   }
+
+#if defined(USE_NEVA_APPRUNTIME)
+  delegate_->OnAssociatedInterfaceRequest(this, interface_name,
+                                          std::move(handle));
+#endif
 }
 
 void RenderFrameHostImpl::AccessibilityPerformAction(
@@ -3284,12 +3307,17 @@ void RenderFrameHostImpl::DidAddMessageToConsole(
     return;
   }
 
+#if defined(OS_WEBOS) && defined(USE_PMLOG)
+  // In webOS we keep always the original debug level to forward to LOG
+  const bool is_builtin_component = true;
+#else
   // Pass through log severity only on builtin components pages to limit console
   // spew.
   const bool is_builtin_component =
       HasWebUIScheme(delegate_->GetMainFrameLastCommittedURL()) ||
       GetContentClient()->browser()->IsBuiltinComponent(
           GetProcess()->GetBrowserContext(), GetLastCommittedOrigin());
+#endif
   const bool is_off_the_record =
       GetSiteInstance()->GetBrowserContext()->IsOffTheRecord();
 
@@ -4735,6 +4763,18 @@ void RenderFrameHostImpl::UpdateTargetURL(
 }
 
 void RenderFrameHostImpl::RequestClose() {
+#if defined(USE_NEVA_APPRUNTIME)
+  if (render_view_host_->GetDelegate() && render_view_host_->GetDelegate()
+                                              ->GetOrCreateWebPreferences()
+                                              .keep_alive_webapp) {
+    // this is keepAlive app, window.close() should't close this app.
+    // Just notify about this 'trying close' without any setting for real view
+    // closing
+    render_view_host_->GetDelegate()->Close(render_view_host());
+    return;
+  }
+#endif
+
   // If the renderer is telling us to close, it has already run the unload
   // events, and we can take the fast path.
   render_view_host_->ClosePageIgnoringUnloadEvents();
@@ -6275,6 +6315,38 @@ void RenderFrameHostImpl::SetKeepAliveTimeoutForTesting(
   keep_alive_handle_factory_.set_timeout(timeout);
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
+void RenderFrameHostImpl::DropAllPeerConnections(base::OnceClosure cb) {
+  GetPeerConnectionTrackerHost().DropAllConnections(cb);
+}
+#endif  // defined(USE_NEVA_APPRUNTIME)
+
+#if defined(USE_NEVA_MEDIA)
+mojom::FrameMediaController* RenderFrameHostImpl::GetFrameMediaController() {
+  if (!frame_media_controller_)
+    GetRemoteAssociatedInterfaces()->GetInterface(&frame_media_controller_);
+  return frame_media_controller_.get();
+}
+
+void RenderFrameHostImpl::SetSuppressed(bool is_suppressed) {
+  if (GetFrameMediaController())
+    GetFrameMediaController()->SetSuppressed(is_suppressed);
+}
+
+gfx::AcceleratedWidget RenderFrameHostImpl::GetAcceleratedWidget() {
+  RenderWidgetHostViewBase* view = static_cast<RenderWidgetHostViewBase*>(
+      frame_tree_node_->IsMainFrame()
+          ? render_view_host_->GetWidget()->GetView()
+          : frame_tree_node_->frame_tree()
+                ->GetMainFrame()
+                ->render_view_host_->GetWidget()
+                ->GetView());
+  if (view)
+    return view->GetAcceleratedWidget();
+  return gfx::kNullAcceleratedWidget;
+}
+#endif
+
 void RenderFrameHostImpl::UpdateState(const blink::PageState& state) {
   OPTIONAL_TRACE_EVENT1("content", "RenderFrameHostImpl::UpdateState",
                         "render_frame_host", this);
@@ -7041,6 +7113,15 @@ CanCommitStatus RenderFrameHostImpl::CanCommitOriginAndUrl(
   // can bypass these rules, such as --disable-web-security or certain Android
   // WebView features like universal access from file URLs.
 
+#if defined(USE_NEVA_APPRUNTIME)
+  if (origin.scheme() == url::kFileScheme) {
+    blink::RendererPreferences* renderer_prefs =
+        WebContents::FromRenderFrameHost(this)->GetMutableRendererPrefs();
+    if (!renderer_prefs->file_security_origin.empty())
+      return CanCommitStatus::CAN_COMMIT_ORIGIN_AND_URL;
+  }
+#endif
+
   // Renderer-debug URLs can never be committed.
   if (blink::IsRendererDebugURL(url)) {
     LogCanCommitOriginAndUrlFailureReason("is_renderer_debug_url");
@@ -7598,6 +7679,12 @@ void RenderFrameHostImpl::CommitNavigation(
         navigation_request->GetSubresourceWebBundleNavigationInfo();
   }
 
+#if defined(USE_NEVA_APPRUNTIME)
+  WebContents* web_contents = WebContents::FromRenderFrameHost(this);
+  if (web_contents->GetDelegate()->GetAllowLocalResourceLoad())
+    commit_params->can_load_local_resources = true;
+#endif
+
   UpdatePermissionsForNavigation(*common_params, *commit_params);
 
   // Get back to a clean state, in case we start a new navigation without
@@ -7780,7 +7867,9 @@ void RenderFrameHostImpl::CommitNavigation(
     //
     // For loading Web Bundle files, we don't set FileURLLoaderFactory.
     // Because loading local files from a Web Bundle file is prohibited.
-    if (effective_scheme == url::kFileScheme && !navigation_to_web_bundle) {
+    if ((effective_scheme == url::kFileScheme ||
+         IsFileAccessAllowedFromNetwork()) &&
+        !navigation_to_web_bundle) {
       // USER_BLOCKING because this scenario is exactly one of the examples
       // given by the doc comment for USER_BLOCKING: Loading and rendering a web
       // page after the user clicks a link.
@@ -8119,6 +8208,16 @@ void RenderFrameHostImpl::SetUpMojoIfNeeded() {
                 blink::mojom::LocalFrameHost::Name_));
       },
       base::Unretained(this)));
+
+#if defined(USE_NEVA_MEDIA)
+  associated_registry_->AddInterface(base::BindRepeating(
+      [](RenderFrameHostImpl* impl,
+         mojo::PendingAssociatedReceiver<
+             content::mojom::FrameVideoWindowFactory> receiver) {
+        impl->frame_video_window_factory_receiver_.Bind(std::move(receiver));
+      },
+      base::Unretained(this)));
+#endif  // defined(USE_NEVA_MEDIA)
 
   if (frame_tree_node_->IsMainFrame()) {
     associated_registry_->AddInterface(base::BindRepeating(

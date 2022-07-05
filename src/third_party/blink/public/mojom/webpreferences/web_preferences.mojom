@@ -66,6 +66,13 @@ enum AutoplayPolicy {
   kDocumentUserActivationRequired,
 };
 
+// Policy for when to display the first frame when launching a webapp.
+// Should match the class in first_frame_policy.h.
+enum FirstFramePolicy {
+  kImmediate,
+  kContents,
+};
+
 enum EffectiveConnectionType {
   // Effective connection type reported when the network quality is unknown.
   kEffectiveConnectionUnknownType,
@@ -271,6 +278,8 @@ struct WebPreferences {
   // Representation of the Web App Manifest scope if any.
   url.mojom.Url web_app_scope;
 
+  bool accessibility_explore_by_mouse_enabled;
+
   [EnableIf=is_android]
   float font_scale_factor;
 
@@ -378,6 +387,25 @@ struct WebPreferences {
   // TODO(changwan): remove this once we no longer support Android N.
   bool do_not_update_selection_on_mutating_selection_range;
 
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  // Policy for when to display the first frame when launching a webapp.
+  [EnableIf=neva_appruntime]
+  FirstFramePolicy first_frame_policy;
+
+  // Keep alive webapp.
+  [EnableIf=neva_appruntime]
+  bool keep_alive_webapp;
+  ///@}
+
+  ///@name USE_NEVA_MEDIA
+  ///@{
+  // The spec says to fire periodic timeupdate events (those sent while playing)
+  // every "15 to 250ms"
+  [EnableIf=neva_media]
+  int32 max_timeupdate_event_frequency;
+  ///@}
+
   // Defines the current autoplay policy.
   AutoplayPolicy autoplay_policy;
 
@@ -437,6 +465,11 @@ struct WebPreferences {
 
   // Controls whether WebXR's immersive-ar is allowed.
   bool webxr_immersive_ar_allowed;
+
+  // CSS UI keyboard control properties (‘nav-index’, ‘nav-up’, ‘nav-down’,
+  // ‘nav-right’, ‘nav-left’) support.
+  // See https://www.w3.org/TR/2021/WD-css-ui-4-20210316/#nav-dir
+  bool css_navigation_enabled;
 
   // Origin the subresources such as images should be redirected to when the
   // kSubresourceRedirect feature is enabled.

@@ -5,7 +5,11 @@
 #ifndef UI_OZONE_PLATFORM_WAYLAND_HOST_WAYLAND_KEYBOARD_H_
 #define UI_OZONE_PLATFORM_WAYLAND_HOST_WAYLAND_KEYBOARD_H_
 
-#include <keyboard-extension-unstable-v1-client-protocol.h>
+///@name USE_NEVA_APPRUNTIME
+///@{
+// The header below moved to the 'wayland_keyboard.cc'
+//#include <keyboard-extension-unstable-v1-client-protocol.h>
+///@}
 
 #include <cstdint>
 

@@ -1,0 +1,61 @@
+From 20f6074f6735d664fc398c1ca74aceb5d291d646 Mon Sep 17 00:00:00 2001
+From: Jose Dapena Paz <j.dapena@lgepartner.com>
+Date: Wed, 15 Dec 2021 17:05:15 +0100
+Subject: [PATCH 2/3] [op][upsable][trace] Prevent crash with std::isprint
+ usage in serialization trace.
+
+:Release Notes:
+Do not crash tracing serialization.
+
+:Detailed Notes:
+Enabling v8 tracing serialization with --trace_serialization passed to
+the v8 flags can cause crashes in the call to std::isprint used
+to identify if a V8 string character can be printed.
+
+This is a known issue in GCC, and it is because a uint16_t is obtained
+from the stored stream that could actually point to a character out
+of bounds. To avoid this problem, std::isprint, that expects an int
+parameter, needs to be fed with a value that can be represented as
+EOF or unsigned char.
+
+Depends on: http://gpro.lge.com/c/webosose/chromium94/+/325679
+
+:Testing Performed:
+Launched test application with --trace_serialization, and it does not
+crash on launching. Log output shows the serialization log.
+
+:QA Notes:
+Test-cases: QWT-626
+
+:Issues Addressed:
+[WRN-12693] "ExtraJS Test" app is not Launching
+
+Change-Id: I3b010f03e5d30af89cc7ebfa7957e027943ffea1
+Originally-Reviewed-on: http://gpro.lge.com/c/webosose/chromium-v8/+/321982
+Reviewed-on: http://gpro.lge.com/c/webosose/chromium-v8/+/325680
+Reviewed-by: Commit Msg Checker <commit_msg@lge.com>
+Reviewed-by: Ban Word Checker <ban_word@lge.com>
+Reviewed-by: Wanchang Ryu <wanchang.ryu@lge.com>
+Reviewed-by: Jose Dapena Paz <j.dapena@lgepartner.com>
+Reviewed-by: Donghyun Kim <donghyun11.kim@lge.com>
+Tested-by: Wanchang Ryu <wanchang.ryu@lge.com>
+---
+ src/objects/string.cc | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/objects/string.cc b/src/objects/string.cc
+index 4b18ee3d05..9965e6006c 100644
+--- a/src/objects/string.cc
++++ b/src/objects/string.cc
+@@ -422,7 +422,7 @@ void String::PrintUC16(StringStream* accumulator, int start, int end) {
+       accumulator->Add("\\r");
+     } else if (c == '\\') {
+       accumulator->Add("\\\\");
+-    } else if (!std::isprint(c)) {
++    } else if (!std::isprint(static_cast<char>(c))) {
+       accumulator->Add("\\x%02x", c);
+     } else {
+       accumulator->Put(static_cast<char>(c));
+-- 
+2.36.1
+

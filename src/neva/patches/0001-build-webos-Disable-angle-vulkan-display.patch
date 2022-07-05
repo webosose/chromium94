@@ -1,0 +1,52 @@
+From 571434abcf5732a840c23a78e8095e78bfcc5fcf Mon Sep 17 00:00:00 2001
+From: JunHo Seo <junho0924.seo@lge.com>
+Date: Wed, 8 Dec 2021 13:18:25 +0900
+Subject: [PATCH] [build][webos] Disable angle_use_vulkan_display
+
+:Release Notes:
+Disabled a build flag in angle to make build success for webOS.
+
+:Detailed Notes:
+From https://crrev.com/c/3043626, angle_use_vulkan_display is enabled
+for linux build. This triggers vulkan target in swiftshader.
+Vulkan target in swiftshader uses XCB code block and includes xcb.h
+header for linux build. But unfortunately, webOS build system doesn't
+have the header.
+To fix the problem, this patch disables angle_use_vulkan_display
+for webOS build.
+
+:Testing Performed:
+1. Build should be successful for webOS starfish build.
+
+:QA Notes:
+
+:Issues Addressed:
+[NEVA-6652] Upgrade neva-master-rolling up to 4587 BUILD
+---
+ gni/angle.gni | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/gni/angle.gni b/gni/angle.gni
+index 9b0ca3af3..2e66de48b 100644
+--- a/gni/angle.gni
++++ b/gni/angle.gni
+@@ -28,6 +28,7 @@ if (angle_has_build) {
+   import("//build/config/ui.gni")  # import the use_x11 variable
+   import("//build_overrides/build.gni")
+   import("//testing/test.gni")
++  import("//neva/neva.gni")
+   if (is_android) {
+     import("//build/config/android/config.gni")
+   }
+@@ -41,7 +42,7 @@ if (angle_has_build) {
+   }
+ 
+   angle_use_x11 = use_x11 && !is_ggp
+-  angle_use_vulkan_display = is_linux && !is_ggp
++  angle_use_vulkan_display = is_linux && !is_ggp && !is_webos
+ } else {
+   declare_args() {
+     is_ubsan = false
+-- 
+2.25.1
+

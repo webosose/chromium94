@@ -498,6 +498,11 @@ class CONTENT_EXPORT RenderWidgetHostViewBase : public RenderWidgetHostView {
   void OnFrameTokenChangedForView(uint32_t frame_token,
                                   base::TimeTicks activation_time);
 
+#if defined(USE_NEVA_APPRUNTIME)
+  // For any swap that has been completed.
+  void OnSwapCompleted();
+#endif
+
   // Add and remove observers for lifetime event notifications. The order in
   // which notifications are sent to observers is undefined. Clients must be
   // sure to remove the observer before they go away.
@@ -526,6 +531,10 @@ class CONTENT_EXPORT RenderWidgetHostViewBase : public RenderWidgetHostView {
   bool is_currently_scrolling_viewport() {
     return is_currently_scrolling_viewport_;
   }
+
+#if defined(USE_NEVA_MEDIA)
+  virtual gfx::AcceleratedWidget GetAcceleratedWidget();
+#endif  // defined(USE_NEVA_MEDIA)
 
   virtual void DidNavigate();
 
@@ -653,6 +662,10 @@ class CONTENT_EXPORT RenderWidgetHostViewBase : public RenderWidgetHostView {
   bool view_stopped_flinging_for_test() const {
     return view_stopped_flinging_for_test_;
   }
+
+#if defined(USE_NEVA_MEDIA)
+  gfx::PointF additional_contents_scale_;
+#endif
 
   base::ObserverList<RenderWidgetHostViewBaseObserver>::Unchecked observers_;
 

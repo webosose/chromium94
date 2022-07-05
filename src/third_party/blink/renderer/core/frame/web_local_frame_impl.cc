@@ -263,6 +263,10 @@
 #include "third_party/blink/renderer/platform/wtf/casting.h"
 #include "third_party/blink/renderer/platform/wtf/hash_map.h"
 
+#if defined(USE_NEVA_APPRUNTIME)
+#include "third_party/blink/renderer/core/paint/first_meaningful_paint_detector.h"
+#endif
+
 namespace blink {
 
 static int g_frame_count = 0;
@@ -1964,6 +1968,9 @@ WebLocalFrameImpl::WebLocalFrameImpl(
       interface_registry_(interface_registry),
       input_method_controller_(*this),
       spell_check_panel_host_client_(nullptr),
+#if defined(USE_NEVA_MEDIA)
+      suppress_media_play_(false),
+#endif
       self_keep_alive_(PERSISTENT_FROM_HERE, this) {
   CHECK(client_);
   g_frame_count++;
@@ -2317,6 +2324,25 @@ void WebLocalFrameImpl::SendPings(const WebURL& destination_url) {
   }
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
+void WebLocalFrameImpl::ResetStateToMarkNextPaint() {
+  if (!GetFrame())
+    return;
+
+  FirstMeaningfulPaintDetector::From(*(GetFrame()->GetDocument()))
+      .ResetStateToMarkNextPaint();
+}
+#endif
+
+#if defined(USE_NEVA_MEDIA)
+void WebLocalFrameImpl::SetSuppressMediaPlay(bool suppress) {
+  suppress_media_play_ = suppress;
+}
+bool WebLocalFrameImpl::IsSuppressedMediaPlay() const {
+  return suppress_media_play_;
+}
+#endif
+
 bool WebLocalFrameImpl::DispatchBeforeUnloadEvent(bool is_reload) {
   if (!GetFrame())
     return true;
@@ -2338,6 +2364,21 @@ void WebLocalFrameImpl::CommitNavigation(
   GetFrame()->Loader().CommitNavigation(std::move(navigation_params),
                                         std::move(extra_data));
 }
+
+#if defined(USE_NEVA_APPRUNTIME)
+void WebLocalFrameImpl::UpdateForSameDocumentNavigation(
+    const std::string& new_url) {
+  DCHECK(GetFrame());
+  GetFrame()->GetDocument()->Loader()->UpdateForSameDocumentNavigation(
+      blink::KURL(blink::KURL(),
+                  WTF::String::FromUTF8(new_url.data(), new_url.length())),
+      mojom::blink::SameDocumentNavigationType::kHistoryApi, nullptr,
+      blink::mojom::ScrollRestorationType::kAuto,
+      blink::WebFrameLoadType::kReplaceCurrentItem,
+      frame_->DomWindow()->GetSecurityOrigin(),
+      /*is_content_initiated=*/false);
+}
+#endif  // defined(USE_NEVA_APPRUNTIME)
 
 blink::mojom::CommitResult WebLocalFrameImpl::CommitSameDocumentNavigation(
     const WebURL& url,

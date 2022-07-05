@@ -209,6 +209,16 @@ void WaylandEventSource::OnPointerMotionEvent(const gfx::PointF& location) {
 void WaylandEventSource::OnPointerAxisEvent(const gfx::Vector2dF& offset) {
   current_pointer_frame_.dx += offset.x();
   current_pointer_frame_.dy += offset.y();
+
+#if defined(USE_NEVA_APPRUNTIME)
+  // Workaround for LSM & weston 3.0.0 not emitting wl_pointer.axis_source event
+  OnPointerAxisSourceEvent(WL_POINTER_AXIS_SOURCE_WHEEL);
+#if defined(OS_WEBOS)
+  // Workaround for LSM not emitting wl_pointer.frame event
+  // See wayland core protocol wl_pointer v5 additions
+  OnPointerFrameEvent();
+#endif  // defined(OS_WEBOS)
+#endif  // defined(USE_NEVA_APPRUNTIME)
 }
 
 void WaylandEventSource::OnResetPointerFlags() {

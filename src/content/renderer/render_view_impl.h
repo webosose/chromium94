@@ -150,6 +150,13 @@ class CONTENT_EXPORT RenderViewImpl : public blink::WebViewClient,
   static WindowOpenDisposition NavigationPolicyToDisposition(
       blink::WebNavigationPolicy policy);
 
+#if defined(USE_NEVA_SUSPEND_MEDIA_CAPTURE)
+  // Make the audio capture devices (e.g. webcam) stop/resume delivering audio
+  // frames to their clients, depending on flag |suspend|. This is called in
+  // response to a RenderView PageHidden/Shown().
+  void SuspendAudioCaptureDevices(bool suspend);
+#endif  // defined(USE_NEVA_SUSPEND_MEDIA_CAPTURE)
+
   // ---------------------------------------------------------------------------
   // ADDING NEW FUNCTIONS? Please keep private functions alphabetized and put
   // it in the same order in the .cc file as it was in the header.

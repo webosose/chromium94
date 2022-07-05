@@ -48,6 +48,9 @@ class WaylandToplevelWindow : public WaylandWindow,
   // PlatformWindow:
   void Show(bool inactive) override;
   void Hide() override;
+#if defined(USE_NEVA_MEDIA)
+  void Close() override;
+#endif  // defined(USE_NEVA_MEDIA)
   bool IsVisible() const override;
   void SetTitle(const std::u16string& title) override;
   void ToggleFullscreen() override;
@@ -68,6 +71,12 @@ class WaylandToplevelWindow : public WaylandWindow,
   void SetOpaqueRegion(std::vector<gfx::Rect> region_px) override;
   void SetInputRegion(gfx::Rect region_px) override;
   void SetAspectRatio(const gfx::SizeF& aspect_ratio) override;
+
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  void HandleStateChanged(PlatformWindowState state) override;
+  void HandleActivationChanged(bool is_activated) override;
+  ///@}
 
   // WaylandWindow overrides:
   absl::optional<std::vector<gfx::Rect>> GetWindowShape() const override;

@@ -149,6 +149,9 @@ const base::FeatureParam<std::string>
 const base::Feature kNetUnusedIdleSocketTimeout{
     "NetUnusedIdleSocketTimeout", base::FEATURE_DISABLED_BY_DEFAULT};
 
+const base::Feature kAggressiveFlushing{"AggressiveFlushing",
+                                        base::FEATURE_DISABLED_BY_DEFAULT};
+
 const base::Feature kShortLaxAllowUnsafeThreshold{
     "ShortLaxAllowUnsafeThreshold", base::FEATURE_DISABLED_BY_DEFAULT};
 

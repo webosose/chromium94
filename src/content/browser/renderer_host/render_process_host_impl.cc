@@ -80,6 +80,7 @@
 #include "components/tracing/common/tracing_switches.h"
 #include "components/viz/common/switches.h"
 #include "components/viz/host/gpu_client.h"
+#include "components/watchdog/switches.h"
 #include "content/browser/appcache/chrome_appcache_service.h"
 #include "content/browser/bad_message.h"
 #include "content/browser/blob_storage/blob_registry_wrapper.h"
@@ -264,6 +265,30 @@
 
 #if BUILDFLAG(ENABLE_LIBRARY_CDMS)
 #include "content/browser/media/key_system_support_impl.h"
+#endif
+
+#if defined(USE_MEMORY_TRACE) || defined(USE_NEVA_APPRUNTIME)
+#include "base/neva/base_switches.h"
+#endif
+
+#if defined(USE_NEVA_APPRUNTIME)
+#include "content/public/common/content_neva_switches.h"
+#include "neva/pal_service/pal_service.h"
+#include "neva/pal_service/public/mojom/memorymanager.mojom.h"
+#include "neva/pal_service/public/mojom/os_crypt.mojom.h"
+#include "neva/pal_service/public/mojom/sample.mojom.h"
+#include "neva/pal_service/public/mojom/system_servicebridge.mojom.h"
+
+#if defined(ENABLE_BROWSER_SHELL)
+#include "neva/browser_shell/service/public/browser_shell_service.h"
+#include "neva/browser_shell/service/public/mojom/browser_shell_service.mojom.h"
+#endif  // defined(ENABLE_BROWSER_SHELL)
+#endif  // defined(USE_NEVA_APPRUNTIME)
+
+#if defined(USE_NEVA_MEDIA)
+#include "media/base/media_switches_neva.h"
+#include "neva/neva_media_service/neva_media_service.h"
+#include "neva/neva_media_service/public/mojom/media_player.mojom.h"
 #endif
 
 #if BUILDFLAG(ENABLE_PLUGINS)
@@ -1563,10 +1588,14 @@ size_t RenderProcessHost::GetMaxRendererProcessCount() {
   if (g_max_renderer_count_override)
     return g_max_renderer_count_override;
 
-#if defined(OS_ANDROID)
+#if defined(OS_ANDROID) || defined(OS_WEBOS)
   // On Android we don't maintain a limit of renderer process hosts - we are
   // happy with keeping a lot of these, as long as the number of live renderer
   // processes remains reasonable, and on Android the OS takes care of that.
+  //
+  // On webOS memory manager takes care of limiting the number of running
+  // applications, and handling low and critical memory situations. Because
+  // of this, a lower limit is not really required.
   return std::numeric_limits<size_t>::max();
 #elif BUILDFLAG(IS_CHROMEOS_ASH)
   // On Chrome OS new renderer processes are very cheap and there's no OS
@@ -2037,6 +2066,12 @@ bool RenderProcessHostImpl::Init() {
     shutdown_requested_ = false;
   }
 
+#if defined(USE_NEVA_APPRUNTIME)
+  memory_pressure_listener_ = std::make_unique<base::MemoryPressureListener>(
+      FROM_HERE, base::BindRepeating(&RenderProcessHostImpl::OnMemoryPressure,
+                                     weak_factory_.GetWeakPtr()));
+#endif  // defined(USE_NEVA_APPRUNTIME)
+
   last_init_time_ = base::TimeTicks::Now();
   return true;
 }
@@ -2442,6 +2477,53 @@ void RenderProcessHostImpl::WriteIntoTrace(
 
 void RenderProcessHostImpl::RegisterMojoInterfaces() {
   auto registry = std::make_unique<service_manager::BinderRegistry>();
+  VLOG(1) << __func__;
+
+#if defined(USE_NEVA_APPRUNTIME)
+  AddUIThreadInterface(
+      registry.get(),
+      base::BindRepeating(
+          [](mojo::PendingReceiver<pal::mojom::MemoryManager> receiver) {
+            pal::GetPalService().BindMemoryManager(std::move(receiver));
+          }));
+
+  AddUIThreadInterface(
+      registry.get(),
+      base::BindRepeating(
+          [](mojo::PendingReceiver<pal::mojom::Sample> receiver) {
+            pal::GetPalService().BindSample(std::move(receiver));
+          }));
+
+  AddUIThreadInterface(
+      registry.get(),
+      base::BindRepeating(
+          [](mojo::PendingReceiver<pal::mojom::SystemServiceBridgeProvider>
+                 receiver) {
+            pal::GetPalService().BindSystemServiceBridgeProvider(
+                std::move(receiver));
+          }));
+
+#if defined(ENABLE_BROWSER_SHELL)
+  AddUIThreadInterface(
+      registry.get(),
+      base::BindRepeating(
+          [](mojo::PendingReceiver<browser_shell::mojom::ShellService>
+              receiver) {
+            browser_shell::BindShellServiceReceiver(std::move(receiver));
+          }));
+#endif  // defined(ENABLE_BROWSER_SHELL)
+#endif  // defined(USE_NEVA_APPRUNTIME)
+
+#if defined(USE_NEVA_MEDIA)
+  AddUIThreadInterface(
+      registry.get(),
+      base::BindRepeating(
+          [](mojo::PendingReceiver<neva_media::mojom::MediaServiceProvider>
+                 receiver) {
+            neva_media::GetNevaMediaService().BindMediaServiceProvider(
+                std::move(receiver));
+          }));
+#endif
 
   AddUIThreadInterface(
       registry.get(),
@@ -2898,6 +2980,22 @@ bool RenderProcessHostImpl::IsKeepAliveRefCountDisabled() {
 mojom::Renderer* RenderProcessHostImpl::GetRendererInterface() {
   return renderer_interface_.get();
 }
+
+#if defined(USE_NEVA_APPRUNTIME)
+void RenderProcessHostImpl::OnMemoryPressure(
+    base::MemoryPressureListener::MemoryPressureLevel level) {
+  base::MemoryPressureListener::MemoryPressureLevel adjusted_level = level;
+
+  // Reclaim memory aggressively in backgrounded process.
+  if (level == base::MemoryPressureListener::MEMORY_PRESSURE_LEVEL_MODERATE &&
+      IsProcessBackgrounded()) {
+    adjusted_level =
+        base::MemoryPressureListener::MEMORY_PRESSURE_LEVEL_CRITICAL;
+  }
+
+  GetRendererInterface()->OnSystemMemoryPressureLevelChanged(adjusted_level);
+}
+#endif  // defined(USE_NEVA_APPRUNTIME)
 
 // static
 void RenderProcessHostImpl::SetNetworkFactoryForTesting(
@@ -3536,6 +3634,11 @@ void RenderProcessHostImpl::PropagateBrowserCommandLineToRenderer(
     cc::switches::kBrowserControlsShowThreshold,
     switches::kRunAllCompositorStagesBeforeDraw,
 
+    // Watchdog switches.
+    watchdog::switches::kEnableWatchdog,
+    watchdog::switches::kWatchdogRendererPeriod,
+    watchdog::switches::kWatchdogRendererTimeout,
+
 #if BUILDFLAG(ENABLE_PLUGINS)
     switches::kEnablePepperTesting,
 #endif
@@ -3562,6 +3665,28 @@ void RenderProcessHostImpl::PropagateBrowserCommandLineToRenderer(
 #endif
 #if defined(USE_OZONE)
     switches::kOzonePlatform,
+#endif
+#if defined(USE_NEVA_MEDIA)
+    switches::kDisableWebMediaPlayerNeva,
+    switches::kEnableNevaMediaService,
+    switches::kFakeUrlMediaDuration,
+#endif
+#if defined(USE_NEVA_WEBRTC)
+    switches::kEnableWebRTCPlatformVideoDecoder,
+#endif
+#if defined(USE_NEVA_APPRUNTIME)
+    switches::kEnableSampleInjection,
+    switches::kDecodedImageWorkingSetBudgetMB,
+    cc::switches::kMemPressureGPUCacheSizeReductionFactor,
+    cc::switches::kTileManagerLowMemPolicyBytesLimitReductionFactor,
+    blink::switches::kAllowScriptsToCloseWindows,
+    blink::switches::kMinTimeToPurgeAfterBackgroundedInSeconds,
+    blink::switches::kMaxTimeToPurgeAfterBackgroundedInSeconds,
+    cc::switches::kEnableAggressiveReleasePolicy,
+#endif
+#if defined(USE_NEVA_SUSPEND_MEDIA_CAPTURE)
+    switches::kDisableSuspendAudioCapture,
+    switches::kDisableSuspendVideoCapture,
 #endif
 #if defined(ENABLE_IPC_FUZZER)
     switches::kIpcDumpDirectory,
@@ -3595,6 +3720,43 @@ void RenderProcessHostImpl::PropagateBrowserCommandLineToRenderer(
 
   BrowserChildProcessHostImpl::CopyFeatureAndFieldTrialFlags(renderer_cmd);
   BrowserChildProcessHostImpl::CopyTraceStartupFlags(renderer_cmd);
+
+#if defined(USE_MEMORY_TRACE)
+  if (browser_cmd.HasSwitch(switches::kTraceMemoryRenderer)) {
+    // Pass kTraceMemoryRenderer switch to renderer
+    renderer_cmd->AppendSwitchASCII(
+        switches::kTraceMemoryRenderer,
+        browser_cmd.GetSwitchValueASCII(switches::kTraceMemoryRenderer));
+  }
+
+  if (browser_cmd.HasSwitch(switches::kTraceMemoryInterval)) {
+    // Pass kTraceMemoryInterval switch to renderer
+    renderer_cmd->AppendSwitchASCII(
+        switches::kTraceMemoryInterval,
+        browser_cmd.GetSwitchValueASCII(switches::kTraceMemoryInterval));
+  }
+
+  if (browser_cmd.HasSwitch(switches::kTraceMemoryToFile)) {
+    // Pass kTraceMemoryToFile switch to renderer
+    renderer_cmd->AppendSwitchASCII(
+        switches::kTraceMemoryToFile,
+        browser_cmd.GetSwitchValueASCII(switches::kTraceMemoryToFile));
+  }
+
+  if (browser_cmd.HasSwitch(switches::kTraceMemoryLogFormat)) {
+    // Pass kTraceMemoryLogFormat switch to renderer
+    renderer_cmd->AppendSwitchASCII(
+        switches::kTraceMemoryLogFormat,
+        browser_cmd.GetSwitchValueASCII(switches::kTraceMemoryLogFormat));
+  }
+
+  if (browser_cmd.HasSwitch(switches::kTraceMemoryByteUnit)) {
+    // Pass kTraceMemoryByteUnit switch to renderer
+    renderer_cmd->AppendSwitchASCII(
+        switches::kTraceMemoryByteUnit,
+        browser_cmd.GetSwitchValueASCII(switches::kTraceMemoryByteUnit));
+  }
+#endif
 
   // Disable databases in incognito mode.
   if (GetBrowserContext()->IsOffTheRecord() &&

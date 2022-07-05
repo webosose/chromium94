@@ -97,6 +97,13 @@ class BLINK_PLATFORM_EXPORT WebMediaPlayerParams {
     return audio_renderer_sink_;
   }
 
+#if defined(USE_NEVA_MEDIA)
+  void set_audio_renderer_sink(
+      const scoped_refptr<media::SwitchableAudioRendererSink>& audio_renderer_sink) {
+    audio_renderer_sink_ = audio_renderer_sink;
+  }
+#endif
+
   std::unique_ptr<media::MediaLog> take_media_log() {
     return std::move(media_log_);
   }

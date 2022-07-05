@@ -192,6 +192,8 @@ class CORE_EXPORT WebFrameWidgetImpl
                      base::OnceCallback<void(bool)>) override;
   void NotifyPresentationTimeInBlink(
       WebReportTimeCallback presentation_callback) final;
+  void NotifyVizFMPSwap(bool is_first_contentful_paint,
+                        bool did_reset_container_state) final;
   void RequestBeginMainFrameNotExpected(bool request) final;
   int GetLayerTreeId() final;
   const cc::LayerTreeSettings& GetLayerTreeSettings() final;
@@ -345,6 +347,9 @@ class CORE_EXPORT WebFrameWidgetImpl
   void SetCursor(const ui::Cursor& cursor) override;
   bool HandlingInputEvent() override;
   void SetHandlingInputEvent(bool handling) override;
+#if defined(USE_NEVA_APPRUNTIME)
+  bool HasImeEventGuard() const override;
+#endif
   void ProcessInputEventSynchronouslyForTesting(const WebCoalescedInputEvent&,
                                                 HandledEventCallback) override;
   WebInputEventResult DispatchBufferedTouchEvents() override;
@@ -388,6 +393,10 @@ class CORE_EXPORT WebFrameWidgetImpl
                          const gfx::PointF& screen_point,
                          ui::mojom::blink::DragOperation,
                          base::OnceClosure callback) override;
+#if defined(USE_NEVA_APPRUNTIME)
+  void ActivateCompositor() override;
+  void DeactivateCompositor() override;
+#endif  // USE_NEVA_APPRUNTIME
 
   // Sets the display mode, which comes from the top-level browsing context and
   // is applied to all widgets.

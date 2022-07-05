@@ -85,6 +85,12 @@ const char* LoadTypeToString(WebMediaPlayer::LoadType type) {
       return "MediaSource";
     case WebMediaPlayer::kLoadTypeMediaStream:
       return "MediaStream";
+#if defined(USE_NEVA_MEDIA)
+    case blink::WebMediaPlayer::kLoadTypeBlobURL:
+      return "BlobURL";
+    case blink::WebMediaPlayer::kLoadTypeDataURL:
+      return "DataURL";
+#endif
   }
 }
 
@@ -175,6 +181,11 @@ class WebMediaPlayerMS::FrameDeliverer {
 
   void OnVideoFrame(scoped_refptr<media::VideoFrame> frame) {
     DCHECK_CALLED_ON_VALID_THREAD(io_thread_checker_);
+
+#if defined(USE_NEVA_WEBRTC)
+    if (render_frame_suspended_ || player_->HandleVideoFrame(frame))
+      return;
+#endif
 
 // On Android, stop passing frames.
 #if defined(OS_ANDROID)
@@ -1124,6 +1135,19 @@ void WebMediaPlayerMS::OnIdleTimeout() {}
 void WebMediaPlayerMS::SetVolumeMultiplier(double multiplier) {
   // TODO(perkj, magjed): See TODO in OnPlay().
 }
+
+#if defined(USE_NEVA_WEBRTC)
+void WebMediaPlayerMS::EnqueueHoleFrame(
+    scoped_refptr<media::VideoFrame>& hole_frame) {
+  if (frame_deliverer_) {
+    PostCrossThreadTask(
+        *io_task_runner_, FROM_HERE,
+        CrossThreadBindOnce(&FrameDeliverer::EnqueueFrame,
+                            CrossThreadUnretained(frame_deliverer_.get()),
+                            hole_frame->unique_id(), hole_frame));
+  }
+}
+#endif
 
 void WebMediaPlayerMS::ActivateSurfaceLayerForVideo() {
   // Note that we might or might not already be in VideoLayer mode.

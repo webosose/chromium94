@@ -10,6 +10,7 @@ import("//build/config/features.gni")
 import("//build/toolchain/toolchain.gni")
 import("//media/cdm/library_cdm/cdm_paths.gni")
 import("//media/media_options.gni")
+import("//neva/neva.gni")
 import("//third_party/widevine/cdm/widevine.gni")
 
 buildflag_header("buildflags") {
@@ -50,6 +51,8 @@ if (bundle_widevine_cdm) {
     assert(is_win || is_mac)
     widevine_cdm_binary_files += [ "${widevine_cdm_root}/${cdm_file_name}.sig" ]
   }
+} else if (enable_widevine && is_webos) {
+  widevine_cdm_version_h_file = "webos/widevine_cdm_version.h"
 }
 
 # For ChromeOS Ash build, the CDM is not component updated hence no manifest.

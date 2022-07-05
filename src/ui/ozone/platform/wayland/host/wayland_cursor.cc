@@ -17,6 +17,14 @@
 #include "ui/ozone/platform/wayland/host/wayland_pointer.h"
 #include "ui/ozone/platform/wayland/host/wayland_shm.h"
 
+///@name USE_NEVA_APPRUNTIME
+///@{
+#include "ui/views/widget/desktop_aura/neva/ui_constants.h"
+#if defined(USE_NEVA_APPRUNTIME)
+#include "ui/gfx/neva/file_utils.h"
+#endif
+///@}
+
 namespace ui {
 
 WaylandCursor::WaylandCursor(WaylandPointer* pointer,
@@ -41,8 +49,14 @@ void WaylandCursor::UpdateBitmap(const std::vector<SkBitmap>& cursor_image,
   if (!pointer_)
     return;
 
-  if (!cursor_image.size())
+  if (!cursor_image.size()) {
+#if defined(OS_WEBOS)
+    if (hotspot_in_dips == lsm_cursor_hide_hotspot ||
+        hotspot_in_dips == lsm_cursor_restore_hotspot)
+      return SetLSMCursorAndCommit(hotspot_in_dips);
+#endif
     return HideCursor();
+  }
 
   const SkBitmap& image = cursor_image[0];
   if (image.dimensions().isEmpty())
@@ -151,5 +165,16 @@ void WaylandCursor::AttachAndCommit(wl_buffer* buffer,
 
   connection_->ScheduleFlush();
 }
+
+#if defined(OS_WEBOS)
+void WaylandCursor::SetLSMCursorAndCommit(const gfx::Point& hotspot_in_dips) {
+  wl_pointer_set_cursor(pointer_->wl_object(), connection_->serial(),
+                        pointer_surface_.get(), hotspot_in_dips.x(),
+                        hotspot_in_dips.y());
+  wl_surface_commit(pointer_surface_.get());
+
+  connection_->ScheduleFlush();
+}
+#endif
 
 }  // namespace ui

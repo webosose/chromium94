@@ -94,6 +94,12 @@ StatusCode PipelineStatusToStatusCode(PipelineStatus status) {
       return StatusCode::kPipelineErrorDemuxerErrorDetectedHLS;
     case PIPELINE_ERROR_HARDWARE_CONTEXT_RESET:
       return StatusCode::kPipelineErrorHardwareContextReset;
+#if defined(USE_NEVA_MEDIA)
+    case PIPELINE_ERROR_DECRYPT:
+      return StatusCode::kPipelineErrorDecrypt;
+    case DECODER_ERROR_RESOURCE_IS_RELEASED:
+      return StatusCode::kDecodeErrorResourceIsReleased;
+#endif  // defined(USE_NEVA_MEDIA)
   }
 
   NOTREACHED();
@@ -108,6 +114,10 @@ std::string PipelineStatusToString(PipelineStatus status) {
     return #status
 
   switch (status) {
+#if defined(USE_NEVA_MEDIA)
+    STRINGIFY_STATUS_CASE(DECODER_ERROR_RESOURCE_IS_RELEASED);
+    STRINGIFY_STATUS_CASE(PIPELINE_ERROR_DECRYPT);
+#endif
     STRINGIFY_STATUS_CASE(PIPELINE_OK);
     STRINGIFY_STATUS_CASE(PIPELINE_ERROR_NETWORK);
     STRINGIFY_STATUS_CASE(PIPELINE_ERROR_DECODE);

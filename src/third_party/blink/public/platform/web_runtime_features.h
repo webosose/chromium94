@@ -90,6 +90,9 @@ class WebRuntimeFeatures {
   BLINK_PLATFORM_EXPORT static void EnableBlockingFocusWithoutUserActivation(
       bool);
   BLINK_PLATFORM_EXPORT static void EnableCacheInlineScriptCode(bool);
+#if defined(USE_FILESCHEME_CODECACHE)
+  BLINK_PLATFORM_EXPORT static void EnableLocalResourceCodeCache(bool);
+#endif
   BLINK_PLATFORM_EXPORT static void EnableCapabilityDelegationPaymentRequest(
       bool enable);
   BLINK_PLATFORM_EXPORT static void EnableClickPointerEvent(bool enable);
@@ -98,6 +101,8 @@ class WebRuntimeFeatures {
   BLINK_PLATFORM_EXPORT static void EnableCanvas2dImageChromium(bool);
   BLINK_PLATFORM_EXPORT static void EnableCooperativeScheduling(bool);
   BLINK_PLATFORM_EXPORT static void EnableCSSHexAlphaColor(bool);
+  BLINK_PLATFORM_EXPORT static void EnableCSSNavigation(bool);
+  BLINK_PLATFORM_EXPORT static void EnableSameSiteByDefaultCookies(bool);
   BLINK_PLATFORM_EXPORT static void EnableScrollTopLeftInterop(bool);
   BLINK_PLATFORM_EXPORT static void EnableKeyboardAccessibleTooltip(bool);
   BLINK_PLATFORM_EXPORT static void EnableKeyboardFocusableScrollers(bool);

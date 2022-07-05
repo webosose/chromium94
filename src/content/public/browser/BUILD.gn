@@ -5,6 +5,7 @@
 import("//build/config/chromeos/ui_mode.gni")
 import("//build/config/ui.gni")
 import("//device/vr/buildflags/buildflags.gni")
+import("//neva/neva.gni")
 import("//ppapi/buildflags/buildflags.gni")
 import("//third_party/protobuf/proto_library.gni")
 import("//third_party/webrtc/webrtc.gni")
@@ -106,6 +107,8 @@ source_set("browser_sources") {
     "console_message.cc",
     "console_message.h",
     "contacts_picker_properties_requested.h",
+    "data_deleter.cc",
+    "data_deleter.h",
     "content_browser_client.cc",
     "content_browser_client.h",
     "content_index_context.h",
@@ -415,6 +418,7 @@ source_set("browser_sources") {
     "websocket_handshake_request_info.h",
     "worker_type.h",
   ]
+
   configs += [
     "//build/config:precompiled_headers",
     "//build/config/compiler:wexit_time_destructors",
@@ -504,7 +508,18 @@ source_set("browser_sources") {
     "//content/browser",
   ]
 
-  if (is_chromeos || is_android || is_win || is_chromecast || is_fuchsia) {
+  if (use_neva_appruntime) {
+    sources += [
+      "web_contents_receiver_set.cc",
+      "web_contents_receiver_set.h",
+    ]
+  }
+
+  if (use_neva_media) {
+    sources += [ "neva/media_state_manager.h" ]
+  }
+
+  if (is_chromeos_ash || is_android || is_chromecast || is_fuchsia || is_webos) {
     defines = [ "ENABLE_PROTECTED_MEDIA_IDENTIFIER_PERMISSION" ]
   }
 

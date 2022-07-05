@@ -16,6 +16,11 @@
 #include "ui/gfx/geometry/insets.h"
 #endif  // defined(OS_FUCHSIA)
 
+///@name USE_NEVA_APPRUNTIME
+///@{
+#include "ui/platform_window/neva/platform_window_delegate.h"
+///@}
+
 namespace gfx {
 class Rect;
 class Size;
@@ -26,6 +31,11 @@ class SkPath;
 namespace ui {
 
 class Event;
+
+///@name USE_NEVA_APPRUNTIME
+///@{
+class LinuxInputMethodContext;
+///@}
 
 enum class PlatformWindowState {
   kUnknown,
@@ -42,7 +52,12 @@ enum class PlatformWindowOcclusionState {
   kHidden,
 };
 
-class COMPONENT_EXPORT(PLATFORM_WINDOW) PlatformWindowDelegate {
+class COMPONENT_EXPORT(PLATFORM_WINDOW) PlatformWindowDelegate
+    ///@name USE_NEVA_APPRUNTIME
+    ///@{
+    : public neva::PlatformWindowDelegate
+    ///@}
+{
  public:
   struct COMPONENT_EXPORT(PLATFORM_WINDOW) BoundsChange {
     BoundsChange();
@@ -104,6 +119,11 @@ class COMPONENT_EXPORT(PLATFORM_WINDOW) PlatformWindowDelegate {
   // Requests size constraints for the PlatformWindow.
   virtual absl::optional<gfx::Size> GetMinimumSizeForWindow();
   virtual absl::optional<gfx::Size> GetMaximumSizeForWindow();
+
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  virtual LinuxInputMethodContext* GetInputMethodContext();
+  ///@}
 
   // Returns a mask to be used to clip the window for the size of
   // |WindowTreeHost::GetBoundsInPixels|.

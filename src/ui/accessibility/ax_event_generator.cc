@@ -261,6 +261,7 @@ AXEventGenerator::Iterator AXEventGenerator::end() const {
 
 void AXEventGenerator::ClearEvents() {
   tree_events_.clear();
+  reparenting_node_events_.clear();
 }
 
 void AXEventGenerator::AddEvent(AXNode* node, AXEventGenerator::Event event) {
@@ -739,6 +740,7 @@ void AXEventGenerator::OnNodeWillBeDeleted(AXTree* tree, AXNode* node) {
   live_region_tracker_->OnNodeWillBeDeleted(*node);
 
   DCHECK_EQ(tree_, tree);
+  reparenting_node_events_.erase(node->id());
   tree_events_.erase(node);
 }
 
@@ -748,6 +750,9 @@ void AXEventGenerator::OnSubtreeWillBeDeleted(AXTree* tree, AXNode* node) {
 
 void AXEventGenerator::OnNodeWillBeReparented(AXTree* tree, AXNode* node) {
   DCHECK_EQ(tree_, tree);
+  for (const auto& event : tree_events_[node]) {
+    reparenting_node_events_[node->id()].insert(event);
+  }
   tree_events_.erase(node);
 }
 
@@ -758,6 +763,10 @@ void AXEventGenerator::OnSubtreeWillBeReparented(AXTree* tree, AXNode* node) {
 void AXEventGenerator::OnNodeReparented(AXTree* tree, AXNode* node) {
   DCHECK_EQ(tree_, tree);
   AddEvent(node, Event::PARENT_CHANGED);
+  for (const auto& event : reparenting_node_events_[node->id()]) {
+    tree_events_[node].insert(event);
+  }
+  reparenting_node_events_.erase(node->id());
 }
 
 void AXEventGenerator::OnAtomicUpdateFinished(

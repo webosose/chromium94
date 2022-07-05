@@ -749,6 +749,10 @@ void RenderThreadImpl::Init() {
     base::ThreadPool::PostTask(FROM_HERE,
                                base::BindOnce([] { SkFontMgr::RefDefault(); }));
   }
+
+#if defined(USE_NEVA_MEDIA) || defined(USE_NEVA_SUSPEND_MEDIA_CAPTURE)
+  neva::RenderThreadImpl<RenderThreadImpl>::Init();
+#endif
 }
 
 RenderThreadImpl::~RenderThreadImpl() {
@@ -1059,7 +1063,7 @@ media::GpuVideoAcceleratorFactories* RenderThreadImpl::GetGpuFactories() {
 
   const bool enable_video_accelerator =
 
-#if defined(OS_LINUX)
+#if defined(OS_LINUX) && !defined(USE_NEVA_V4L2_CODEC)
       base::FeatureList::IsEnabled(media::kVaapiVideoDecodeLinux) &&
 #else
       !cmd_line->HasSwitch(switches::kDisableAcceleratedVideoDecode) &&
@@ -1102,6 +1106,9 @@ media::GpuVideoAcceleratorFactories* RenderThreadImpl::GetGpuFactories() {
       enable_video_accelerator, std::move(interface_factory),
       std::move(vea_provider)));
   gpu_factories_.back()->SetRenderingColorSpace(rendering_color_space_);
+#if defined(USE_NEVA_MEDIA)
+  gpu_factories_.back()->SetEnableWebOSVDA(enable_webos_vda_);
+#endif
   return gpu_factories_.back().get();
 }
 
@@ -1394,6 +1401,31 @@ void RenderThreadImpl::SetProcessState(
   visible_state_ = visible_state;
 }
 
+///@name USE_NEVA_APPRUNTIME
+///@{
+void RenderThreadImpl::ProcessSuspend() {
+#if defined(USE_NEVA_APPRUNTIME)
+  page_pauser_ = blink::WebScopedPagePauser::Create();
+  ++suspension_count_;
+#endif
+}
+
+void RenderThreadImpl::ProcessResume() {
+#if defined(USE_NEVA_APPRUNTIME)
+  if (suspension_count_ > 0) {
+    page_pauser_.reset();
+    --suspension_count_;
+  }
+#endif
+}
+
+void RenderThreadImpl::OnSystemMemoryPressureLevelChanged(
+    base::MemoryPressureListener::MemoryPressureLevel level) {
+  LOG(INFO) << __func__ << " level: " << level;
+  base::MemoryPressureListener::NotifyMemoryPressure(level);
+}
+///@}
+
 void RenderThreadImpl::SetIsLockedToSite() {
   DCHECK(blink_platform_impl_);
   blink_platform_impl_->SetIsLockedToSite();
@@ -1643,6 +1675,13 @@ void RenderThreadImpl::OnNetworkConnectionChanged(
       NetConnectionTypeToWebConnectionType(type), max_bandwidth_mbps);
   if (url_loader_throttle_provider_)
     url_loader_throttle_provider_->SetOnline(online_status);
+
+#if defined(USE_NEVA_APPRUNTIME)
+  // Reverted part of CL http://crrev.com/c/2692032
+  // since NEVA-3272 depends on it
+  for (auto& observer : observers_)
+    observer.NetworkStateChanged(online_status);
+#endif
 }
 
 void RenderThreadImpl::OnNetworkQualityChanged(
@@ -1922,6 +1961,10 @@ void RenderThreadImpl::OnRendererForegrounded() {
 }
 
 void RenderThreadImpl::ReleaseFreeMemory() {
+#if defined(USE_NEVA_APPRUNTIME)
+  VLOG(1) << __func__;
+#endif
+
   TRACE_EVENT0("blink", "RenderThreadImpl::ReleaseFreeMemory()");
   base::allocator::ReleaseFreeMemory();
   discardable_memory_allocator_->ReleaseFreeMemory();
@@ -1979,5 +2022,16 @@ gfx::ColorSpace RenderThreadImpl::GetRenderingColorSpace() {
   DCHECK(IsMainThread());
   return rendering_color_space_;
 }
+
+#if defined(USE_NEVA_MEDIA)
+void RenderThreadImpl::SetEnableWebOSVDA(bool enable) {
+  DCHECK(IsMainThread());
+  enable_webos_vda_ = enable;
+  for (const auto& factories : gpu_factories_) {
+    if (factories)
+      factories->SetEnableWebOSVDA(enable);
+  }
+}
+#endif
 
 }  // namespace content

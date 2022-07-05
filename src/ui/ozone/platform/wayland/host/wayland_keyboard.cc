@@ -29,6 +29,18 @@
 #include "ui/events/ozone/layout/xkb/xkb_keyboard_layout_engine.h"
 #endif
 
+///@name USE_NEVA_APPRUNTIME
+///@{
+// The header included below has been moved from the 'wayland_keyboard.h'
+// header file in order to:
+// 1) fix the issue raised by the preprocessor failing to locate the below
+//    header
+// 2) follow the best C/C++ coding practice on avoiding inclusions of headers
+//    within header files and place them within implementation files instead
+//    (if possible)
+#include <keyboard-extension-unstable-v1-client-protocol.h>
+///@}
+
 namespace ui {
 
 class WaylandKeyboard::ZCRExtendedKeyboard {
@@ -101,6 +113,10 @@ WaylandKeyboard::WaylandKeyboard(
         this, zcr_keyboard_extension_v1_get_extended_keyboard(
                   keyboard_extension_v1, obj_.get()));
   }
+
+#if defined(OS_WEBOS)
+  auto_repeat_handler_.SetAutoRepeatEnabled(false);
+#endif
 }
 
 WaylandKeyboard::~WaylandKeyboard() {
@@ -143,6 +159,17 @@ void WaylandKeyboard::Enter(void* data,
     auto* self = static_cast<WaylandKeyboard*>(data);
     self->delegate_->OnKeyboardFocusChanged(window, /*focused=*/true);
   }
+
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  if (auto* window = wl::RootWindowFromWlSurface(surface)) {
+    window->HandleKeyboardEnter();
+
+    // Required for webOS and AGL which don't support activation update via
+    // surface configure event
+    window->HandleActivationChanged(true);
+  }
+  ///@}
 }
 
 void WaylandKeyboard::Leave(void* data,
@@ -156,6 +183,17 @@ void WaylandKeyboard::Leave(void* data,
 
   // Upon window focus lose, reset the key repeat timers.
   self->auto_repeat_handler_.StopKeyRepeat();
+
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  if (auto* window = wl::RootWindowFromWlSurface(surface)) {
+    window->HandleKeyboardLeave();
+
+    // Required for webOS and AGL which don't support activation update via
+    // surface configure event
+    window->HandleActivationChanged(false);
+  }
+  ///@}
 }
 
 void WaylandKeyboard::Key(void* data,

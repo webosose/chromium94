@@ -22,7 +22,12 @@ class COMPONENT_EXPORT(UI_BASE_IME_LINUX) InputMethodAuraLinux
     : public InputMethodBase,
       public LinuxInputMethodContextDelegate {
  public:
-  explicit InputMethodAuraLinux(internal::InputMethodDelegate* delegate);
+  explicit InputMethodAuraLinux(internal::InputMethodDelegate* delegate,
+                                ///@name USE_NEVA_APPRUNTIME
+                                ///@{
+                                unsigned handle = 0
+                                ///@}
+                                );
   InputMethodAuraLinux(const InputMethodAuraLinux&) = delete;
   InputMethodAuraLinux& operator=(const InputMethodAuraLinux&) = delete;
   ~InputMethodAuraLinux() override;
@@ -36,12 +41,24 @@ class COMPONENT_EXPORT(UI_BASE_IME_LINUX) InputMethodAuraLinux
   void CancelComposition(const TextInputClient* client) override;
   bool IsCandidatePopupOpen() const override;
 
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  LinuxInputMethodContext* GetInputMethodContext() override;
+  ///@}
+
   // Overriden from ui::LinuxInputMethodContextDelegate
   void OnCommit(const std::u16string& text) override;
   void OnDeleteSurroundingText(int32_t index, uint32_t length) override;
   void OnPreeditChanged(const CompositionText& composition_text) override;
   void OnPreeditEnd() override;
   void OnPreeditStart() override {}
+
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  // Overriden from ui::NevaLinuxInputMethodContextDelegate through
+  // ui::LinuxInputMethodContextDelegate
+  bool SystemKeyboardDisabled() override;
+  ///@}
 
  protected:
   // Overridden from InputMethodBase.
@@ -51,6 +68,11 @@ class COMPONENT_EXPORT(UI_BASE_IME_LINUX) InputMethodAuraLinux
                                 TextInputClient* focused) override;
 
  private:
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  friend class InputMethodAuraLinuxNeva;
+  ///@}
+
   // Continues to dispatch the ET_KEY_PRESSED event to the client.
   // This needs to be called "before" committing the result string or
   // the composition string.
@@ -92,6 +114,14 @@ class COMPONENT_EXPORT(UI_BASE_IME_LINUX) InputMethodAuraLinux
   // The current text input type used to indicates if |context_| and
   // |context_simple_| are focused or not.
   TextInputType text_input_type_;
+
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  // Flag of currently associated text input instance.
+  // It's use is to handle system VKB visibility when focus switches between
+  // different text input instances.
+  bool system_keyboard_disabled_ = false;
+  ///@}
 
   // Indicates if currently in sync mode when handling a key event.
   // This is used in OnXXX callbacks from GTK IM module.

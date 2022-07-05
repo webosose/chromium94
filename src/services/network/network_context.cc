@@ -328,6 +328,45 @@ std::string HashesToBase64String(const net::HashValueVector& hashes) {
   return str;
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
+class ExtraHeaderNetworkDelegate : public NetworkServiceNetworkDelegate,
+                                   public mojom::ExtraHeaderNetworkDelegate {
+ public:
+  ExtraHeaderNetworkDelegate(
+      bool enable_referrers,
+      bool validate_referrer_policy_on_initial_request,
+      mojom::ProxyErrorClientPtrInfo proxy_error_client_info,
+      NetworkContext* network_context, mojom::ExtraHeaderNetworkDelegateRequest request)
+      : NetworkServiceNetworkDelegate(enable_referrers, validate_referrer_policy_on_initial_request,
+      std::move(proxy_error_client_info), network_context),
+        receiver_(this, std::move(request)) {}
+
+  void SetWebSocketHeader(const std::string& key,
+                          const std::string& value) override {
+    extra_websocket_headers_.insert(std::make_pair(key, value));
+  }
+
+  int OnBeforeStartTransaction(
+      net::URLRequest* request,
+      const net::HttpRequestHeaders& headers,
+      net::NetworkDelegate::OnBeforeStartTransactionCallback callback) override {
+    // Extra WebSocket headers should be applied for WebSocket requests only
+    if (request->url().SchemeIsWSOrWSS()) {
+      for (const auto& pair : extra_websocket_headers_) {
+        auto non_const_headers = const_cast<net::HttpRequestHeaders&>(headers);
+        non_const_headers.SetHeader(pair.first, pair.second);
+      }
+    }
+    return NetworkServiceNetworkDelegate::OnBeforeStartTransaction(
+        request, headers, std::move(callback));
+  }
+
+ private:
+  mojo::Receiver<mojom::ExtraHeaderNetworkDelegate> receiver_;
+  std::map<std::string, std::string> extra_websocket_headers_;
+};
+#endif
+
 #if BUILDFLAG(IS_CT_SUPPORTED)
 // SCTAuditingDelegate is an implementation of the delegate interface that is
 // aware of per-NetworkContext details (to allow the cache to notify the
@@ -440,6 +479,9 @@ NetworkContext::NetworkContext(
       url_loader_factory_for_cert_net_fetcher_receiver =
           url_loader_factory_for_cert_net_fetcher
               .InitWithNewPipeAndPassReceiver();
+
+  cookie_crypto_delegate_ =
+      std::make_unique<cookie_config::CookieNevaCryptoDelegate>();
 
   scoped_refptr<SessionCleanupCookieStore> session_cleanup_cookie_store =
       MakeSessionCleanupCookieStore();
@@ -2021,11 +2063,20 @@ URLRequestContextOwner NetworkContext::MakeURLRequestContext(
       std::make_unique<SCTAuditingDelegate>(weak_factory_.GetWeakPtr()));
 #endif  // BUILDFLAG(IS_CT_SUPPORTED)
 
+#if defined(USE_NEVA_APPRUNTIME)
+  std::unique_ptr<NetworkServiceNetworkDelegate> network_delegate =
+      std::make_unique<ExtraHeaderNetworkDelegate>(
+          params_->enable_referrers,
+          params_->validate_referrer_policy_on_initial_request,
+          std::move(params_->proxy_error_client), this,
+          std::move(params_->network_delegate_request));
+#else
   std::unique_ptr<NetworkServiceNetworkDelegate> network_delegate =
       std::make_unique<NetworkServiceNetworkDelegate>(
           params_->enable_referrers,
           params_->validate_referrer_policy_on_initial_request,
           std::move(params_->proxy_error_client), this);
+#endif
   network_delegate_ = network_delegate.get();
   builder.set_network_delegate(std::move(network_delegate));
 
@@ -2390,7 +2441,9 @@ NetworkContext::MakeSessionCleanupCookieStore() const {
         << "NetworkService::SetCryptConfig must be called before creating a "
            "NetworkContext with encrypted cookies.";
 #endif
-    crypto_delegate = cookie_config::GetCookieCryptoDelegate();
+    cookie_crypto_delegate_->SetDefaultCryptoDelegate(
+        cookie_config::GetCookieCryptoDelegate());
+    crypto_delegate = cookie_crypto_delegate_.get();
   }
   scoped_refptr<net::SQLitePersistentCookieStore> sqlite_store(
       new net::SQLitePersistentCookieStore(
@@ -2596,6 +2649,11 @@ void NetworkContext::CreateTrustedUrlLoaderFactoryForNetworkService(
   url_loader_factory_params->process_id = network::mojom::kBrowserProcessId;
   CreateURLLoaderFactory(std::move(url_loader_factory_pending_receiver),
                          std::move(url_loader_factory_params));
+}
+
+void NetworkContext::SetOSCrypt(
+    mojo::PendingRemote<pal::mojom::OSCrypt> os_crypt) {
+  cookie_crypto_delegate_->SetOSCrypt(std::move(os_crypt));
 }
 
 }  // namespace network

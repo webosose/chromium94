@@ -22,6 +22,12 @@ namespace content {
 struct MainFunctionParams;
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
+namespace neva_app_runtime {
+class AppRuntimeSharedMemoryManager;
+}
+#endif
+
 namespace extensions {
 
 class DesktopController;
@@ -50,6 +56,10 @@ class ShellBrowserMainParts : public content::BrowserMainParts {
 
   // BrowserMainParts overrides.
   int PreEarlyInitialization() override;
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  void ToolkitInitialized() override;
+  ///@}
   void PreCreateMainMessageLoop() override;
   void PostCreateMainMessageLoop() override;
   int PreCreateThreads() override;
@@ -63,6 +73,10 @@ class ShellBrowserMainParts : public content::BrowserMainParts {
   // Initializes the ExtensionSystem.
   void InitExtensionSystem();
 
+#if defined(OS_WEBOS)
+  void ExitWhenPossibleOnUIThread(int signal);
+#endif
+
 #if BUILDFLAG(IS_CHROMEOS_ASH)
   std::unique_ptr<ShellNetworkController> network_controller_;
 #endif
@@ -73,6 +87,11 @@ class ShellBrowserMainParts : public content::BrowserMainParts {
 
 #if BUILDFLAG(IS_CHROMEOS_ASH)
   std::unique_ptr<ShellAudioController> audio_controller_;
+#endif
+
+#if defined(USE_NEVA_APPRUNTIME)
+  std::unique_ptr<neva_app_runtime::AppRuntimeSharedMemoryManager>
+      app_runtime_mem_manager_;
 #endif
 
   // The DesktopController outlives ExtensionSystem and context-keyed services.

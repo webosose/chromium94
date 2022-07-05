@@ -1,6 +1,6 @@
 solutions = [
   { "name"        : 'src',
-    "url"         : 'https://chromium.googlesource.com/chromium/src.git',
+    "url"         : 'ssh://gpro.lge.com/webos-pro/chromium',
     "deps_file"   : 'DEPS',
     "managed"     : False,
     "custom_deps" : {
@@ -8,3 +8,4 @@ solutions = [
     "custom_vars": {},
   },
 ]
+

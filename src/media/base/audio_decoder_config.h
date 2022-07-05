@@ -116,6 +116,11 @@ class MEDIA_EXPORT AudioDecoderConfig {
     return target_output_channel_layout_;
   }
 
+#if defined(USE_NEVA_MEDIA)
+  bool is_dolby_atmos() const { return is_dolby_atmos_; }
+  void set_is_dolby_atmos(bool dolby_atmos) { is_dolby_atmos_ = dolby_atmos; }
+#endif
+
  private:
   // WARNING: When modifying or adding any parameters, update the following:
   // - AudioDecoderConfig::AsHumanReadableString()
@@ -151,6 +156,10 @@ class MEDIA_EXPORT AudioDecoderConfig {
   // Indicates if a decoder should implicitly discard decoder delay without it
   // being explicitly marked in discard padding.
   bool should_discard_decoder_delay_ = true;
+
+#if defined(USE_NEVA_MEDIA)
+  bool is_dolby_atmos_ = false;
+#endif
 
   // Derived values from mandatory and optional parameters above:
 

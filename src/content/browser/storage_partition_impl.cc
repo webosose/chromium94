@@ -101,6 +101,7 @@
 #include "mojo/public/cpp/bindings/self_owned_receiver.h"
 #include "net/base/net_errors.h"
 #include "net/ssl/client_cert_store.h"
+#include "neva/pal_service/os_crypt.h"
 #include "ppapi/buildflags/buildflags.h"
 #include "services/cert_verifier/public/mojom/cert_verifier_service_factory.mojom.h"
 #include "services/network/public/cpp/cross_thread_pending_shared_url_loader_factory.h"
@@ -2715,6 +2716,14 @@ void StoragePartitionImpl::GetQuotaSettings(
     return;
   }
 
+#if defined(USE_NEVA_APPRUNTIME)
+  if (GetContentClient()->browser()->HasQuotaSettings()) {
+    GetContentClient()->browser()->GetQuotaSettings(browser_context_, this,
+                                                    std::move(callback));
+    return;
+  }
+#endif
+
   storage::GetNominalDynamicSettings(
       GetPath(), browser_context_->IsOffTheRecord(),
       storage::GetDefaultDeviceInfoHelper(), std::move(callback));
@@ -2760,6 +2769,15 @@ void StoragePartitionImpl::InitNetworkContext() {
       network_context_client_receiver_.BindNewPipeAndPassRemote());
   network_context_.set_disconnect_handler(base::BindOnce(
       &StoragePartitionImpl::InitNetworkContext, weak_factory_.GetWeakPtr()));
+
+  auto os_crypt_impl = std::make_unique<pal::OSCryptImpl>();
+  if (os_crypt_impl->IsEncryptionAvailable()) {
+    mojo::PendingRemote<pal::mojom::OSCrypt> os_crypt_remote;
+    mojo::MakeSelfOwnedReceiver(
+        std::move(os_crypt_impl),
+        os_crypt_remote.InitWithNewPipeAndPassReceiver());
+    network_context_->SetOSCrypt(std::move(os_crypt_remote));
+  }
 }
 
 network::mojom::URLLoaderFactory*

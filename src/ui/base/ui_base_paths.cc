@@ -28,7 +28,6 @@ bool PathProvider(int key, base::FilePath* result) {
       if (!base::PathService::Get(DIR_RESOURCE_PAKS_ANDROID, &cur))
         return false;
 #elif defined(OS_APPLE)
-      if (!base::PathService::Get(base::DIR_MODULE, &cur))
         return false;
       // On Mac, locale files are in Contents/Resources, a sibling of the
       // App dir.

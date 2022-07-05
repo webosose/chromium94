@@ -3204,6 +3204,18 @@ RenderWidgetHostImpl::BindAndGenerateCreateFrameWidgetParamsForNewWindow() {
   return params;
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
+void RenderWidgetHostImpl::ActivateRendererCompositor() {
+  if (blink_frame_widget_)
+    blink_frame_widget_->ActivateCompositor();
+}
+
+void RenderWidgetHostImpl::DeactivateRendererCompositor() {
+  if (blink_frame_widget_)
+    blink_frame_widget_->DeactivateCompositor();
+}
+#endif
+
 void RenderWidgetHostImpl::DispatchInputEventWithLatencyInfo(
     const blink::WebInputEvent& event,
     ui::LatencyInfo* latency) {
@@ -3520,6 +3532,13 @@ void RenderWidgetHostImpl::DidProcessFrame(uint32_t frame_token,
                                            base::TimeTicks activation_time) {
   frame_token_message_queue_->DidProcessFrame(frame_token, activation_time);
 }
+
+#if defined(USE_NEVA_APPRUNTIME)
+void RenderWidgetHostImpl::DidCompleteSwap() {
+  if (delegate_)
+    delegate_->DidCompleteSwap();
+}
+#endif
 
 #if defined(OS_MAC)
 device::mojom::WakeLock* RenderWidgetHostImpl::GetWakeLock() {

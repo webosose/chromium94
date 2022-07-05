@@ -121,6 +121,11 @@
 #include "ui/wm/core/ime_util_chromeos.h"
 #endif
 
+#if defined(USE_NEVA_APPRUNTIME)
+#include "content/browser/renderer_host/delegated_frame_host_client_neva.h"
+#include "third_party/blink/public/platform/web_text_input_type.h"
+#endif
+
 #if BUILDFLAG(IS_CHROMEOS_ASH)
 #include "ui/base/ime/chromeos/extension_ime_util.h"
 #include "ui/base/ime/chromeos/input_method_manager.h"
@@ -378,7 +383,8 @@ void RenderWidgetHostViewAura::InitAsPopup(
     old_child->popup_parent_host_view_ = nullptr;
   }
   popup_parent_host_view_->SetPopupChild(this);
-  CreateAuraWindow(aura::client::WINDOW_TYPE_MENU);
+  CreateAuraWindow(aura::client::WINDOW_TYPE_POPUP);
+
   // Use transparent background color for the popup in order to avoid flashing
   // the white background on popup open when dark color-scheme is used.
   SetContentBackgroundColor(SK_ColorTRANSPARENT);
@@ -415,6 +421,18 @@ void RenderWidgetHostViewAura::Hide() {
   visibility_ = Visibility::HIDDEN;
   HideImpl();
 }
+
+#if defined(USE_NEVA_APPRUNTIME)
+void RenderWidgetHostViewAura::ResumeDrawing() {
+  if (delegated_frame_host_)
+    delegated_frame_host_->ResumeDrawing();
+}
+
+void RenderWidgetHostViewAura::SuspendDrawing() {
+  if (delegated_frame_host_)
+    delegated_frame_host_->SuspendDrawing();
+}
+#endif
 
 void RenderWidgetHostViewAura::SetSize(const gfx::Size& size) {
   // For a SetSize operation, we don't care what coordinate system the origin
@@ -716,6 +734,10 @@ void RenderWidgetHostViewAura::SetIsLoading(bool is_loading) {
 }
 
 void RenderWidgetHostViewAura::RenderProcessGone() {
+#if defined(USE_NEVA_APPRUNTIME)
+  if (window_ && window_->GetHost() && window_->GetHost()->compositor())
+    window_->GetHost()->compositor()->RenderProcessGone();
+#endif
   UpdateCursorIfOverSelf();
   Destroy();
 }
@@ -1381,9 +1403,18 @@ bool RenderWidgetHostViewAura::SetEditableSelectionRange(
 }
 
 bool RenderWidgetHostViewAura::DeleteRange(const gfx::Range& range) {
+#if defined(USE_NEVA_APPRUNTIME)
+  if (!text_input_manager_ || !text_input_manager_->GetActiveWidget())
+    return false;
+
+  text_input_manager_->GetActiveWidget()->ImeSetComposition(
+      std::u16string(), std::vector<ui::ImeTextSpan>(), range, 0, 0);
+  return true;
+#else
   // TODO(suzhe): implement this method when fixing http://crbug.com/55130.
   NOTIMPLEMENTED_LOG_ONCE();
   return false;
+#endif
 }
 
 bool RenderWidgetHostViewAura::GetTextFromRange(const gfx::Range& range,
@@ -2093,7 +2124,11 @@ void RenderWidgetHostViewAura::CreateAuraWindow(aura::client::WindowType type) {
 
 void RenderWidgetHostViewAura::CreateDelegatedFrameHostClient() {
   delegated_frame_host_client_ =
+#if defined(USE_NEVA_APPRUNTIME)
+      std::make_unique<DelegatedFrameHostClientNeva>(this);
+#else
       std::make_unique<DelegatedFrameHostClientAura>(this);
+#endif
   delegated_frame_host_ = std::make_unique<DelegatedFrameHost>(
       frame_sink_id_, delegated_frame_host_client_.get(),
       false /* should_register_frame_sink_id */);
@@ -2171,7 +2206,8 @@ void RenderWidgetHostViewAura::UpdateCursorIfOverSelf() {
 
 bool RenderWidgetHostViewAura::SynchronizeVisualProperties(
     const cc::DeadlinePolicy& deadline_policy,
-    const absl::optional<viz::LocalSurfaceId>& child_local_surface_id) {
+    const absl::optional<viz::LocalSurfaceId>& child_local_surface_id,
+    bool ignore_pending_ack) {
   DCHECK(window_);
   DCHECK(delegated_frame_host_) << "Cannot be invoked during destruction.";
 
@@ -2183,6 +2219,11 @@ bool RenderWidgetHostViewAura::SynchronizeVisualProperties(
 
   delegated_frame_host_->EmbedSurface(
       GetLocalSurfaceId(), window_->bounds().size(), deadline_policy);
+
+  if (ignore_pending_ack) {
+    host()->SynchronizeVisualPropertiesIgnoringPendingAck();
+    return true;
+  }
 
   return host()->SynchronizeVisualProperties();
 }
@@ -2318,11 +2359,33 @@ void RenderWidgetHostViewAura::InternalSetBounds(const gfx::Rect& rect) {
   if (!in_bounds_changed_)
     window_->SetBounds(rect);
 
+#if defined(USE_NEVA_APPRUNTIME)
+  // Calculate scale ratio only for non popup window
+  if (!popup_parent_host_view_ && rect.height()) {
+    window_scale_ratio_ = static_cast<float>(display::Screen::GetScreen()
+                                                 ->GetPrimaryDisplay()
+                                                 .bounds()
+                                                 .height()) /
+                          rect.height();
+  }
+#endif
+
   // Even if not showing yet, we need to synchronize on size. As the renderer
   // needs to begin layout. Waiting until we show to start layout leads to
   // significant delays in embedding the first shown surface (500+ ms.)
+  bool ignore_pending_ack = false;
+#if defined(OS_WEBOS)
+  // In webOS some applications need changed bounds already when loading
+  // for the first time before showing.in order to determine layout style for
+  // the rest of the application life time. Thus ignore possibly pending
+  // synchronize visual properties ack and force new visual properties to be
+  // pushed to renderer.
+  if (in_bounds_changed_ && !IsShowing())
+    ignore_pending_ack = true;
+#endif
   SynchronizeVisualProperties(cc::DeadlinePolicy::UseDefaultDeadline(),
-                              window_->GetLocalSurfaceId());
+                              window_->GetLocalSurfaceId(),
+                              ignore_pending_ack);
 
 #if defined(OS_WIN)
   UpdateLegacyWin();
@@ -2508,6 +2571,12 @@ void RenderWidgetHostViewAura::OnUpdateTextInputStateCalled(
   const ui::mojom::TextInputState* state =
       text_input_manager_->GetTextInputState();
 
+#if defined(USE_NEVA_APPRUNTIME)
+  if (state && enable_html_systemkeyboard_attr_ &&
+      (state->flags & blink::kWebTextInputFlagSystemKeyboardOff))
+    return;
+#endif
+
   // Show the virtual keyboard if needed.
   if (state && state->type != ui::TEXT_INPUT_TYPE_NONE &&
       state->mode != ui::TEXT_INPUT_MODE_NONE) {
@@ -2556,6 +2625,64 @@ void RenderWidgetHostViewAura::OnImeCancelComposition(
   has_composition_text_ = false;
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
+void RenderWidgetHostViewAura::SetEnableHtmlSystemKeyboardAttr(bool enable) {
+  enable_html_systemkeyboard_attr_ = enable;
+}
+
+bool RenderWidgetHostViewAura::SystemKeyboardDisabled() const {
+  if (text_input_manager_ && text_input_manager_->GetTextInputState() &&
+      enable_html_systemkeyboard_attr_ &&
+      (text_input_manager_->GetTextInputState()->flags &
+       blink::kWebTextInputFlagSystemKeyboardOff))
+    return true;
+
+  return false;
+}
+
+gfx::Rect RenderWidgetHostViewAura::GetInputPanelRectangle() const {
+  if (text_input_manager_ && text_input_manager_->GetTextInputState())
+    return text_input_manager_->GetTextInputState()->input_panel_rectangle;
+  return gfx::Rect();
+}
+
+gfx::Rect RenderWidgetHostViewAura::GetTextInputBounds() const {
+  if (!text_input_manager_ || !text_input_manager_->GetActiveWidget())
+    return gfx::Rect();
+  const ui::mojom::TextInputState* state =
+      text_input_manager_->GetTextInputState();
+
+  return ConvertRectToScreen(state->bounds);
+}
+
+gfx::Size RenderWidgetHostViewAura::GetCompositorViewportPixelSize() {
+  return gfx::ScaleToCeiledSize(GetRequestedRendererSize(),
+                                GetDeviceScaleFactor() * window_scale_ratio_);
+}
+
+bool RenderWidgetHostViewAura::IsKeepAliveWebApp() const {
+  RenderWidgetHostOwnerDelegate* owner_delegate = host()->owner_delegate();
+  if (owner_delegate)
+    return owner_delegate->GetWebkitPreferencesForWidget().keep_alive_webapp;
+  return false;
+}
+
+int RenderWidgetHostViewAura::GetTextInputMaxLength() const {
+  if (text_input_manager_ && text_input_manager_->GetTextInputState())
+    return text_input_manager_->GetTextInputState()->max_length;
+  return -1;
+}
+#endif
+
+#if defined(USE_NEVA_MEDIA)
+gfx::AcceleratedWidget RenderWidgetHostViewAura::GetAcceleratedWidget() {
+  aura::WindowTreeHost* host = window_->GetHost();
+  if (host)
+    return host->GetAcceleratedWidget();
+  return gfx::kNullAcceleratedWidget;
+}
+#endif  // defined(USE_NEVA_MEDIA)
+
 void RenderWidgetHostViewAura::OnSelectionBoundsChanged(
     TextInputManager* text_input_manager,
     RenderWidgetHostViewBase* updated_view) {
@@ -2593,7 +2720,7 @@ void RenderWidgetHostViewAura::OnTextSelectionChanged(
           ui::ClipboardBuffer::kSelection)) {
     const TextInputManager::TextSelection* selection =
         GetTextInputManager()->GetTextSelection(focused_view);
-    if (selection->selected_text().length()) {
+    if (selection && selection->selected_text().length()) {
       // Set the ClipboardBuffer::kSelection to the ui::Clipboard.
       ui::ScopedClipboardWriter clipboard_writer(
           ui::ClipboardBuffer::kSelection);

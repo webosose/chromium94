@@ -39,6 +39,11 @@
 #include "third_party/blink/public/web/web_window_features.h"
 #include "ui/base/ui_base_features.h"
 
+#if defined(USE_NEVA_SUSPEND_MEDIA_CAPTURE)
+#include "content/public/common/content_neva_switches.h"
+#include "content/renderer/media/audio/neva/audio_capturer_source_manager.h"
+#endif
+
 using blink::WebFrame;
 using blink::WebLocalFrame;
 using blink::WebNavigationPolicy;
@@ -387,6 +392,19 @@ WebView* RenderViewImpl::CreateView(
 
   return view->GetWebView();
 }
+
+#if defined(USE_NEVA_SUSPEND_MEDIA_CAPTURE)
+void RenderViewImpl::SuspendAudioCaptureDevices(bool suspend) {
+  // TODO(neva, 92.0.4505.0): Need to reimplement via blink::SuspendCaptureObserver,
+  // see https://crrev.com/c/2869105
+  /*if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+          switches::kDisableSuspendAudioCapture))
+    return;
+
+  RenderThreadImpl::current()->audio_capturer_source_manager()->SuspendDevices(
+      suspend);*/
+}
+#endif  // defined(USE_NEVA_SUSPEND_MEDIA_CAPTURE)
 
 // RenderView implementation ---------------------------------------------------
 

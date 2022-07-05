@@ -30,7 +30,12 @@ enum class RendererType {
   kFuchsia = 7,          // FuchsiaRendererFactory
   kRemoting = 8,         // RemotingRendererFactory for remoting::Receiver
   kCastStreaming = 9,    // CastStreamingRendererFactory
+#if defined(USE_NEVA_MEDIA)
+  kNevaMediaPlayer = 10,  // NevaMediaPlayerRendererFactory
+  kMaxValue = kNevaMediaPlayer,
+#else
   kMaxValue = kCastStreaming,
+#endif
 };
 
 // Get the name of the Renderer for `renderer_type`. The returned name could be

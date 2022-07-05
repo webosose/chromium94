@@ -1753,6 +1753,29 @@ void NavigationRequest::BeginNavigationImpl() {
   }
 #endif
 
+#if defined(USE_NEVA_APPRUNTIME)
+  if (GetURL().SchemeIsFile()) {
+    bool initiator_scheme_is_file = false;
+
+    if (!commit_params_->is_browser_initiated) {
+      // Only relevant for webOS whitelisting implementation
+      initiator_scheme_is_file =
+          GetInitiatorOrigin().value().GetURL().SchemeIsFile();
+    }
+
+    if (!GetContentClient()->browser()->IsFileSchemeNavigationAllowed(
+            GetURL(), frame_tree_node_->frame_tree_node_id(),
+            commit_params_->is_browser_initiated)) {
+      StartNavigation();
+      OnRequestFailedInternal(
+          network::URLLoaderCompletionStatus(net::ERR_ACCESS_DENIED),
+          false /*skip_throttles*/, absl::nullopt /*error_page_content*/,
+          false /*collapse_frame*/);
+      return;
+    }
+  }
+#endif
+
   // Check Content Security Policy before the NavigationThrottles run. This
   // gives CSP a chance to modify requests that NavigationThrottles would
   // otherwise block. Similarly, the NavigationHandle is created afterwards, so
@@ -2887,6 +2910,21 @@ void NavigationRequest::OnResponseStarted(
         response_head_->headers->response_code() != 205 &&
         !ShouldRenderFallbackContentForResponse(*response_head_->headers)));
 
+#if defined(USE_NEVA_APPRUNTIME)
+  if (response_head_->headers.get() &&
+      response_head_->headers->response_code() >= 400) {
+    WebContents* web_contents = WebContents::FromRenderFrameHost(
+        frame_tree_node_->current_frame_host());
+    const bool has_policy = web_contents->DecidePolicyForResponse(
+        frame_tree_node_->IsMainFrame(),
+        response_head_->headers->response_code(),
+        common_params_->url.spec(),
+        response_head_->headers->GetStatusText());
+    if (has_policy)
+      response_should_be_rendered_ = false;
+  }
+#endif
+
   // Response that will not commit should be marked as aborted in the
   // NavigationHandle.
   if (!response_should_be_rendered_)
@@ -3494,12 +3532,20 @@ void NavigationRequest::OnStartChecksComplete(
   // Abort the request if needed. This will destroy the NavigationRequest.
   if (result.action() == NavigationThrottle::CANCEL_AND_IGNORE ||
       result.action() == NavigationThrottle::CANCEL ||
+#if defined(USE_NEVA_BROWSER_SERVICE)
+      result.action() == NavigationThrottle::BLOCK_BY_SITEFILTER ||
+#endif
       result.action() == NavigationThrottle::BLOCK_REQUEST ||
       result.action() == NavigationThrottle::BLOCK_REQUEST_AND_COLLAPSE) {
 #if DCHECK_IS_ON()
     if (result.action() == NavigationThrottle::BLOCK_REQUEST) {
       DCHECK(net::IsRequestBlockedError(result.net_error_code()));
     }
+#if defined(USE_NEVA_BROWSER_SERVICE)
+    else if (result.action() == NavigationThrottle::BLOCK_BY_SITEFILTER) {
+      DCHECK(net::IsRequestBlockedError(result.net_error_code()));
+    }
+#endif
     // TODO(clamy): distinguish between CANCEL and CANCEL_AND_IGNORE.
     else if (result.action() == NavigationThrottle::CANCEL_AND_IGNORE) {
       DCHECK_EQ(result.net_error_code(), net::ERR_ABORTED);
@@ -3775,6 +3821,9 @@ void NavigationRequest::OnRedirectChecksComplete(
   }
 
   if (result.action() == NavigationThrottle::BLOCK_REQUEST ||
+#if defined(USE_NEVA_BROWSER_SERVICE)
+      result.action() == NavigationThrottle::BLOCK_BY_SITEFILTER ||
+#endif
       result.action() == NavigationThrottle::BLOCK_REQUEST_AND_COLLAPSE) {
     DCHECK(net::IsRequestBlockedError(result.net_error_code()));
     OnRequestFailedInternal(
@@ -5101,6 +5150,9 @@ void NavigationRequest::OnWillProcessResponseProcessed(
     NavigationThrottle::ThrottleCheckResult result) {
   DCHECK_EQ(WILL_PROCESS_RESPONSE, state_);
   DCHECK_NE(NavigationThrottle::BLOCK_REQUEST, result.action());
+#if defined(USE_NEVA_BROWSER_SERVICE)
+  DCHECK_NE(NavigationThrottle::BLOCK_BY_SITEFILTER, result.action());
+#endif
   DCHECK_NE(NavigationThrottle::BLOCK_REQUEST_AND_COLLAPSE, result.action());
   DCHECK(processing_navigation_throttle_);
   processing_navigation_throttle_ = false;

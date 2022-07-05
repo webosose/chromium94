@@ -28,6 +28,7 @@ if (angle_has_build) {
   import("//build/config/ui.gni")  # import the use_x11 variable
   import("//build_overrides/build.gni")
   import("//testing/test.gni")
+  import("//neva/neva.gni")
   if (is_android) {
     import("//build/config/android/config.gni")
   }
@@ -41,7 +42,7 @@ if (angle_has_build) {
   }
 
   angle_use_x11 = use_x11 && !is_ggp
-  angle_use_vulkan_display = is_linux && !is_ggp
+  angle_use_vulkan_display = is_linux && !is_ggp && !is_webos
 } else {
   declare_args() {
     is_ubsan = false

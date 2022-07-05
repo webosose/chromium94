@@ -10,6 +10,7 @@
 #include "base/bind.h"
 #include "base/callback_helpers.h"
 #include "base/location.h"
+#include "base/logging.h"
 #include "base/single_thread_task_runner.h"
 #include "base/strings/string_number_conversions.h"
 #include "base/strings/string_util.h"
@@ -69,7 +70,9 @@
 #endif
 
 #if BUILDFLAG(ENABLE_DESKTOP_AURA) && \
-    (defined(OS_LINUX) || defined(OS_CHROMEOS))
+    (defined(OS_LINUX) || defined(OS_CHROMEOS)) && \
+    !defined(NEVA_OZONE_PLATFORM_WAYLAND) && \
+    !defined(OZONE_PLATFORM_WAYLAND_EXTERNAL)
 #include "ui/views/widget/desktop_aura/desktop_window_tree_host_linux.h"
 #endif
 
@@ -687,11 +690,13 @@ bool NativeWidgetAura::IsVisibleOnAllWorkspaces() const {
 }
 
 void NativeWidgetAura::Maximize() {
+  VLOG(1) << __PRETTY_FUNCTION__;
   if (window_)
     window_->SetProperty(aura::client::kShowStateKey, ui::SHOW_STATE_MAXIMIZED);
 }
 
 void NativeWidgetAura::Minimize() {
+  VLOG(1) << __PRETTY_FUNCTION__;
   if (window_)
     window_->SetProperty(aura::client::kShowStateKey, ui::SHOW_STATE_MINIMIZED);
 }
@@ -713,9 +718,12 @@ void NativeWidgetAura::Restore() {
 
 void NativeWidgetAura::SetFullscreen(bool fullscreen,
                                      const base::TimeDelta& delay) {
-  if (!window_ || IsFullscreen() == fullscreen)
+  if (!window_ || IsFullscreen() == fullscreen) {
+    LOG(INFO) << __PRETTY_FUNCTION__ << ": skip";
     return;  // Nothing to do.
+  }
 
+  VLOG(1) << __PRETTY_FUNCTION__ << ": fullscreen=" << fullscreen;
   wm::SetWindowFullscreen(window_, fullscreen);
 }
 
@@ -1143,7 +1151,9 @@ void NativeWidgetAura::SetInitialFocus(ui::WindowShowState show_state) {
 
 namespace {
 #if BUILDFLAG(ENABLE_DESKTOP_AURA) && \
-    (defined(OS_WIN) || defined(OS_LINUX) || defined(OS_CHROMEOS))
+    (defined(OS_WIN) || defined(OS_LINUX) || defined(OS_CHROMEOS)) && \
+    !defined(NEVA_OZONE_PLATFORM_WAYLAND) && \
+    !defined(OZONE_PLATFORM_WAYLAND_EXTERNAL)
 void CloseWindow(aura::Window* window) {
   if (window) {
     Widget* widget = Widget::GetWidgetForNativeView(window);
@@ -1174,7 +1184,9 @@ void Widget::CloseAllSecondaryWidgets() {
 #endif
 
 #if BUILDFLAG(ENABLE_DESKTOP_AURA) && \
-    (defined(OS_LINUX) || defined(OS_CHROMEOS))
+    (defined(OS_LINUX) || defined(OS_CHROMEOS)) && \
+    !defined(NEVA_OZONE_PLATFORM_WAYLAND) && \
+    !defined(OZONE_PLATFORM_WAYLAND_EXTERNAL)
   DesktopWindowTreeHostLinux::CleanUpWindowList(CloseWindow);
 #endif
 }

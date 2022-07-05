@@ -120,6 +120,7 @@
   X("omnibox")                                                           \
   X("oobe")                                                              \
   X("ozone")                                                             \
+  X("pal")                                                               \
   X("partition_alloc")                                                   \
   X("passwords")                                                         \
   X("p2p")                                                               \

@@ -1,0 +1,38 @@
+From f0aa2078b076d354e08f1bb6a331a04bf0249be1 Mon Sep 17 00:00:00 2001
+From: Eugeny Aristov <eugeny.aristov@lge.com>
+Date: Wed, 15 Dec 2021 12:58:43 +0300
+Subject: [PATCH] libstdc++: Add <cstring> for strerror_r and memset
+
+:Release Notes:
+Fixed libstdc++ issue after rolling to 94.0.4606.0~2.
+
+:Detailed Notes:
+<cstring> is added in order to use strerror_r and memset.
+
+:Issues Addressed:
+[NEVA-6634] Upgrade neva-master-rolling up to 4606 BUILD (M94 branchpoint)
+---
+ epoll_server/simple_epoll_server.cc | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/epoll_server/simple_epoll_server.cc b/epoll_server/simple_epoll_server.cc
+index 28c301eb..29a80fad 100644
+--- a/epoll_server/simple_epoll_server.cc
++++ b/epoll_server/simple_epoll_server.cc
+@@ -4,11 +4,12 @@
+ 
+ #include "epoll_server/simple_epoll_server.h"
+ 
+-#include <errno.h>   // for errno and strerror_r
++#include <errno.h>   // for errno
+ #include <stdlib.h>  // for abort
+ #include <unistd.h>  // For read, pipe, close and write.
+ 
+ #include <algorithm>
++#include <cstring>
+ #include <utility>
+ 
+ #include "epoll_server/platform/api/epoll_bug.h"
+-- 
+2.17.1
+

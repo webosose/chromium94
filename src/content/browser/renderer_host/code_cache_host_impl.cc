@@ -79,9 +79,16 @@ bool CheckSecurityForAccessingCodeCacheData(const GURL& resource_url,
     return true;
   }
 
+#if defined(USE_FILESCHEME_CODECACHE)
+  if (content::neva::IsFileSchemeSupportedForCodeCache(resource_url))
+    return true;
+  else if (operation == Operation::kWrite)
+    mojo::ReportBadMessage("Invalid URL scheme for code cache.");
+#else
   if (operation == Operation::kWrite) {
     mojo::ReportBadMessage("Invalid URL scheme for code cache.");
   }
+#endif
   return false;
 }
 
@@ -143,7 +150,13 @@ absl::optional<GURL> GetSecondaryKeyForCodeCache(const GURL& resource_url,
   if (process_lock.matches_scheme(url::kHttpScheme) ||
       process_lock.matches_scheme(url::kHttpsScheme) ||
       process_lock.matches_scheme(content::kChromeUIScheme) ||
+#if !defined(USE_FILESCHEME_CODECACHE)
       process_lock.matches_scheme(content::kChromeUIUntrustedScheme)) {
+#else
+      process_lock.matches_scheme(content::kChromeUIUntrustedScheme) ||
+      content::neva::IsFileSchemeSupportedForCodeCache(
+          process_lock.lock_url())) {
+#endif
     return process_lock.lock_url();
   }
 

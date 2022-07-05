@@ -1282,8 +1282,9 @@ deps = {
   'src/third_party/libwebm/source':
     Var('chromium_git') + '/webm/libwebm.git' + '@' + 'e4fbea0c9751ae8aa86629b197a28d8276a2b0da',
 
+  # FIXME(neva): Rolled down during 92.0.4497.0 upgrade (original hash: 49ebc996aa8c4bdf89c1b5ea461eb677234c61cc)
   'src/third_party/libyuv':
-    Var('chromium_git') + '/libyuv/libyuv.git' + '@' + '49ebc996aa8c4bdf89c1b5ea461eb677234c61cc',
+    Var('chromium_git') + '/libyuv/libyuv.git' + '@' + '19bbedfd3e37329900d34e104021f04d7205ad78',
 
   'src/third_party/lighttpd': {
       'url': Var('chromium_git') + '/chromium/deps/lighttpd.git' + '@' + Var('lighttpd_revision'),
@@ -4036,6 +4037,129 @@ hooks = [
                '--bucket', 'chromium-webrtc-resources',
                '-d', 'src/third_party/opus/tests/resources'],
   },
+  #@name USE_NEVA_APPRUNTIME
+  #@{
+  # Apply icu time zone fix
+  {
+    'name': 'Apply_icu_timezone_fix',
+    'pattern': '.',
+    'action': ['git', '-C', 'src/third_party/icu', 'am',
+               '../../neva/patches/0001-webos-Change-the-default-timezone-link.patch']
+  },
+  # Apply use non-icu database fix
+  {
+    'name': 'Apply_use_non_icu_database_fix',
+    'pattern': '.',
+    'action': ['git', '-C', 'src/v8', 'am',
+               '../neva/patches/0001-webos-Allow-to-use-v8-non-ICU-timezone-database.patch']
+  },
+  # Apply more accurate trace of heap growing factor
+  {
+    'name': 'Apply_more_accurate_trace_of_heap_growing_factor',
+    'pattern': '.',
+    'action': ['git', '-C', 'src/v8', 'am',
+               '../neva/patches/0002-v8-Trace-heap-growing-factor-more-accurately.patch']
+  },
+  # Apply v8 snapshot report exceptions to console
+  {
+    'name': 'Apply_v8_snapshot_report_exceptions_to_console',
+    'pattern': '.',
+    'action': ['git', '-C', 'src/v8', 'am',
+               '../neva/patches/0003-op-upsable-v8-snapshot-Report-exceptions-to-console-.patch']
+  },
+  # Apply Add LTTng tracepoints support
+  {
+    'name': 'Apply_add_lttng_tracepoints_support',
+    'pattern': '.',
+    'action': ['git', '-C', 'src/v8', 'am',
+               '../neva/patches/0004-Add-LTTng-tracepoints-support.patch']
+  },
+  # Apply Make v8 heap constraints configurable
+  {
+    'name': 'Apply_make_v8_heap_constraints_configurable',
+    'pattern': '.',
+    'action': ['git', '-C', 'src/v8', 'am',
+               '../neva/patches/0005-op-upsable-v8-memory-Make-v8-heap-constraints-config.patch']
+  },
+  # Apply 'Refactor neva content decryption module' patch
+  {
+    'name': 'Apply_refactor_neva_content_decryption_module',
+    'pattern': '.',
+    'action': ['git', '-C', 'src/media/cdm/api', 'am',
+               '../../../neva/patches/0001-cdm-Refactor-neva-content-decryption-module.patch']
+  },
+  # Apply 'GCC-suppress-invalid-offsetof-warnings' patch
+  {
+    'name': 'Apply_GCC-suppress-invalid-offsetof-warnings',
+    'pattern': '.',
+    'action': ['git', '-C', 'src/net/third_party/quiche/src', 'am',
+               '../../../../neva/patches/0001-GCC-suppress-invalid-offsetof-warnings.patch']
+  },
+  # Apply 'libstdc-Add-cstring-for-strerror_r-and-memset' patch
+  {
+    'name': 'Apply_libstdc-Add-cstring-for-strerror_r-and-memset',
+    'pattern': '.',
+    'action': ['git', '-C', 'src/net/third_party/quiche/src', 'am',
+               '../../../../neva/patches/0001-libstdc-Add-cstring-for-strerror_r-and-memset.patch']
+  },
+  # Apply 'Disable-angle-vulkan-display' patch
+  {
+    'name': 'Apply_Disable-angle-vulkan-display',
+    'pattern': '.',
+    'action': ['git', '-C', 'src/third_party/angle', 'am',
+              '../../neva/patches/0001-build-webos-Disable-angle-vulkan-display.patch']
+  },
+  #@}
+  #@name webOS Reference Platform
+  #@{
+  # Apply RP downstream v8 patches
+  {
+    'name': 'Appy_add_webos_submission_number_to_v8_vers',
+    'pattern': '.',
+    'action': ['git', '-C', 'src/v8', 'am', '--keep-non-patch',
+               '../neva/patches/rp/v8/0001-op-ds-version-Add-webOS-submission-number-to-v8-vers.patch']
+  },
+  {
+    'name': 'Appy_trace_prevent_crash_with_std_isprint_usag',
+    'pattern': '.',
+    'action': ['git', '-C', 'src/v8', 'am', '--keep-non-patch',
+               '../neva/patches/rp/v8/0002-op-upsable-trace-Prevent-crash-with-std-isprint-usag.patch']
+  },
+  {
+    'name': 'Appy_timezone_reset_dates_cache',
+    'pattern': '.',
+    'action': ['git', '-C', 'src/v8', 'am', '--keep-non-patch',
+               '../neva/patches/rp/v8/0003-op-n_upsable-timezone-Reset-dates-cache.patch']
+  },
+  # breakpad: fix build with glibc-2.34
+  {
+    'name': 'Apply_breakpad-fix-build-with-glibc-2.34',
+    'pattern': '.',
+    'action': ['git', '-C', 'src/third_party/breakpad/breakpad', 'am', '--keep-non-patch',
+               '../../../neva/patches/rp/0001-op-upsable-build-breakpad-fix-build-with-glibc-2.34.patch']
+  },
+  # perfetto: Avoid symbol clash with perfetto and LTTng
+  {
+    'name': 'Apply_perfetto-avoid-symbol-clash-with-perfetto-and-LTTng',
+    'pattern': '.',
+    'action': ['git', '-C', 'src/third_party/perfetto', 'am', '--keep-non-patch',
+               '../../neva/patches/rp/0001-op-n_upsable-lttng-Avoid-symbol-clash-with-perfetto-.patch']
+  },
+  # libyuv: Complete the option to disable libyuv use neon
+  {
+    'name': 'Apply_libyuv-complete-the-option-to-disable-libyuv-use-neon',
+    'pattern': '.',
+    'action': ['git', '-C', 'src/third_party/libyuv', 'am', '--keep-non-patch',
+               '../../neva/patches/rp/0001-op-build-Complete-the-option-to-disable-libyuv_use_n.patch']
+  },
+  # libyuv: Update libyuv to current stable of upstream to support NEON
+  {
+    'name': 'Apply_libyuv-update-libyuv-to-current-stable-to-support-NEON',
+    'pattern': '.',
+    'action': ['git', '-C', 'src/third_party/libyuv', 'am', '--keep-non-patch',
+               '../../neva/patches/rp/0002-op-ds-build-Update-libyuv-to-current-stable-of-upstr.patch']
+  },
+  #@}
   {
     'name': 'apache_mac',
     'pattern': '\\.sha1',

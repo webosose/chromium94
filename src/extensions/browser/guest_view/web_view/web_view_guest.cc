@@ -64,6 +64,7 @@
 #include "extensions/common/constants.h"
 #include "extensions/common/extension_messages.h"
 #include "extensions/common/manifest_constants.h"
+#include "extensions/common/value_builder.h"
 #include "extensions/strings/grit/extensions_strings.h"
 #include "ipc/ipc_message_macros.h"
 #include "net/base/escape.h"
@@ -76,6 +77,26 @@
 #include "ui/events/keycodes/keyboard_codes.h"
 #include "url/url_constants.h"
 
+///@name USE_NEVA_APPRUNTIME
+///@{
+#include "content/common/renderer.mojom.h"
+///@}
+
+#if defined(USE_NEVA_MEDIA)
+#include "content/public/browser/neva/media_state_manager.h"
+#endif
+
+#if defined(USE_NEVA_APPRUNTIME)
+#include "extensions/common/switches.h"
+#include "neva/user_agent/common/user_agent.h"
+#if defined(OS_WEBOS)
+#include "neva/app_runtime/browser/app_runtime_webview_controller_impl.h"
+#include "neva/app_runtime/public/mojom/app_runtime_webview.mojom.h"
+#include "neva/app_runtime/public/webview_controller_delegate.h"
+#include "third_party/blink/public/common/associated_interfaces/associated_interface_provider.h"
+#endif  // OS_WEBOS
+#endif  // USE_NEVA_APPRUNTIME
+
 using base::UserMetricsAction;
 using content::GlobalRequestID;
 using content::RenderFrameHost;
@@ -86,6 +107,57 @@ using guest_view::GuestViewBase;
 using guest_view::GuestViewEvent;
 using guest_view::GuestViewManager;
 using zoom::ZoomController;
+
+#if defined(USE_NEVA_APPRUNTIME) && defined(OS_WEBOS)
+namespace {
+
+const char kDevicePixelRatio[] = "devicePixelRatio";
+const char kIdentifier[] = "identifier";
+const char kInitialize[] = "initialize";
+
+class WebViewGuestWebViewControllerDelegate
+    : public neva_app_runtime::WebViewControllerDelegate {
+ public:
+  WebViewGuestWebViewControllerDelegate(
+      extensions::WebViewGuest* web_view_guest)
+      : web_view_guest_(web_view_guest) {}
+
+  void RunCommand(const std::string& name,
+                  const std::vector<std::string>& arguments) override {}
+
+  std::string RunFunction(const std::string& name,
+                          const std::vector<std::string>&) override {
+    if (name == kInitialize) {
+      return extensions::DictionaryBuilder()
+          .Set(kIdentifier, GetIdentifier())
+          .ToJSON();
+    } else if (name == kIdentifier) {
+      return GetIdentifier();
+    } else if (name == kDevicePixelRatio) {
+      return GetDevicePixelRatio();
+    }
+    return std::string();
+  }
+
+ private:
+  std::string GetIdentifier() {
+    base::CommandLine* cmd = base::CommandLine::ForCurrentProcess();
+    return cmd->GetSwitchValueASCII(extensions::switches::kWebOSAppId);
+  }
+
+  std::string GetDevicePixelRatio() {
+    float device_scale_factor = web_view_guest_->web_contents()
+                                    ->GetRenderWidgetHostView()
+                                    ->GetDeviceScaleFactor();
+    double page_zoom_factor = web_view_guest_->GetZoom();
+    return std::to_string(device_scale_factor * page_zoom_factor);
+  }
+
+  extensions::WebViewGuest* web_view_guest_ = nullptr;
+};
+
+}  // namespace
+#endif
 
 namespace extensions {
 
@@ -407,6 +479,13 @@ void WebViewGuest::CreateWebContents(const base::DictionaryValue& create_params,
     return;
   }
   std::string partition_domain = GetOwnerSiteURL().host();
+
+#if defined(USE_NEVA_EXTENSIONS)
+  if (partition_domain.empty())
+    partition_domain =
+        owner_web_contents()->GetMutableRendererPrefs()->application_id;
+#endif
+
   auto partition_config = content::StoragePartitionConfig::Create(
       browser_context(), partition_domain, storage_partition_id,
       !persist_storage /* in_memory */);
@@ -431,6 +510,18 @@ void WebViewGuest::CreateWebContents(const base::DictionaryValue& create_params,
 
   GURL guest_site = GetSiteForGuestPartitionConfig(partition_config);
 
+#if defined(USE_NEVA_APPRUNTIME)
+  scoped_refptr<content::SiteInstance> guest_site_instance;
+  base::CommandLine* cmd = base::CommandLine::ForCurrentProcess();
+  if (!cmd->HasSwitch(switches::kProcessPerGuestWebView)) {
+    // If we already have a webview tag in the same app using the same storage
+    // partition, we should use the same SiteInstance so the existing tag and
+    // the new tag can script each other.
+    auto* guest_view_manager = GuestViewManager::FromBrowserContext(
+        owner_render_process_host->GetBrowserContext());
+    guest_site_instance = guest_view_manager->GetGuestSiteInstance(guest_site);
+  }
+#else
   // If we already have a webview tag in the same app using the same storage
   // partition, we should use the same SiteInstance so the existing tag and
   // the new tag can script each other.
@@ -438,6 +529,8 @@ void WebViewGuest::CreateWebContents(const base::DictionaryValue& create_params,
       GuestViewManager::FromBrowserContext(browser_context());
   scoped_refptr<content::SiteInstance> guest_site_instance =
       guest_view_manager->GetGuestSiteInstance(guest_site);
+#endif  // USE_NEVA_APPRUNTIME
+
   if (!guest_site_instance) {
     // Create the SiteInstance in a new BrowsingInstance, which will ensure
     // that webview tags are also not allowed to send messages across
@@ -784,13 +877,85 @@ void WebViewGuest::SetUserAgentOverride(
   if (is_overriding_user_agent_) {
     base::RecordAction(UserMetricsAction("WebView.Guest.OverrideUA"));
   }
+
+#if defined(USE_NEVA_APPRUNTIME)
+  if (neva_user_agent::IsUserAgentClientHintsEnabled()) {
+    blink::UserAgentOverride ua_override;
+    ua_override.ua_string_override = user_agent_override;
+    ua_override.ua_metadata_override =
+        neva_user_agent::GetDefaultUserAgentMetadata();
+    web_contents()->SetUserAgentOverride(ua_override, false);
+  } else {
+    web_contents()->SetUserAgentOverride(
+        blink::UserAgentOverride::UserAgentOnly(user_agent_override), false);
+  }
+#else
   web_contents()->SetUserAgentOverride(
       blink::UserAgentOverride::UserAgentOnly(user_agent_override), false);
+#endif  // defined(USE_NEVA_APPRUNTIME)
 }
 
 void WebViewGuest::Stop() {
   web_contents()->Stop();
 }
+
+///@name USE_NEVA_APPRUNTIME
+///@{
+void WebViewGuest::Suspend() {
+  if (is_suspended_)
+    return;
+  is_suspended_ = true;
+  base::RecordAction(UserMetricsAction("WebView.Guest.Suspend"));
+#if defined(USE_NEVA_MEDIA)
+  content::MediaStateManager::GetInstance()->SuspendAllMedia(web_contents());
+#endif
+
+  content::RenderProcessHost* host =
+      web_contents()->GetMainFrame()->GetProcess();
+  if (host)
+    host->GetRendererInterface()->ProcessSuspend();
+}
+
+void WebViewGuest::Resume() {
+  if (!is_suspended_)
+    return;
+  is_suspended_ = false;
+  base::RecordAction(UserMetricsAction("WebView.Guest.Resume"));
+#if defined(USE_NEVA_MEDIA)
+  content::MediaStateManager::GetInstance()->ResumeAllMedia(web_contents());
+#endif
+
+  content::RenderProcessHost* host =
+      web_contents()->GetMainFrame()->GetProcess();
+  if (host)
+    host->GetRendererInterface()->ProcessResume();
+}
+///@}
+
+#if defined(USE_NEVA_APPRUNTIME) && defined(OS_WEBOS)
+void WebViewGuest::RenderFrameCreated(
+    content::RenderFrameHost* render_frame_host) {
+  content::WebContents* contents =
+      content::WebContents::FromRenderFrameHost(render_frame_host);
+  // Only do this for the initial main frame.
+  if (render_frame_host == contents->GetMainFrame()) {
+    webview_controller_impl_ =
+        std::make_unique<neva_app_runtime::AppRuntimeWebViewControllerImpl>(
+            contents);
+
+    webview_controller_delegate_ =
+        std::make_unique<WebViewGuestWebViewControllerDelegate>(this);
+    webview_controller_impl_->SetDelegate(webview_controller_delegate_.get());
+
+    mojo::AssociatedRemote<neva_app_runtime::mojom::AppRuntimeWebViewClient>
+        client;
+    render_frame_host->GetMainFrame()->GetRemoteAssociatedInterfaces()
+        ->GetInterface(&client);
+    client->AddInjectionToLoad(std::string("v8/webosservicebridge"), std::string("{}"));
+    client->AddInjectionToLoad(std::string("v8/webossystem"), std::string("{}"));
+  }
+}
+#endif
 
 void WebViewGuest::Terminate() {
   base::RecordAction(UserMetricsAction("WebView.Guest.Terminate"));
@@ -854,7 +1019,7 @@ WebViewGuest::WebViewGuest(WebContents* owner_web_contents)
       did_set_explicit_zoom_(false),
       is_spatial_navigation_enabled_(
           base::CommandLine::ForCurrentProcess()->HasSwitch(
-              switches::kEnableSpatialNavigation)) {
+              ::switches::kEnableSpatialNavigation)) {
   web_view_guest_delegate_.reset(
       ExtensionsAPIClient::Get()->CreateWebViewGuestDelegate(this));
 }

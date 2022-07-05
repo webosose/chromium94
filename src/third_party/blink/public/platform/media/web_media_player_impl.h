@@ -294,7 +294,11 @@ class BLINK_PLATFORM_EXPORT WebMediaPlayerImpl
   // be disabled to save resources.
   enum { kMaxKeyframeDistanceToDisableBackgroundVideoMs = 5500 };
 
+#if defined(USE_NEVA_MEDIA)
+ protected:
+#else
  private:
+#endif
   friend class WebMediaPlayerImplTest;
   friend class WebMediaPlayerImplBackgroundBehaviorTest;
 
@@ -392,7 +396,11 @@ class BLINK_PLATFORM_EXPORT WebMediaPlayerImpl
   // Returns the current video frame from |compositor_|, and asks the compositor
   // to update its frame if it is stale.
   // Can return a nullptr.
+#if defined(USE_NEVA_MEDIA)
+  virtual scoped_refptr<media::VideoFrame> GetCurrentFrameFromCompositor() const;
+#else
   scoped_refptr<media::VideoFrame> GetCurrentFrameFromCompositor() const;
+#endif
 
   // Called when the demuxer encounters encrypted streams.
   void OnEncryptedMediaInitData(media::EmeInitDataType init_data_type,
@@ -1015,6 +1023,10 @@ class BLINK_PLATFORM_EXPORT WebMediaPlayerImpl
 
   // Whether background video optimization is supported on current platform.
   bool is_background_video_track_optimization_supported_ = true;
+
+#if defined(USE_NEVA_MEDIA)
+  bool is_background_video_optimization_enabled_ = true;
+#endif
 
   bool was_suspended_for_frame_closed_ = false;
 

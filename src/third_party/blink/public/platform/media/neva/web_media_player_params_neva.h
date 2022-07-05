@@ -1,0 +1,84 @@
+// Copyright 2018 LG Electronics, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+//
+// SPDX-License-Identifier: Apache-2.0
+
+#ifndef THIRD_PARTY_BLINK_PUBLIC_PLATFORM_MEDIA_NEVA_WEB_MEDIA_PLAYER_PARAMS_NEVA_H_
+#define THIRD_PARTY_BLINK_PUBLIC_PLATFORM_MEDIA_NEVA_WEB_MEDIA_PLAYER_PARAMS_NEVA_H_
+
+#include "media/neva/media_platform_api.h"
+#include "media/neva/media_player_neva_factory.h"
+#include "third_party/blink/public/platform/web_common.h"
+#include "third_party/blink/public/platform/web_string.h"
+#include "ui/platform_window/neva/mojom/video_window.mojom.h"
+
+namespace blink {
+
+class BLINK_PLATFORM_EXPORT WebMediaPlayerParamsNeva {
+ public:
+  using CreateVideoWindowCB = base::RepeatingCallback<void(
+      mojo::PendingRemote<ui::mojom::VideoWindowClient>,
+      mojo::PendingReceiver<ui::mojom::VideoWindow>,
+      const ui::VideoWindowParams&)>;
+
+  WebMediaPlayerParamsNeva(CreateVideoWindowCB callback);
+  ~WebMediaPlayerParamsNeva();
+
+  WebString application_id() const { return application_id_; }
+
+  bool use_unlimited_media_policy() const {
+    return use_unlimited_media_policy_;
+  }
+
+  media::CreateMediaPlayerNevaCB override_create_media_player_neva() const {
+    return override_create_media_player_neva_;
+  }
+
+  media::CreateMediaPlatformAPICB override_create_media_platform_api() const {
+    return override_create_media_platform_api_;
+  }
+
+  void set_application_id(const WebString application_id) {
+    application_id_ = application_id;
+  }
+
+  void set_use_unlimited_media_policy(const bool use_unlimited_media_policy) {
+    use_unlimited_media_policy_ = use_unlimited_media_policy;
+  }
+
+  void set_override_create_media_player_neva(
+      media::CreateMediaPlayerNevaCB create_callback) {
+    override_create_media_player_neva_ = std::move(create_callback);
+  }
+
+  void set_override_create_media_platform_api(
+      media::CreateMediaPlatformAPICB create_callback) {
+    override_create_media_platform_api_ = std::move(create_callback);
+  }
+
+  CreateVideoWindowCB&& get_create_video_window_callback() {
+    return std::move(create_video_window_cb_);
+  }
+
+ protected:
+  CreateVideoWindowCB create_video_window_cb_;
+  WebString application_id_;
+  bool use_unlimited_media_policy_ = false;
+  media::CreateMediaPlayerNevaCB override_create_media_player_neva_;
+  media::CreateMediaPlatformAPICB override_create_media_platform_api_;
+};
+
+}  // namespace blink
+
+#endif  // THIRD_PARTY_BLINK_PUBLIC_PLATFORM_MEDIA_NEVA_WEB_MEDIA_PLAYER_PARAMS_NEVA_H_

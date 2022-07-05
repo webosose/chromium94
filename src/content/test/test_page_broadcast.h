@@ -28,6 +28,10 @@ class TestPageBroadcast : public blink::mojom::PageBroadcast {
   void SetInsidePortal(bool is_inside_portal) override;
   void UpdateWebPreferences(
       const blink::web_pref::WebPreferences& preferences) override;
+#if defined(USE_NEVA_NPAPI)
+  void AddAvailablePlugin(const std::string& path,
+                          const std::string& mime_description) override;
+#endif  // defined(USE_NEVA_NPAPI)
   void UpdateRendererPreferences(
       const blink::RendererPreferences& preferences) override;
   void SetHistoryOffsetAndLength(int32_t history_offset,

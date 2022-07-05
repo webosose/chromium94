@@ -174,6 +174,9 @@ struct AudioDecoderConfig {
   AudioCodecProfile profile;
   ChannelLayout target_output_channel_layout;
   bool should_discard_decoder_delay;
+
+  [EnableIf=use_neva_media]
+  bool is_dolby_atmos;
 };
 
 // This defines a mojo transport format for media::VideoDecoderConfig.
@@ -191,6 +194,9 @@ struct VideoDecoderConfig {
   EncryptionScheme encryption_scheme;
   VideoColorSpace color_space_info;
   gfx.mojom.HDRMetadata? hdr_metadata;
+
+  [EnableIf=use_neva_webrtc]
+  bool is_live_stream;
 };
 
 // Native struct media::SubsampleEntry;
@@ -515,4 +521,9 @@ enum RendererType {
   kFuchsia = 7,          // FuchsiaRendererFactory
   kRemoting = 8,         // RemotingRendererFactory for remoting::Receiver
   kCastStreaming = 9,    // CastStreamingRendererFactory
+  ///@name USE_NEVA_MEDIA
+  ///@{
+  [EnableIf=use_neva_media]
+  kNevaMediaPlayer = 10, // NevaMediaPlayerRendererFactory
+  ///@}
 };

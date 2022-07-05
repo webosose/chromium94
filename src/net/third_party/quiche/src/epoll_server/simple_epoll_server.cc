@@ -4,11 +4,12 @@
 
 #include "epoll_server/simple_epoll_server.h"
 
-#include <errno.h>   // for errno and strerror_r
+#include <errno.h>   // for errno
 #include <stdlib.h>  // for abort
 #include <unistd.h>  // For read, pipe, close and write.
 
 #include <algorithm>
+#include <cstring>
 #include <utility>
 
 #include "epoll_server/platform/api/epoll_bug.h"

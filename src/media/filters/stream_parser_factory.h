@@ -14,6 +14,11 @@
 #include "media/base/media_log.h"
 #include "media/base/mime_util.h"
 
+#if defined(USE_NEVA_MEDIA)
+#include "third_party/abseil-cpp/absl/types/optional.h"
+#include "media/neva/media_codec_capability.h"
+#endif
+
 namespace media {
 
 class AudioDecoderConfig;
@@ -32,6 +37,14 @@ class MEDIA_EXPORT StreamParserFactory {
   // requires a codecs parameter that is missing.
   static SupportsType IsTypeSupported(const std::string& type,
                                       base::span<const std::string> codecs);
+
+#if defined(USE_NEVA_MEDIA)
+  // Checks to see if the specified additional options are supported.
+  static SupportsType IsTypeSupported(
+      const std::string& type,
+      const std::vector<std::string>& codecs,
+      const absl::optional<MediaCodecCapability>& capability);
+#endif
 
   // Creates a new StreamParser object if the specified |type| and |codecs| list
   // are supported. |media_log| can be used to report errors if there is

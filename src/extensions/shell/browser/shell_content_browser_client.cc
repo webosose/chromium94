@@ -12,6 +12,7 @@
 #include "base/cxx17_backports.h"
 #include "components/guest_view/browser/guest_view_message_filter.h"
 #include "components/nacl/common/buildflags.h"
+#include "components/network_session_configurator/common/network_switches.h"
 #include "content/public/browser/browser_main_runner.h"
 #include "content/public/browser/browser_task_traits.h"
 #include "content/public/browser/browser_thread.h"
@@ -47,6 +48,8 @@
 #include "extensions/shell/browser/shell_navigation_ui_data.h"
 #include "extensions/shell/browser/shell_speech_recognition_manager_delegate.h"
 #include "extensions/shell/common/version.h"  // Generated file.
+#include "neva/browser_service/browser/cookiemanager_service_impl.h"
+#include "neva/browser_service/browser/popupblocker_service_impl.h"
 #include "services/metrics/public/cpp/ukm_source_id.h"
 #include "third_party/blink/public/common/associated_interfaces/associated_interface_registry.h"
 #include "url/gurl.h"
@@ -61,10 +64,47 @@
 #include "content/public/browser/child_process_data.h"
 #endif
 
+#if defined(USE_NEVA_APPRUNTIME)
+#include "base/neva/base_switches.h"
+#include "content/public/browser/login_delegate.h"
+#include "content/public/browser/network_service_instance.h"
+#include "content/shell/common/shell_neva_switches.h"
+#include "extensions/browser/extension_util.h"
+#include "extensions/common/manifest_handlers/app_isolation_info.h"
+#include "neva/browser_service/public/mojom/constants.mojom.h"
+#include "neva/pal_service/public/mojom/constants.mojom.h"
+#include "neva/user_agent/common/user_agent.h"
+#include "services/network/public/mojom/network_service.mojom.h"
+#include "third_party/abseil-cpp/absl/types/optional.h"
+#include "ui/base/ui_base_neva_switches.h"
+#endif
+#if defined(USE_NEVA_BROWSER_SERVICE)
+#include "neva/browser_service/browser_service.h"
+#include "third_party/blink/public/common/web_preferences/web_preferences.h"
+#endif
+
 using base::CommandLine;
 using content::BrowserContext;
+#if defined(USE_NEVA_BROWSER_SERVICE)
+using blink::web_pref::WebPreferences;
+#endif
 namespace extensions {
 namespace {
+#if defined(USE_NEVA_APPRUNTIME)
+const char kCacheStoreFile[] = "Cache";
+const char kCookieStoreFile[] = "Cookies";
+const int kDefaultDiskCacheSize = 16 * 1024 * 1024;  // default size is 16MB
+
+void AuthRequestCallback(
+    LoginAuthRequiredCallback callback,
+    const absl::optional<net::AuthCredentials>& credentials,
+    bool should_cancel) {
+  if (credentials) {
+    std::move(callback).Run(credentials);
+    return;
+  }
+}
+#endif
 
 ShellContentBrowserClient* g_instance = nullptr;
 
@@ -85,6 +125,33 @@ ShellContentBrowserClient::~ShellContentBrowserClient() {
 // static
 ShellContentBrowserClient* ShellContentBrowserClient::Get() {
   return g_instance;
+}
+
+bool ShellContentBrowserClient::CanCreateWindow(
+    content::RenderFrameHost* opener,
+    const GURL& opener_url,
+    const GURL& opener_top_level_frame_url,
+    const url::Origin& source_origin,
+    content::mojom::WindowContainerType container_type,
+    const GURL& target_url,
+    const content::Referrer& referrer,
+    const std::string& frame_name,
+    WindowOpenDisposition disposition,
+    const blink::mojom::WindowFeatures& features,
+    bool user_gesture,
+    bool opener_suppressed,
+    bool* no_javascript_access) {
+  *no_javascript_access = false;
+
+#if defined(USE_NEVA_APPRUNTIME)
+  if (browser::PopupBlockerServiceImpl::GetInstance()->IsBlocked(
+          opener_top_level_frame_url, user_gesture, disposition)) {
+    LOG(INFO) << __func__ << "Pop up window is blocked for this site: "
+              << opener_url.spec().c_str();
+    return false;
+  }
+#endif
+  return true;
 }
 
 content::BrowserContext* ShellContentBrowserClient::GetBrowserContext() {
@@ -154,11 +221,32 @@ bool ShellContentBrowserClient::IsHandledURL(const GURL& url) {
 
 void ShellContentBrowserClient::SiteInstanceGotProcess(
     content::SiteInstance* site_instance) {
+#if defined(USE_NEVA_BROWSER_SERVICE)
+  // We need to set the new cookie manager instance as it is changed
+  // after a web page is opened because storage partition is changed
+  network::mojom::CookieManager* cookie_manager =
+      browser_main_parts_->browser_context()
+          ->GetStoragePartition(site_instance, false)
+          ->GetCookieManagerForBrowserProcess();
+  browser::CookieManagerServiceImpl::Get()->SetNetworkCookieManager(
+      cookie_manager);
+#endif
+
   // If this isn't an extension renderer there's nothing to do.
   const Extension* extension = GetExtension(site_instance);
   if (!extension)
     return;
 
+#if defined(USE_NEVA_APPRUNTIME)
+  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+          ::switches::kV8SnapshotBlobPath)) {
+    v8_snapshot_path_ =
+        std::make_pair(site_instance->GetProcess()->GetID(),
+                       base::CommandLine::ForCurrentProcess()
+                           ->GetSwitchValuePath(::switches::kV8SnapshotBlobPath)
+                           .value());
+  }
+#endif
   ProcessMap::Get(browser_main_parts_->browser_context())
       ->Insert(extension->id(),
                site_instance->GetProcess()->GetID(),
@@ -189,6 +277,24 @@ void ShellContentBrowserClient::AppendExtraCommandLineSwitches(
       command_line->GetSwitchValueASCII(::switches::kProcessType);
   if (process_type == ::switches::kRendererProcess)
     AppendRendererSwitches(command_line);
+#if defined(USE_NEVA_APPRUNTIME)
+  // Append v8 snapshot path if given
+  if (v8_snapshot_path_.first == child_process_id) {
+    command_line->AppendSwitchPath(::switches::kV8SnapshotBlobPath,
+                                   base::FilePath(v8_snapshot_path_.second));
+  }
+
+  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+          ::switches::kUseOzoneWaylandVkb))
+    command_line->AppendSwitch(::switches::kUseOzoneWaylandVkb);
+
+  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+          ::switches::kOzoneWaylandUseXDGShell))
+    command_line->AppendSwitch(::switches::kOzoneWaylandUseXDGShell);
+#endif
+#if defined(OS_WEBOS)
+  command_line->AppendSwitch(::switches::kDisableQuic);
+#endif
 }
 
 content::SpeechRecognitionManagerDelegate*
@@ -233,6 +339,29 @@ void ShellContentBrowserClient::ExposeInterfacesToRenderer(
     content::RenderProcessHost* render_process_host) {
   associated_registry->AddInterface(base::BindRepeating(
       &EventRouter::BindForRenderer, render_process_host->GetID()));
+#if defined(USE_NEVA_BROWSER_SERVICE)
+  auto sitefilter_service =
+      [](mojo::PendingReceiver<browser::mojom::SiteFilterService> receiver) {
+        browser::BrowserService::GetBrowserService()->BindSiteFilterService(
+            std::move(receiver));
+      };
+  registry->AddInterface(base::BindRepeating(sitefilter_service),
+                         content::GetUIThreadTaskRunner({}));
+  auto popupblocker_service =
+      [](mojo::PendingReceiver<browser::mojom::PopupBlockerService> receiver) {
+        browser::BrowserService::GetBrowserService()->BindPopupBlockerService(
+            std::move(receiver));
+      };
+  registry->AddInterface(base::BindRepeating(popupblocker_service),
+                         content::GetUIThreadTaskRunner({}));
+  auto cookiemanager_service =
+      [](mojo::PendingReceiver<browser::mojom::CookieManagerService> receiver) {
+        browser::BrowserService::GetBrowserService()->BindCookieManagerService(
+            std::move(receiver));
+      };
+  registry->AddInterface(base::BindRepeating(cookiemanager_service),
+                         content::GetUIThreadTaskRunner({}));
+#endif
 }
 
 bool ShellContentBrowserClient::BindAssociatedReceiverFromFrame(
@@ -371,10 +500,20 @@ ShellContentBrowserClient::GetSandboxedStorageServiceDataDirectory() {
 }
 
 std::string ShellContentBrowserClient::GetUserAgent() {
+#if defined(USE_NEVA_APPRUNTIME)
+  return neva_user_agent::GetDefaultUserAgent();
+#else
   // Must contain a user agent string for version sniffing. For example,
   // pluginless WebRTC Hangouts checks the Chrome version number.
   return content::BuildUserAgentFromProduct("Chrome/" PRODUCT_VERSION);
+#endif  // defined(USE_NEVA_APPRUNTIME)
 }
+
+#if defined(USE_NEVA_APPRUNTIME)
+blink::UserAgentMetadata ShellContentBrowserClient::GetUserAgentMetadata() {
+  return neva_user_agent::GetDefaultUserAgentMetadata();
+}
+#endif  // defined(USE_NEVA_APPRUNTIME)
 
 std::unique_ptr<ShellBrowserMainParts>
 ShellContentBrowserClient::CreateShellBrowserMainParts(
@@ -415,5 +554,110 @@ const Extension* ShellContentBrowserClient::GetExtension(
   return registry->enabled_extensions().GetExtensionOrAppByURL(
       site_instance->GetSiteURL());
 }
+
+#if defined(USE_NEVA_APPRUNTIME)
+std::unique_ptr<content::LoginDelegate>
+ShellContentBrowserClient::CreateLoginDelegate(
+    const net::AuthChallengeInfo& auth_info,
+    content::WebContents* web_contents,
+    const content::GlobalRequestID& request_id,
+    bool is_request_for_main_frame,
+    const GURL& url,
+    scoped_refptr<net::HttpResponseHeaders> response_headers,
+    bool first_auth_attempt,
+    LoginAuthRequiredCallback auth_required_callback) {
+  BrowserContext* browser_context = GetBrowserContext();
+  extensions::WebRequestAPI* api =
+      extensions::BrowserContextKeyedAPIFactory<extensions::WebRequestAPI>::Get(
+          browser_context);
+  auto continuation =
+      base::BindOnce(&AuthRequestCallback, std::move(auth_required_callback));
+
+  if (api->MaybeProxyAuthRequest(
+          browser_context, auth_info, std::move(response_headers), request_id,
+          is_request_for_main_frame, std::move(continuation))) {
+  }
+
+  return std::make_unique<content::LoginDelegate>();
+}
+
+content::StoragePartitionConfig
+ShellContentBrowserClient::GetStoragePartitionConfigForSite(
+    content::BrowserContext* browser_context,
+    const GURL& site) {
+  // Default to the browser-wide storage partition and override based on |site|
+  // below.
+  content::StoragePartitionConfig storage_partition_config =
+      content::StoragePartitionConfig::CreateDefault(browser_context);
+
+#if BUILDFLAG(ENABLE_EXTENSIONS)
+  if (extensions::WebViewGuest::GetGuestPartitionConfigForSite(
+          browser_context, site, &storage_partition_config)) {
+    return storage_partition_config;
+  }
+
+  if (site.SchemeIs(extensions::kExtensionScheme)) {
+    // The host in an extension site URL is the extension_id.
+    CHECK(site.has_host());
+    return extensions::util::GetStoragePartitionConfigForExtensionId(
+        site.host(), browser_context);
+  }
+#endif
+
+  return storage_partition_config;
+}
+
+void ShellContentBrowserClient::OnNetworkServiceCreated(
+    network::mojom::NetworkService* network_service) {
+#if defined(OS_WEBOS)
+  network_service->DisableQuic();
+#endif
+}
+
+void ShellContentBrowserClient::ConfigureNetworkContextParams(
+    content::BrowserContext* context,
+    bool in_memory,
+    const base::FilePath& relative_partition_path,
+    network::mojom::NetworkContextParams* network_context_params,
+    cert_verifier::mojom::CertVerifierCreationParams*
+        cert_verifier_creation_params) {
+  network_context_params->user_agent = GetUserAgent();
+  network_context_params->accept_language = "en-us,en";
+  network_context_params->cookie_path =
+      context->GetPath().Append(kCookieStoreFile);
+  network_context_params->enable_encrypted_cookies = false;
+
+  int disk_cache_size = kDefaultDiskCacheSize;
+  base::CommandLine* cmd_line = base::CommandLine::ForCurrentProcess();
+  if (cmd_line->HasSwitch(::switches::kShellDiskCacheSize)) {
+    if (!base::StringToInt(
+            cmd_line->GetSwitchValueASCII(::switches::kShellDiskCacheSize),
+            &disk_cache_size) ||
+        disk_cache_size < 0) {
+      LOG(ERROR) << __func__ << " invalid value("
+                 << cmd_line->GetSwitchValueASCII(
+                        ::switches::kShellDiskCacheSize)
+                 << ") for the command-line switch of --"
+                 << ::switches::kShellDiskCacheSize;
+      disk_cache_size = kDefaultDiskCacheSize;
+    }
+  }
+
+  network_context_params->http_cache_max_size = disk_cache_size;
+  network_context_params->http_cache_path =
+      context->GetPath().Append(kCacheStoreFile);
+}
+#endif
+
+#if defined(USE_NEVA_BROWSER_SERVICE)
+void ShellContentBrowserClient::OverrideWebkitPrefs(
+    content::WebContents* web_contents,
+    WebPreferences* prefs) {
+  prefs->cookie_enabled =
+      browser::CookieManagerServiceImpl::Get()->IsCookieEnabled();
+  if (override_web_preferences_callback_)
+    override_web_preferences_callback_.Run(prefs);
+}
+#endif
 
 }  // namespace extensions

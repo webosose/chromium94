@@ -94,6 +94,10 @@
 #include "content/public/browser/android/child_process_importance.h"
 #endif
 
+#if defined(USE_NEVA_APPRUNTIME)
+#include "base/memory/memory_pressure_listener.h"
+#endif  // defined(USE_NEVA_APPRUNTIME)
+
 namespace base {
 class CommandLine;
 class PersistentMemoryAllocator;
@@ -688,6 +692,11 @@ class CONTENT_EXPORT RenderProcessHostImpl
 
   size_t keep_alive_ref_count() const { return keep_alive_ref_count_; }
 
+#if defined(USE_NEVA_APPRUNTIME)
+  void OnMemoryPressure(
+      base::MemoryPressureListener::MemoryPressureLevel level);
+#endif  // defined(USE_NEVA_APPRUNTIME)
+
   // Allows overriding the URLLoaderFactory creation via CreateURLLoaderFactory.
   // Passing a null callback will restore the default behavior.
   // This method must be called either on the UI thread or before threads start.
@@ -1145,6 +1154,10 @@ class CONTENT_EXPORT RenderProcessHostImpl
   // delayed to run unload handlers, or zero if the process shutdown was not
   // delayed due to unload handlers.
   base::TimeDelta time_spent_running_unload_handlers_;
+
+#if defined(USE_NEVA_APPRUNTIME)
+  std::unique_ptr<base::MemoryPressureListener> memory_pressure_listener_;
+#endif  // defined(USE_NEVA_APPRUNTIME)
 
   // If the RenderProcessHost is being shutdown via Shutdown(), this records the
   // exit code.

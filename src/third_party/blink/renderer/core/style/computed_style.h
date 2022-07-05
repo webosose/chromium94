@@ -90,6 +90,8 @@ class StyleDifference;
 class StyleImage;
 class StyleInheritedVariables;
 class StyleInitialData;
+class StyleNavigationData;
+class StyleNavigationIndex;
 class StyleResolver;
 class StyleSelfAlignmentData;
 class TransformationMatrix;
@@ -997,6 +999,22 @@ class ComputedStyle : public ComputedStyleBase,
   }
   const AtomicString& TextEmphasisMarkString() const;
   LineLogicalSide GetTextEmphasisLineLogicalSide() const;
+
+  // caret-width
+  float CaretWidth() const {
+    return CaretWidthInternal();
+  }
+  void SetCaretWidth(float f) {
+    SetCaretWidthIsAutoInternal(false);
+    SetCaretWidthInternal(f);
+  }
+  bool HasAutoCaretWidth() const {
+    return CaretWidthIsAutoInternal();
+  }
+  void SetHasAutoCaretWidth() {
+    SetCaretWidthIsAutoInternal(true);
+    SetCaretWidthInternal(1.f);
+  }
 
   // Font properties.
   CORE_EXPORT const Font& GetFont() const { return FontInternal(); }
@@ -2559,6 +2577,12 @@ class ComputedStyle : public ComputedStyleBase,
   bool ShouldPlaceBlockDirectionScrollbarOnLogicalLeft() const {
     return !IsLeftToRightDirection() && IsHorizontalWritingMode();
   }
+
+  const scoped_refptr<StyleNavigationData> Navigation(CSSPropertyID property) const;
+  scoped_refptr<StyleNavigationData> AccessNavigation(CSSPropertyID property);
+  const scoped_refptr<StyleNavigationIndex> NavigationIndex() const;
+  scoped_refptr<StyleNavigationIndex> AccessNavigationIndex();
+  void InheritNavigation(CSSPropertyID property, const ComputedStyle* inherit_parent);
 
   // Border utility functions.
   bool BorderObscuresBackground() const;

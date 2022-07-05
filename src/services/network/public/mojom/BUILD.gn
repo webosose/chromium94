@@ -8,6 +8,8 @@ import("//mojo/public/tools/bindings/mojom.gni")
 import("//net/features.gni")
 import("//services/network/public/cpp/features.gni")
 
+import("//neva/neva.gni")
+
 # These interfaces are put in their own target to avoid a circular dependency,
 # which comes from the fact that proxy_resolver service uses these interfaces,
 # and the network service uses the proxy_resolver service.
@@ -217,6 +219,10 @@ mojom("url_loader_base") {
   enabled_features = []
   if (is_android || is_chromeos_ash) {
     enabled_features += [ "network_change_notifier_in_browser" ]
+  }
+
+  if (use_filescheme_codecache) {
+    enabled_features += [ "filescheme_codecache" ]
   }
 
   if (!is_ios) {
@@ -816,6 +822,7 @@ mojom("mojom") {
     ":url_loader_base",
     ":websocket_mojom",
     "//mojo/public/mojom/base",
+    "//neva/pal_service/public/mojom",
     "//services/proxy_resolver/public/mojom",
     "//url/mojom:url_mojom_gurl",
     "//url/mojom:url_mojom_origin",
@@ -847,6 +854,10 @@ mojom("mojom") {
   # because IS_CHROMECAST is not available in build/build_config.h.
   if (is_linux || is_chromeos_lacros) {
     enabled_features += [ "needs_crypt_config" ]
+  }
+
+  if (is_webos) {
+    enabled_features += [ "is_webos" ]
   }
 
   # Typemaps which apply to both Blink and non-Blink bindings.

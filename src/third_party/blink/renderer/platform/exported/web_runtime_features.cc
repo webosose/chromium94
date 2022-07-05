@@ -166,6 +166,12 @@ void WebRuntimeFeatures::EnableCacheInlineScriptCode(bool enable) {
   RuntimeEnabledFeatures::SetCacheInlineScriptCodeEnabled(enable);
 }
 
+#if defined(USE_FILESCHEME_CODECACHE)
+void WebRuntimeFeatures::EnableLocalResourceCodeCache(bool enable) {
+  RuntimeEnabledFeatures::SetLocalResourceCodeCacheEnabled(enable);
+}
+#endif
+
 void WebRuntimeFeatures::EnableCanvas2dImageChromium(bool enable) {
   RuntimeEnabledFeatures::SetCanvas2dImageChromiumEnabled(enable);
 }
@@ -176,6 +182,10 @@ void WebRuntimeFeatures::EnableCompositedSelectionUpdate(bool enable) {
 
 void WebRuntimeFeatures::EnableCSSHexAlphaColor(bool enable) {
   RuntimeEnabledFeatures::SetCSSHexAlphaColorEnabled(enable);
+}
+
+void WebRuntimeFeatures::EnableCSSNavigation(bool enable) {
+  RuntimeEnabledFeatures::SetCSSNavigationEnabled(enable);
 }
 
 void WebRuntimeFeatures::EnableScrollTopLeftInterop(bool enable) {

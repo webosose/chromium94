@@ -199,6 +199,10 @@ class VIZ_SERVICE_EXPORT Display : public DisplaySchedulerClient,
     return output_surface_->capabilities().supports_delegated_ink;
   }
 
+#if defined(USE_NEVA_APPRUNTIME)
+  void RenderProcessGone();
+#endif
+
   // If the platform supports delegated ink trails, then forward the pending
   // receiver to the gpu main thread where it will be bound so that points can
   // be sent directly there from the browser process and bypass viz.

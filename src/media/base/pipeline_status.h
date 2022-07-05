@@ -27,7 +27,11 @@ enum PipelineStatus {
   // Deprecated: PIPELINE_ERROR_URL_NOT_FOUND = 1,
   PIPELINE_ERROR_NETWORK = 2,
   PIPELINE_ERROR_DECODE = 3,
+#if defined(USE_NEVA_MEDIA)
+  PIPELINE_ERROR_DECRYPT = 4,
+#else
   // Deprecated: PIPELINE_ERROR_DECRYPT = 4,
+#endif
   PIPELINE_ERROR_ABORT = 5,
   PIPELINE_ERROR_INITIALIZATION_FAILED = 6,
   PIPELINE_ERROR_COULD_NOT_RENDER = 8,
@@ -62,9 +66,15 @@ enum PipelineStatus {
   // recreate the Renderer instead of failing the playback. See
   // https://crbug.com/1208618
   PIPELINE_ERROR_HARDWARE_CONTEXT_RESET = 23,
+#if defined(USE_NEVA_MEDIA)
+  // Resource is released by policy action.
+  DECODER_ERROR_RESOURCE_IS_RELEASED = 24,
 
+  PIPELINE_STATUS_MAX = DECODER_ERROR_RESOURCE_IS_RELEASED,
+#else
   // Must be equal to the largest value ever logged.
   PIPELINE_STATUS_MAX = PIPELINE_ERROR_HARDWARE_CONTEXT_RESET,
+#endif
 };
 
 MEDIA_EXPORT absl::optional<PipelineStatus> StatusCodeToPipelineStatus(

@@ -12,6 +12,13 @@
 #include "ui/base/ime/linux/fake_input_method_context_factory.h"
 #include "ui/views/linux_ui/linux_ui.h"
 
+///@name USE_NEVA_APPRUNTIME
+///@{
+#if defined(OZONE_PLATFORM_WAYLAND_EXTERNAL)
+#include "ozone/ui/webui/ozone_webui.h"
+#endif  // defined(OZONE_PLATFORM_WAYLAND_EXTERNAL)
+///@}
+
 #if BUILDFLAG(USE_GTK)
 #include "ui/gtk/gtk_ui_factory.h"
 #endif
@@ -32,6 +39,16 @@ std::unique_ptr<views::LinuxUI> BuildLinuxUI() {
   if (features::IsUsingOzonePlatform() && !ui::LinuxUiDelegate::GetInstance())
     return nullptr;
 #endif
+
+///@name USE_NEVA_APPRUNTIME
+///@{
+// FIXME(neva): Don't be confused since currently builds contain both backends.
+// Needs to be refactored when IOW is finally dropped.
+#if defined(OZONE_PLATFORM_WAYLAND_EXTERNAL)
+  if (ui::OzonePlatform::IsWaylandExternal())
+    return BuildWebUI();
+#endif
+///@}
 
   // GtkUi is the only LinuxUI implementation for now.
 #if BUILDFLAG(USE_GTK)

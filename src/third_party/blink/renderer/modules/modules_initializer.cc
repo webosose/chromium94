@@ -141,6 +141,8 @@ class SuspendCaptureObserver : public GarbageCollected<SuspendCaptureObserver>,
     if (!media_stream_device_observer)
       return;
 
+    // TODO(neva, media): Migrate functionality from CL
+    // http://repo.lge.com:8080/c/2100/
     bool suspend = !GetPage()->IsPageVisible();
     MediaStreamDevices video_devices =
         media_stream_device_observer->GetNonScreenCaptureDevices();

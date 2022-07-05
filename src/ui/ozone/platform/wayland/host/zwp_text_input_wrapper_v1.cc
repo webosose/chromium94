@@ -11,6 +11,20 @@
 #include "ui/ozone/platform/wayland/host/wayland_connection.h"
 #include "ui/ozone/platform/wayland/host/wayland_window.h"
 
+#if defined(USE_NEVA_APPRUNTIME)
+namespace {
+
+void OnInputPanelVisibilityChanged(ui::WaylandConnection* conn, bool state) {
+  ui::WaylandWindow* window =
+      conn->wayland_window_manager()->GetCurrentKeyboardFocusedWindow();
+  if (!window)
+    return;
+  window->OnInputPanelVisibilityChanged(state);
+}
+
+}  // namespace
+#endif  // defined(USE_NEVA_APPRUNTIME)
+
 namespace ui {
 
 ZWPTextInputWrapperV1::ZWPTextInputWrapperV1(
@@ -86,13 +100,23 @@ void ZWPTextInputWrapperV1::ResetInputEventState() {
 void ZWPTextInputWrapperV1::OnEnter(void* data,
                                     struct zwp_text_input_v1* text_input,
                                     struct wl_surface* surface) {
+#if defined(USE_NEVA_APPRUNTIME)
+  ZWPTextInputWrapperV1* wti = static_cast<ZWPTextInputWrapperV1*>(data);
+  OnInputPanelVisibilityChanged(wti->connection_, true);
+#else   // defined(USE_NEVA_APPRUNTIME)
   NOTIMPLEMENTED_LOG_ONCE();
+#endif  // defined(USE_NEVA_APPRUNTIME)
 }
 
 // static
 void ZWPTextInputWrapperV1::OnLeave(void* data,
                                     struct zwp_text_input_v1* text_input) {
+#if defined(USE_NEVA_APPRUNTIME)
+  ZWPTextInputWrapperV1* wti = static_cast<ZWPTextInputWrapperV1*>(data);
+  OnInputPanelVisibilityChanged(wti->connection_, false);
+#else   // defined(USE_NEVA_APPRUNTIME)
   NOTIMPLEMENTED_LOG_ONCE();
+#endif  // defined(USE_NEVA_APPRUNTIME)
 }
 
 // static

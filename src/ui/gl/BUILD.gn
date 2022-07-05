@@ -9,6 +9,7 @@ import("//build/config/chromeos/ui_mode.gni")
 import("//build/config/linux/pkg_config.gni")
 import("//build/config/ozone.gni")
 import("//build/config/ui.gni")
+import("//neva/neva.gni")
 import("//testing/test.gni")
 import("//third_party/angle/gni/angle.gni")
 import("//third_party/dawn/scripts/dawn_features.gni")
@@ -177,6 +178,11 @@ component("gl") {
     "//third_party/angle:includes",
     "//ui/gfx/mojom",
   ]
+
+  if (use_neva_media) {
+    deps += [ "//ui/gl/neva" ]
+  }
+
   public_deps = [
     "//base",
     "//third_party/mesa_headers",

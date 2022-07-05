@@ -134,6 +134,14 @@ class CONTENT_EXPORT RenderFrameHostDelegate {
   virtual bool OnMessageReceived(RenderFrameHostImpl* render_frame_host,
                                  const IPC::Message& message);
 
+#if defined(USE_NEVA_APPRUNTIME)
+  // Allows the delegate to filter incoming associated interface requests.
+  virtual void OnAssociatedInterfaceRequest(
+      RenderFrameHostImpl* render_frame_host,
+      const std::string& interface_name,
+      mojo::ScopedInterfaceEndpointHandle handle) {}
+#endif
+
   // Allows the delegate to filter incoming interface requests.
   virtual void OnInterfaceRequest(
       RenderFrameHostImpl* render_frame_host,

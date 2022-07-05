@@ -730,6 +730,11 @@ class CONTENT_EXPORT RenderWidgetHostImpl
   // there are any queued messages belonging to it, they will be processed.
   void DidProcessFrame(uint32_t frame_token, base::TimeTicks activation_time);
 
+#if defined(USE_NEVA_APPRUNTIME)
+  // A swap has been completed
+  void DidCompleteSwap();
+#endif
+
   mojo::Remote<viz::mojom::InputTargetClient>& input_target_client() {
     return input_target_client_;
   }
@@ -854,6 +859,11 @@ class CONTENT_EXPORT RenderWidgetHostImpl
   // why that's happening and remove this.
   mojom::CreateFrameWidgetParamsPtr
   BindAndGenerateCreateFrameWidgetParamsForNewWindow();
+
+#if defined(USE_NEVA_APPRUNTIME)
+  void ActivateRendererCompositor();
+  void DeactivateRendererCompositor();
+#endif
 
  protected:
   // |routing_id| must not be MSG_ROUTING_NONE.

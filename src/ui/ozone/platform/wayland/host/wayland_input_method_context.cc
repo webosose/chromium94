@@ -330,7 +330,6 @@ void WaylandInputMethodContext::OnPreeditString(
       continue;
     composition_text.ime_text_spans.push_back(std::move(text_span));
   }
-
   if (preedit_cursor < 0) {
     composition_text.selection = gfx::Range::InvalidRange();
   } else {
@@ -427,6 +426,11 @@ void WaylandInputMethodContext::MaybeUpdateActivated() {
   activated_ = activated;
   if (activated) {
     text_input_->Activate(window);
+    ///@name USE_NEVA_APPRUNTIME
+    ///@{
+    if (ime_delegate_->SystemKeyboardDisabled())
+      return;
+    ///@}
     text_input_->ShowInputPanel();
   } else {
     text_input_->Deactivate();

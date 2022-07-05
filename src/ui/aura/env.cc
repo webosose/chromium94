@@ -31,6 +31,10 @@
 #include "ui/ozone/public/ozone_platform.h"
 #endif
 
+#if defined(USE_SINGLE_WINDOW_MODE)
+#include "ui/aura/window_tree_host.h"
+#endif
+
 #if defined(USE_X11)
 #include "ui/base/x/x11_cursor_factory.h"
 #endif
@@ -119,6 +123,13 @@ Env* Env::GetInstance() {
 bool Env::HasInstance() {
   return !!g_primary_instance;
 }
+
+#if defined(USE_SINGLE_WINDOW_MODE)
+// static
+Window* Env::GetRootWindow() {
+  return GetInstance()->RootWindow();
+}
+#endif
 
 void Env::AddObserver(EnvObserver* observer) {
   observers_.AddObserver(observer);
@@ -242,6 +253,11 @@ void Env::NotifyWindowInitialized(Window* window) {
 }
 
 void Env::NotifyHostInitialized(WindowTreeHost* host) {
+#if defined(USE_SINGLE_WINDOW_MODE)
+  if (host)
+    root_window_ = host->window();
+#endif
+
   window_tree_hosts_.push_back(host);
   for (EnvObserver& observer : observers_)
     observer.OnHostInitialized(host);

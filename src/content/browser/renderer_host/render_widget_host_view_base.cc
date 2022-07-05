@@ -676,6 +676,13 @@ void RenderWidgetHostViewBase::OnFrameTokenChangedForView(
     host()->DidProcessFrame(frame_token, activation_time);
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
+void RenderWidgetHostViewBase::OnSwapCompleted() {
+  if (host())
+    host()->DidCompleteSwap();
+}
+#endif
+
 bool RenderWidgetHostViewBase::ScreenRectIsUnstableFor(
     const blink::WebInputEvent& event) {
   return false;
@@ -857,6 +864,12 @@ void RenderWidgetHostViewBase::SynchronizeVisualProperties() {
   if (host())
     host()->SynchronizeVisualProperties();
 }
+
+#if defined(USE_NEVA_MEDIA)
+gfx::AcceleratedWidget RenderWidgetHostViewBase::GetAcceleratedWidget() {
+  return gfx::kNullAcceleratedWidget;
+}
+#endif
 
 void RenderWidgetHostViewBase::DidNavigate() {
   if (host())

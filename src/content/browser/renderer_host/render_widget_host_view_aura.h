@@ -109,6 +109,10 @@ class CONTENT_EXPORT RenderWidgetHostViewAura
   void Show() override;
   void Hide() override;
   bool IsShowing() override;
+#if defined(USE_NEVA_APPRUNTIME)
+  void ResumeDrawing() override;
+  void SuspendDrawing() override;
+#endif
   void WasUnOccluded() override;
   void WasOccluded() override;
   gfx::Rect GetViewBounds() override;
@@ -352,6 +356,20 @@ class CONTENT_EXPORT RenderWidgetHostViewAura
   void SetSelectionControllerClientForTest(
       std::unique_ptr<TouchSelectionControllerClientAura> client);
 
+#if defined(USE_NEVA_APPRUNTIME)
+  void SetEnableHtmlSystemKeyboardAttr(bool enable);
+  bool SystemKeyboardDisabled() const override;
+  gfx::Rect GetInputPanelRectangle() const override;
+  gfx::Rect GetTextInputBounds() const override;
+  gfx::Size GetCompositorViewportPixelSize() override;
+  bool IsKeepAliveWebApp() const;
+  int GetTextInputMaxLength() const override;
+#endif
+
+#if defined(USE_NEVA_MEDIA)
+  gfx::AcceleratedWidget GetAcceleratedWidget() override;
+#endif  // defined(USE_NEVA_MEDIA)
+
   // RenderWidgetHostViewEventHandler::Delegate:
   gfx::Rect ConvertRectToScreen(const gfx::Rect& rect) const override;
   void ForwardKeyboardEventWithLatencyInfo(const NativeWebKeyboardEvent& event,
@@ -515,7 +533,8 @@ class CONTENT_EXPORT RenderWidgetHostViewAura
 
   bool SynchronizeVisualProperties(
       const cc::DeadlinePolicy& deadline_policy,
-      const absl::optional<viz::LocalSurfaceId>& child_local_surface_id);
+      const absl::optional<viz::LocalSurfaceId>& child_local_surface_id,
+      bool ignore_pending_ack = false);
 
   void OnDidUpdateVisualPropertiesComplete(
       const cc::RenderFrameMetadata& metadata);
@@ -685,6 +704,11 @@ class CONTENT_EXPORT RenderWidgetHostViewAura
       virtual_keyboard_controller_win_;
 
   gfx::Point last_mouse_move_location_;
+#endif
+
+#if defined(USE_NEVA_APPRUNTIME)
+  bool enable_html_systemkeyboard_attr_ = false;
+  float window_scale_ratio_ = 1.0f;
 #endif
 
   // The last selection bounds reported to the view.

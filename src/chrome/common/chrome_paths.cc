@@ -120,6 +120,9 @@ bool PathProvider(int key, base::FilePath* result) {
   // Some keys are just aliases...
   switch (key) {
     case chrome::DIR_APP:
+#if defined(USE_CBE)
+      return base::PathService::Get(base::DIR_EXE, result);
+#endif  // defined(USE_CBE)
       return base::PathService::Get(base::DIR_MODULE, result);
     case chrome::DIR_LOGS:
 #ifdef NDEBUG
@@ -353,6 +356,10 @@ bool PathProvider(int key, base::FilePath* result) {
 #else
       // If we're not bundled on mac or Android, resources.pak should be next
       // to the binary (e.g., for unit tests).
+#if defined(USE_CBE)
+      if (!base::PathService::Get(base::DIR_EXE, &cur))
+        return false;
+#endif  // defined(USE_CBE)
       if (!base::PathService::Get(base::DIR_MODULE, &cur))
         return false;
       cur = cur.Append(FILE_PATH_LITERAL("resources.pak"));
@@ -450,6 +457,10 @@ bool PathProvider(int key, base::FilePath* result) {
                .Append(FILE_PATH_LITERAL("External Extensions"));
       create_dir = false;
 #else
+#if defined(USE_CBE)
+      if (!base::PathService::Get(base::DIR_EXE, &cur))
+        return false;
+#endif  // defined(USE_CBE)
       if (!base::PathService::Get(base::DIR_MODULE, &cur))
         return false;
 

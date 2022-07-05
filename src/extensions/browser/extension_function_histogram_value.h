@@ -1656,6 +1656,11 @@ enum HistogramValue {
   WALLPAPERPRIVATE_ISSWAENABLED = 1593,
   // Last entry: Add new entries above, then run:
   // python tools/metrics/histograms/update_extension_histograms.py
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  WEBVIEWINTERNAL_RESUME,
+  WEBVIEWINTERNAL_SUSPEND,
+  ///@}
   ENUM_BOUNDARY
 };
 

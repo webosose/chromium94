@@ -1,0 +1,53 @@
+From bc8ce67d68aedc0f52763830e45bc16dc9ef44a3 Mon Sep 17 00:00:00 2001
+From: Youngsoo Choi <youngsoo.choi@lge.com>
+Date: Wed, 20 Oct 2021 13:55:06 +0900
+Subject: [PATCH 1/2] [op][build] Complete the option to disable
+ libyuv_use_neon
+
+:Release Notes:
+Complete the option to disable libyuv_use_neon.
+
+:Detailed Notes:
+When not using the NEON instruction for libyuv library,
+which means "libyuv_use_neon" is false, the build fails because there are
+still codes that reference to the NEON realted functions.
+
+So to disable the NEON instruction completely, define LIBYUV_DISABLE_NEON
+when the "libyuv_use_neon" is false.
+
+:Testing Performed:
+Build succeeds
+
+:QA Notes:
+Test-cases: N/A
+
+:Issues Addressed:
+[WRN-9142] Build RPi4-64 for webos-pro (build only)
+
+Change-Id: I4e63790c9c1b3edc98e93bc7844d4d567a6395b0
+Reviewed-on: http://gpro.lge.com/c/webosose/chromium91/+/317790
+Reviewed-by: Commit Msg Checker <commit_msg@lge.com>
+Reviewed-by: Donghyun Kim <donghyun11.kim@lge.com>
+Tested-by: Donghyun Kim <donghyun11.kim@lge.com>
+---
+ BUILD.gn | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/BUILD.gn b/BUILD.gn
+index e1c7c1da..be2061be 100644
+--- a/BUILD.gn
++++ b/BUILD.gn
+@@ -177,6 +177,10 @@ static_library("libyuv_internal") {
+   if (!libyuv_use_mmi) {
+     defines += [ "LIBYUV_DISABLE_MMI" ]
+   }
++
++  if (!libyuv_use_neon) {
++    defines += [ "LIBYUV_DISABLE_NEON" ]
++  }
+ }
+ 
+ if (libyuv_use_neon) {
+-- 
+2.36.1
+

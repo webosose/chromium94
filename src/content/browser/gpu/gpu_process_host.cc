@@ -659,6 +659,12 @@ void GpuProcessHost::TerminateGpuProcess(const std::string& message) {
 }
 #endif  // defined(USE_OZONE)
 
+#if defined(USE_OZONE) && defined(OZONE_PLATFORM_WAYLAND_EXTERNAL)
+void GpuProcessHost::SendGpuProcessMessage(IPC::Message* message) {
+  Send(message);
+}
+#endif  // defined(USE_OZONE) && defined(OZONE_PLATFORM_WAYLAND_EXTERNAL)
+
 // static
 GpuProcessHost* GpuProcessHost::FromID(int host_id) {
   DCHECK_CURRENTLY_ON(base::FeatureList::IsEnabled(features::kProcessHostOnUI)
@@ -753,6 +759,14 @@ GpuProcessHost::~GpuProcessHost() {
     ca_transaction_gpu_coordinator_ = nullptr;
   }
 #endif
+
+#if defined(USE_OZONE) && defined(OZONE_PLATFORM_WAYLAND_EXTERNAL)
+  // In case we never started, clean up.
+  while (!queued_messages_.empty()) {
+    delete queued_messages_.front();
+    queued_messages_.pop();
+  }
+#endif  // defined(USE_OZONE) && defined(OZONE_PLATFORM_WAYLAND_EXTERNAL)
 
   // This is only called on the IO thread so no race against the constructor
   // for another GpuProcessHost.
@@ -887,6 +901,9 @@ bool GpuProcessHost::Init() {
     // WGL needs to create its own window and pump messages on it.
     options.message_pump_type = base::MessagePumpType::UI;
 #endif
+#if defined(USE_OZONE)
+    options.message_pump_type = gpu_preferences.message_pump_type;
+#endif
     if (base::FeatureList::IsEnabled(features::kGpuUseDisplayThreadPriority))
       options.priority = base::ThreadPriority::DISPLAY;
     in_process_gpu_thread_->StartWithOptions(std::move(options));
@@ -922,6 +939,44 @@ bool GpuProcessHost::Init() {
 
   return true;
 }
+
+#if defined(USE_OZONE) && defined(OZONE_PLATFORM_WAYLAND_EXTERNAL)
+bool GpuProcessHost::Send(IPC::Message* msg) {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+  if (process_->GetHost()->IsChannelOpening()) {
+    queued_messages_.push(msg);
+    return true;
+  }
+
+  bool result = process_->Send(msg);
+  if (!result) {
+    // Channel is hosed, but we may not get destroyed for a while. Send
+    // outstanding channel creation failures now so that the caller can restart
+    // with a new process/channel without waiting.
+    SendOutstandingReplies();
+  }
+  return result;
+}
+
+bool GpuProcessHost::OnMessageReceived(const IPC::Message& message) {
+  DCHECK_CALLED_ON_VALID_SEQUENCE(sequence_checker_);
+
+  ui::OzonePlatform::GetInstance()
+      ->GetGpuPlatformSupportHost()
+      ->OnMessageReceived(message);
+
+  return true;
+}
+
+void GpuProcessHost::OnChannelConnected(int32_t peer_pid) {
+  TRACE_EVENT0("gpu", "GpuProcessHost::OnChannelConnected");
+
+  while (!queued_messages_.empty()) {
+    Send(queued_messages_.front());
+    queued_messages_.pop();
+  }
+}
+#endif  // defined(USE_OZONE) && defined(OZONE_PLATFORM_WAYLAND_EXTERNAL)
 
 void GpuProcessHost::OnProcessLaunched() {
   UMA_HISTOGRAM_TIMES("GPU.GPUProcessLaunchTime",

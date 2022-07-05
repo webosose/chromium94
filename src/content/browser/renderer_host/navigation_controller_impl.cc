@@ -2623,7 +2623,15 @@ SessionStorageNamespace* NavigationControllerImpl::GetSessionStorageNamespace(
     if (partition_config != it->first.config()) {
       LogStoragePartitionIdCrashKeys(it->first, partition_id);
     }
+#if defined(USE_NEVA_APPRUNTIME)
+    // FIXME(neva, sync-to-93): Discover below CHECK failure for
+    // Enact-based browser navigation case
+    if (partition_config != it->first.config())
+      LOG(ERROR) << "Partition configs don't match: " << partition_config
+                 << " vs " << it->first.config();
+#else
     CHECK_EQ(partition_config, it->first.config());
+#endif
 
     return it->second.get();
   }
@@ -3624,6 +3632,8 @@ NavigationControllerImpl::CreateNavigationRequestFromEntry(
     return nullptr;
   }
 
+#if !defined(OS_WEBOS)
+  // This is workaround for some webOS apps (e.g., Enyo-based apps).
   if (!DoesURLMatchOriginForNavigation(
           dest_url, origin_to_commit,
           frame_entry->subresource_web_bundle_navigation_info())) {
@@ -3631,6 +3641,7 @@ NavigationControllerImpl::CreateNavigationRequestFromEntry(
                   << " origin:" << origin_to_commit.value();
     return nullptr;
   }
+#endif  // !defined(OS_WEBOS)
 
   // Determine if Previews should be used for the navigation.
   blink::PreviewsState previews_state =

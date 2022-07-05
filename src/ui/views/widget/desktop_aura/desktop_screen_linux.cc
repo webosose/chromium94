@@ -11,6 +11,11 @@
 #endif
 
 #if defined(USE_OZONE)
+///@name USE_NEVA_APPRUNTIME
+///@{
+#include "ui/ozone/public/ozone_platform.h"
+#include "ui/views/widget/desktop_aura/desktop_factory_ozone.h"
+///@}
 #include "ui/base/ui_base_features.h"
 #include "ui/ozone/public/platform_screen.h"
 #include "ui/views/linux_ui/device_scale_factor_observer.h"
@@ -60,8 +65,16 @@ class DesktopScreenOzoneLinux : public DesktopScreenOzone,
 
 std::unique_ptr<display::Screen> CreateDesktopScreen() {
 #if defined(USE_OZONE)
-  if (features::IsUsingOzonePlatform())
+  if (features::IsUsingOzonePlatform()) {
+    ///@name USE_NEVA_APPRUNTIME
+    ///@{
+    if (ui::OzonePlatform::IsWaylandExternal()) {
+      return std::unique_ptr<display::Screen>(
+          DesktopFactoryOzone::GetInstance()->CreateDesktopScreen());
+    }
+    ///@}
     return std::make_unique<DesktopScreenOzoneLinux>();
+  }
 #endif
 #if defined(USE_X11)
   auto screen = std::make_unique<DesktopScreenX11>();

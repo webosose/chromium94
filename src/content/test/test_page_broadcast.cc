@@ -34,6 +34,12 @@ void TestPageBroadcast::SetInsidePortal(bool is_inside_portal) {}
 void TestPageBroadcast::UpdateWebPreferences(
     const blink::web_pref::WebPreferences& preferences) {}
 
+#if defined(USE_NEVA_NPAPI)
+void TestPageBroadcast::AddAvailablePlugin(
+    const std::string& path,
+    const std::string& mime_description) {}
+#endif  // defined(USE_NEVA_NPAPI)
+
 void TestPageBroadcast::UpdateRendererPreferences(
     const blink::RendererPreferences& preferences) {}
 

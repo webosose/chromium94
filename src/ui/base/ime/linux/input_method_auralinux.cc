@@ -42,7 +42,12 @@ bool IsSameKeyEvent(const ui::KeyEvent& lhs, const ui::KeyEvent& rhs) {
 namespace ui {
 
 InputMethodAuraLinux::InputMethodAuraLinux(
-    internal::InputMethodDelegate* delegate)
+    internal::InputMethodDelegate* delegate,
+    ///@name USE_NEVA_APPRUNTIME
+    ///@{
+    unsigned handle
+    ///@}
+    )
     : InputMethodBase(delegate),
       text_input_type_(TEXT_INPUT_TYPE_NONE),
       is_sync_mode_(false),
@@ -50,12 +55,27 @@ InputMethodAuraLinux::InputMethodAuraLinux(
   DCHECK(LinuxInputMethodContextFactory::instance())
       << "Trying to initialize InputMethodAuraLinux, but "
          "LinuxInputMethodContextFactory is not initialized yet.";
-  context_ =
-      LinuxInputMethodContextFactory::instance()->CreateInputMethodContext(
-          this, false);
-  context_simple_ =
-      LinuxInputMethodContextFactory::instance()->CreateInputMethodContext(
-          this, true);
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  if (!!handle) {
+    context_ =
+        LinuxInputMethodContextFactory::instance()->CreateInputMethodContext(
+          this, handle, false);
+    context_simple_ =
+        LinuxInputMethodContextFactory::instance()->CreateInputMethodContext(
+          this, handle, true);
+  } else {
+  ///@}
+    context_ =
+        LinuxInputMethodContextFactory::instance()->CreateInputMethodContext(
+            this, false);
+    context_simple_ =
+        LinuxInputMethodContextFactory::instance()->CreateInputMethodContext(
+            this, true);
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  }
+  ///@}
 }
 
 InputMethodAuraLinux::~InputMethodAuraLinux() = default;
@@ -346,6 +366,12 @@ void InputMethodAuraLinux::UpdateContextFocusState() {
   bool old_text_input_type = text_input_type_;
   text_input_type_ = GetTextInputType();
 
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  bool old_system_keyboard_disabled = system_keyboard_disabled_;
+  system_keyboard_disabled_ = SystemKeyboardDisabled();
+  ///@}
+
   // We only focus in |context_| when the focus is in a textfield.
   if (old_text_input_type != TEXT_INPUT_TYPE_NONE &&
       text_input_type_ == TEXT_INPUT_TYPE_NONE) {
@@ -354,6 +380,17 @@ void InputMethodAuraLinux::UpdateContextFocusState() {
              text_input_type_ != TEXT_INPUT_TYPE_NONE) {
     context_->Focus();
   }
+  ///@name USE_NEVA_APPRUNTIME
+  ///@{
+  else if (old_text_input_type != TEXT_INPUT_TYPE_NONE &&
+           text_input_type_ != TEXT_INPUT_TYPE_NONE) {
+    if (system_keyboard_disabled_ && !old_system_keyboard_disabled) {
+      context_->Blur();
+    } else if (!system_keyboard_disabled_ && old_system_keyboard_disabled) {
+      context_->Focus();
+    }
+  }
+  ///@}
 
   // |context_simple_| can be used in any textfield, including password box, and
   // even if the focused text input client's text input type is
@@ -424,6 +461,13 @@ bool InputMethodAuraLinux::IsCandidatePopupOpen() const {
   // There seems no way to detect candidate windows or any popups.
   return false;
 }
+
+///@name USE_NEVA_APPRUNTIME
+///@{
+LinuxInputMethodContext* InputMethodAuraLinux::GetInputMethodContext() {
+  return context_.get();
+}
+///@}
 
 // Overriden from ui::LinuxInputMethodContextDelegate
 
@@ -545,5 +589,16 @@ ui::EventDispatchDetails InputMethodAuraLinux::SendFakeProcessKeyEvent(
 void InputMethodAuraLinux::ConfirmCompositionText() {
   ResetContext();
 }
+
+///@name USE_NEVA_APPRUNTIME
+///@{
+bool InputMethodAuraLinux::SystemKeyboardDisabled() {
+  // returns true if VKB is explicitly disabled by client, false otherwise
+  if (!GetTextInputClient())
+    return false;
+  else
+    return GetTextInputClient()->SystemKeyboardDisabled();
+}
+///@}
 
 }  // namespace ui

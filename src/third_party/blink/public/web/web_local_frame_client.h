@@ -769,6 +769,10 @@ class BLINK_EXPORT WebLocalFrameClient {
   // was used for its load or if an unreachable URL was used.
   virtual WebURL LastCommittedUrlForUKM() { return WebURL(); }
 
+#if defined(USE_NEVA_APPRUNTIME)
+  // APPRUNTIME has own procedure for regulating access to local resources.
+  virtual bool IsAccessAllowedForURL(const blink::WebURL& url) { return true; }
+#endif
   // Called when script in the frame (and it subframes) wishes to be printed via
   // a window.print() call.
   virtual void ScriptedPrint() {}

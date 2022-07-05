@@ -92,15 +92,22 @@ class MEDIA_GPU_EXPORT GpuVideoDecodeAcceleratorFactory {
       const gpu::GpuDriverBugWorkarounds& workarounds,
       const gpu::GpuPreferences& gpu_preferences,
       MediaLog* media_log) const;
+#elif defined(USE_WEBOS_CODEC)
+  std::unique_ptr<VideoDecodeAccelerator> CreateWebOSVDA(
+      const gpu::GpuDriverBugWorkarounds& workarounds,
+      const gpu::GpuPreferences& gpu_preferences,
+      MediaLog* media_log) const;
 #elif BUILDFLAG(USE_V4L2_CODEC)
   std::unique_ptr<VideoDecodeAccelerator> CreateV4L2VDA(
       const gpu::GpuDriverBugWorkarounds& workarounds,
       const gpu::GpuPreferences& gpu_preferences,
       MediaLog* media_log) const;
+#if !defined(USE_NEVA_V4L2_CODEC)
   std::unique_ptr<VideoDecodeAccelerator> CreateV4L2SliceVDA(
       const gpu::GpuDriverBugWorkarounds& workarounds,
       const gpu::GpuPreferences& gpu_preferences,
       MediaLog* media_log) const;
+#endif  // !defined(USE_NEVA_V4L2_CODEC)
 #endif
 #if defined(OS_MAC)
   std::unique_ptr<VideoDecodeAccelerator> CreateVTVDA(

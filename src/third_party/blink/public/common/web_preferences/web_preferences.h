@@ -19,6 +19,10 @@
 #include "url/gurl.h"
 #include "url/origin.h"
 
+#if defined(USE_NEVA_APPRUNTIME)
+#include "third_party/blink/public/common/page/first_frame_policy.h"
+#endif
+
 namespace blink {
 
 class WebView;
@@ -220,6 +224,8 @@ struct BLINK_COMMON_EXPORT WebPreferences {
   // Representation of the Web App Manifest scope if any.
   GURL web_app_scope;
 
+  bool accessibility_explore_by_mouse_enabled;
+
 #if defined(OS_ANDROID)
   float font_scale_factor;
   float device_scale_adjustment;
@@ -284,6 +290,20 @@ struct BLINK_COMMON_EXPORT WebPreferences {
   // https://crbug.com/699943 for details.
   // TODO(changwan): remove this once we no longer support Android N.
   bool do_not_update_selection_on_mutating_selection_range;
+
+#if defined(USE_NEVA_APPRUNTIME)
+  bool keep_alive_webapp;
+
+  // Policy for when to display the first frame when launching a webapp.
+  blink::FirstFramePolicy first_frame_policy =
+      blink::FirstFramePolicy::kContents;
+#endif
+
+#if defined(USE_NEVA_MEDIA)
+  // The spec says to fire periodic timeupdate events (those sent while playing)
+  // every "15 to 250ms"
+  int max_timeupdate_event_frequency;
+#endif
 
   // Defines the current autoplay policy.
   blink::mojom::AutoplayPolicy autoplay_policy =
@@ -353,6 +373,11 @@ struct BLINK_COMMON_EXPORT WebPreferences {
   // By default, WebXR's immersive-ar session creation is allowed, but this can
   // change depending on the enterprise policy if the platform supports it.
   bool webxr_immersive_ar_allowed = true;
+
+  // CSS UI keyboard control properties (‘nav-index’, ‘nav-up’, ‘nav-down’,
+  // ‘nav-right’, ‘nav-left’) support.
+  // See https://www.w3.org/TR/2021/WD-css-ui-4-20210316/#nav-dir
+  bool css_navigation_enabled = false;
 
   // LitePage origin the subresources such as images should be redirected to
   // when the kSubresourceRedirect feature is enabled.

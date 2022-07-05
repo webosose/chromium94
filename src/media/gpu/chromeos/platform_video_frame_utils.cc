@@ -33,10 +33,30 @@
 #include "ui/gfx/linux/drm_util_linux.h"
 #include "ui/gfx/linux/gbm_buffer.h"
 #include "ui/gfx/linux/gbm_device.h"
+#if !defined(USE_NEVA_V4L2_CODEC)
 #include "ui/gfx/linux/gbm_util.h"
+#endif
 #include "ui/gfx/linux/gbm_wrapper.h"
 #include "ui/gfx/linux/native_pixmap_dmabuf.h"
 #include "ui/gfx/native_pixmap.h"
+
+#if defined(USE_NEVA_V4L2_CODEC)
+// When enabling use_neva_v4l2_codec, it needs //media/gpu/chromeos:common.
+// And //media/gpu/chromeos:common needs gbm.
+// But VDAVideoDecoder(V4L2VideoDecodeAccelerator) doesn't use gbm
+// at runtime. So we made dummy functions to exclude gbm dependency.
+namespace ui {
+
+std::unique_ptr<GbmDevice> CreateGbmDevice(int fd) {
+  return nullptr;
+}
+
+uint32_t BufferUsageToGbmFlags(gfx::BufferUsage usage) {
+  return 0;
+}
+
+}  // namespace ui
+#endif
 
 namespace media {
 

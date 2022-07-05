@@ -49,6 +49,12 @@ void WriteIpcMessageIdAsProtozero(uint32_t message_id,
     case GinJavaBridgeMsgStart:
       message_class = ChromeLegacyIpc::CLASS_GIN_JAVA_BRIDGE;
       break;
+    ///@name USE_NEVA_APPRUNTIME
+    ///@{
+    case OzoneGpuMsgStart:
+      message_class = ChromeLegacyIpc::CLASS_OZONE_GPU;
+      break;
+    ///@}
     case ExtensionsGuestViewMsgStart:
       message_class = ChromeLegacyIpc::CLASS_EXTENSIONS_GUEST_VIEW;
       break;

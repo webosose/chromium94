@@ -64,6 +64,7 @@
 #include "services/network/public/cpp/initiator_lock_compatibility.h"
 #include "services/network/public/cpp/load_info_util.h"
 #include "services/network/public/cpp/network_switches.h"
+#include "services/network/public/cpp/neva/cors_corb_exception.h"
 #include "services/network/public/cpp/parsed_headers.h"
 #include "services/network/public/mojom/network_service_test.mojom.h"
 #include "services/network/url_loader.h"
@@ -659,6 +660,16 @@ void NetworkService::RemoveSecurityExceptionsForPlugin(int32_t process_id) {
 
   std::map<int, std::set<url::Origin>>& map = plugin_origins_;
   map.erase(process_id);
+}
+
+void NetworkService::AddCorsCorbExceptionForProcess(uint32_t process_id) {
+  DCHECK_NE(mojom::kBrowserProcessId, process_id);
+  neva::CorsCorbException::AddForProcess(process_id);
+}
+
+void NetworkService::RemoveCorsCorbExceptionForProcess(uint32_t process_id) {
+  DCHECK_NE(mojom::kBrowserProcessId, process_id);
+  neva::CorsCorbException::RemoveForProcess(process_id);
 }
 
 bool NetworkService::IsInitiatorAllowedForPlugin(

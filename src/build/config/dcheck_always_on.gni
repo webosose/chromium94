@@ -25,8 +25,11 @@ declare_args() {
   # please prefer excluding OSes rather than reverting . I.e. if Mac builds
   # break badly but other platforms are reasonably stable, add "&& !is_mac"
   # instead of reverting.
+  # TODO(neva): Enabling DCHECK on Neva builds causes compile time issues
+  # with GCC and runtime issues on the all platforms (PC, Starfish, OSE).
+  # Let's disable it for all Neva builds until we will be ready for it.
   dcheck_always_on =
-      (build_with_chromium && !is_official_build) || dcheck_is_configurable
+      (!is_linux && build_with_chromium && !is_official_build) || dcheck_is_configurable
 }
 
 declare_args() {
