@@ -38,6 +38,7 @@
 #include "content/public/common/content_features.h"
 #include "neva/app_runtime/browser/gcm/gcm_profile_service_factory.h"
 #include "neva/app_runtime/browser/gcm/instance_id/instance_id_profile_service_factory.h"
+#include "neva/app_runtime/browser/permissions/permission_manager_factory.h"
 #include "neva/app_runtime/browser/push_messaging/push_messaging_constants.h"
 #include "neva/app_runtime/browser/push_messaging/push_messaging_features.h"
 #include "neva/app_runtime/browser/push_messaging/push_messaging_service_factory.h"
@@ -556,23 +557,16 @@ void PushMessagingServiceImpl::SubscribeFromDocument(
     return;
   }
 
-  // TODO(webOS): Remove the condition when PermissionManagerFactory is
-  // integrated. Push does not allow permission requests from iframes.
-#if 0
-    PermissionManagerFactory::GetForProfile(browser_context_)
-        ->RequestPermission(
-            ContentSettingsType::NOTIFICATIONS, render_frame_host,
-            requesting_origin, user_gesture,
-            base::BindOnce(&PushMessagingServiceImpl::DoSubscribe,
-                           weak_factory_.GetWeakPtr(),
-                           std::move(app_identifier), std::move(options),
-                           std::move(callback), render_process_id,
-                           render_frame_id));
-#else
-  DoSubscribe(std::move(app_identifier), std::move(options),
-              std::move(callback), render_process_id, render_frame_id,
-              CONTENT_SETTING_ALLOW);
-#endif
+  // Push does not allow permission requests from iframes.
+  PermissionManagerFactory::GetForBrowserContext(browser_context_)
+      ->RequestPermission(
+          ContentSettingsType::NOTIFICATIONS, render_frame_host,
+          requesting_origin, user_gesture,
+          base::BindOnce(&PushMessagingServiceImpl::DoSubscribe,
+                         weak_factory_.GetWeakPtr(),
+                         std::move(app_identifier), std::move(options),
+                         std::move(callback), render_process_id,
+                         render_frame_id));
 }
 
 void PushMessagingServiceImpl::SubscribeFromWorker(
@@ -621,17 +615,11 @@ blink::mojom::PermissionStatus PushMessagingServiceImpl::GetPermissionStatus(
     // won't have an embedding origin at all. Only consider the requesting
     // |origin| when checking whether permission to use the API has been
     // granted.
-    // TODO(webOS): Remove condition when PermissionManagerFactory is
-    // integrated.
-#if 0
   return ToPermissionStatus(
-      PermissionManagerFactory::GetForProfile(profile_)
+      PermissionManagerFactory::GetForBrowserContext(browser_context_)
           ->GetPermissionStatus(ContentSettingsType::NOTIFICATIONS, origin,
                                 origin)
           .content_setting);
-#else
-  return blink::mojom::PermissionStatus::GRANTED;
-#endif
 }
 
 bool PushMessagingServiceImpl::SupportNonVisibleMessages() {
