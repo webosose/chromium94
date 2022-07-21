@@ -139,6 +139,10 @@
 #include "media/mojo/clients/win/media_foundation_renderer_client_factory.h"
 #endif  // BUILDFLAG(IS_WIN)
 
+#if defined(OS_WEBOS) && defined(USE_PULSEAUDIO)
+#include "media/audio/audio_device_description.h"
+#endif
+
 namespace {
 
 // This limit is much higher than it needs to be right now, because the logic
@@ -446,11 +450,25 @@ blink::WebMediaPlayer* MediaFactory::CreateMediaPlayer(
     blink::MediaInspectorContext* inspector_context,
     blink::WebMediaPlayerEncryptedMediaClient* encrypted_client,
     blink::WebContentDecryptionModule* initial_cdm,
+#if defined(OS_WEBOS) && defined(USE_PULSEAUDIO)
+    const blink::WebString& input_sink_id,
+#else
     const blink::WebString& sink_id,
+#endif
     viz::FrameSinkId parent_frame_sink_id,
     const cc::LayerTreeSettings& settings,
     scoped_refptr<base::SingleThreadTaskRunner>
         main_thread_compositor_task_runner) {
+#if defined(OS_WEBOS) && defined(USE_PULSEAUDIO)
+  blink::WebString sink_id = input_sink_id;
+  if (sink_id.IsNull() || sink_id.IsEmpty()) {
+    std::string device_id = media::AudioDeviceDescription::GetDefaultDeviceId(
+        render_frame_->GetRendererPreferences().display_id);
+    VLOG(1) << __func__ << " defult device_id=[" << device_id << "]";
+    sink_id = blink::WebString::FromUTF8(device_id);
+  }
+#endif
+
   blink::WebLocalFrame* web_frame = render_frame_->GetWebFrame();
   auto* delegate = GetWebMediaPlayerDelegate();
 
