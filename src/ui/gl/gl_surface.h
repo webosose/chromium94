@@ -12,6 +12,7 @@
 #include "base/memory/ref_counted.h"
 #include "base/memory/weak_ptr.h"
 #include "build/build_config.h"
+#include "components/viz/common/gpu/gpu_vsync_callback.h"
 #include "mojo/public/cpp/bindings/pending_receiver.h"
 #include "ui/gfx/delegated_ink_metadata.h"
 #include "ui/gfx/geometry/rect.h"
@@ -333,6 +334,8 @@ class GL_EXPORT GLSurface : public base::RefCounted<GLSurface>,
   virtual void InitDelegatedInkPointRendererReceiver(
       mojo::PendingReceiver<gfx::mojom::DelegatedInkPointRenderer>
           pending_receiver);
+
+  virtual void SetVSyncCallback(viz::GpuVSyncCallback callback){};
 
  protected:
   virtual ~GLSurface();
