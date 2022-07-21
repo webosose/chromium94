@@ -28,7 +28,8 @@ source_set("browser_service_browser") {
 
   deps = [
     "//base",
-    "//neva/browser_service/public/mojom"
+    "//neva/browser_service/public/mojom",
+    "//services/network/public/mojom",
   ]
 
   public_deps = [
