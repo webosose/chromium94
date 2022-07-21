@@ -22,6 +22,7 @@
 #include <errno.h>
 #include <fcntl.h>
 
+#include <presentation-time-client-protocol.h>
 #include <string>
 #include <vector>
 
@@ -36,7 +37,6 @@
 #include "ozone/wayland/input/keyboard.h"
 #include "ozone/wayland/input/pointer.h"
 #include "ozone/wayland/input/touchscreen.h"
-#include "ozone/wayland/protocol/presentation-time-client-protocol.h"
 #include "ozone/wayland/screen.h"
 #include "ozone/wayland/seat.h"
 #include "ozone/wayland/shell/shell.h"

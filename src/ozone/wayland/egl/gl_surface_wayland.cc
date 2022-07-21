@@ -17,11 +17,11 @@
 
 #include "ozone/wayland/egl/gl_surface_wayland.h"
 
+#include <presentation-time-client-protocol.h>
 #include <utility>
 
 #include "base/trace_event/trace_event.h"
 #include "ozone/wayland/display.h"
-#include "ozone/wayland/protocol/presentation-time-client-protocol.h"
 #include "ozone/wayland/shell/shell_surface.h"
 #include "ozone/wayland/window.h"
 #include "third_party/khronos/EGL/egl.h"
