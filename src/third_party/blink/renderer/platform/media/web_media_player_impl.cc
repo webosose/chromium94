@@ -90,6 +90,10 @@
 #include "media/base/android/media_codec_util.h"
 #endif
 
+#if defined(USE_NEVA_MEDIA)
+#include "media/base/media_switches_neva.h"
+#endif
+
 #define STATIC_ASSERT_ENUM(a, b)                            \
   static_assert(static_cast<int>(a) == static_cast<int>(b), \
                 "mismatching enums: " #a)
@@ -120,10 +124,22 @@ bool IsBackgroundSuspendEnabled(const WebMediaPlayerImpl* wmpi) {
           switches::kDisableBackgroundMediaSuspend)) {
     return false;
   }
+#if defined(USE_NEVA_MEDIA)
+  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+          switches::kDisableWebMediaPlayerNeva)) {
+    return true;
+  }
+#endif
   return wmpi->IsBackgroundMediaSuspendEnabled();
 }
 
 bool IsResumeBackgroundVideosEnabled() {
+#if defined(USE_NEVA_MEDIA)
+  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+          switches::kDisableWebMediaPlayerNeva)) {
+    return true;
+  }
+#endif
   return base::FeatureList::IsEnabled(media::kResumeBackgroundVideo);
 }
 
@@ -2943,10 +2959,11 @@ WebMediaPlayerImpl::GetCurrentFrameFromCompositor() const {
 
 void WebMediaPlayerImpl::UpdatePlayState() {
   DCHECK(main_task_runner_->BelongsToCurrentThread());
-#if defined(USE_NEVA_MEDIA)
-  bool can_auto_suspend = false;
-#else
   bool can_auto_suspend = !disable_pipeline_auto_suspend_;
+#if defined(USE_NEVA_MEDIA)
+  if (!base::CommandLine::ForCurrentProcess()->HasSwitch(
+          switches::kDisableWebMediaPlayerNeva))
+    can_auto_suspend = false;
 #endif
   // For streaming videos, we only allow suspending at the very beginning of the
   // video, and only if we know the length of the video. (If we don't know
@@ -3590,7 +3607,9 @@ bool WebMediaPlayerImpl::IsBackgroundOptimizationCandidate() const {
 
 void WebMediaPlayerImpl::UpdateBackgroundVideoOptimizationState() {
 #if defined(USE_NEVA_MEDIA)
-  if (!is_background_video_optimization_enabled_)
+  if (!base::CommandLine::ForCurrentProcess()->HasSwitch(
+          switches::kDisableWebMediaPlayerNeva) &&
+      !is_background_video_optimization_enabled_)
     return;
 #endif
 
