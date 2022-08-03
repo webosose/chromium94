@@ -56,10 +56,6 @@
 #include "third_party/blink/renderer/platform/loader/fetch/resource_request.h"
 #include "third_party/blink/renderer/platform/wtf/assertions.h"
 
-#if defined(USE_NEVA_APPRUNTIME)
-#include "url/url_constants.h"
-#endif
-
 namespace blink {
 
 namespace {
@@ -349,12 +345,6 @@ void ThreadableLoader::NotifyFinished(Resource* resource) {
   checker_.NotifyFinished(resource);
 
   if (resource->ErrorOccurred()) {
-#if defined(USE_NEVA_APPRUNTIME)
-    // Don't throw an exception for loading of illegal local file. APPRUNTIME
-    // sets 'kIllegalDataURL' for local file request in case the file doesn't
-    // exist or the file loading is not allowed.
-    if (resource->Url() != url::kIllegalDataURL)
-#endif
     DispatchDidFail(resource->GetResourceError());
     return;
   }
