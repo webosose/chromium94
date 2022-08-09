@@ -47,6 +47,8 @@ class WebosInputPanel : public InputPanel {
   void SetInputPanelRect(const gfx::Rect& input_panel_rect);
   gfx::Rect GetInputPanelRect();
 
+  WaylandConnection* connection() const { return connection_; }
+
  private:
   // Creates the text model wrapper (if not exists).
   bool CreateTextModel();

@@ -433,7 +433,11 @@ void WaylandInputMethodContext::OnKeysym(uint32_t keysym,
 
   // Keyboard might not exist.
   int device_id =
+#if defined(OS_WEBOS)
+      webos_text_model_wrapper_ ? webos_text_model_wrapper_->device_id() : 0;
+#else   // defined(OS_WEBOS)
       connection_->keyboard() ? connection_->keyboard()->device_id() : 0;
+#endif  // !defined(OS_WEBOS)
 
   EventType type =
       state == WL_KEYBOARD_KEY_STATE_PRESSED ? ET_KEY_PRESSED : ET_KEY_RELEASED;

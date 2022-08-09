@@ -160,6 +160,8 @@ class WebosTextModelWrapper {
 
   bool IsActivated() const { return is_activated_; }
 
+  int device_id() const { return text_model_.id(); }
+
  private:
   wl::Object<text_model> text_model_;
 

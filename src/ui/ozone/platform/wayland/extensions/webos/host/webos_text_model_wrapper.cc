@@ -23,8 +23,10 @@
 #include "ui/ozone/platform/wayland/extensions/webos/common/wayland_webos_util.h"
 #include "ui/ozone/platform/wayland/extensions/webos/host/wayland_window_webos.h"
 #include "ui/ozone/platform/wayland/extensions/webos/host/webos_input_panel.h"
+#include "ui/ozone/platform/wayland/host/wayland_connection.h"
 #include "ui/ozone/platform/wayland/host/wayland_input_method_context.h"
 #include "ui/ozone/platform/wayland/host/wayland_seat.h"
+#include "ui/ozone/platform/wayland/host/wayland_window_manager.h"
 
 namespace ui {
 
@@ -355,6 +357,11 @@ void WebosTextModelWrapper::Enter(void* data,
       static_cast<WebosTextModelWrapper*>(data);
   DCHECK(text_model_wrapper);
 
+  if (auto* window_manager = text_model_wrapper->input_panel_->connection()
+                                 ->wayland_window_manager())
+    window_manager->GrabKeyboardEvents(text_model_wrapper->device_id(),
+                                       text_model_wrapper->window_);
+
   text_model_wrapper->is_activated_ = true;
 }
 
@@ -362,6 +369,11 @@ void WebosTextModelWrapper::Leave(void* data, text_model* text_model) {
   WebosTextModelWrapper* text_model_wrapper =
       static_cast<WebosTextModelWrapper*>(data);
   DCHECK(text_model_wrapper);
+
+  if (auto* window_manager = text_model_wrapper->input_panel_->connection()
+                                 ->wayland_window_manager())
+    window_manager->UngrabKeyboardEvents(text_model_wrapper->device_id(),
+                                         text_model_wrapper->window_);
 
   if (text_model_wrapper->IsActivated()) {
     text_model_wrapper->is_activated_ = false;

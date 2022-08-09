@@ -35,6 +35,11 @@ void WebosInputPanel::HideInputPanel(ImeHiddenType hidden_type) {
     return;
 
   if (hidden_type == ImeHiddenType::kDeactivate) {
+    // since the text model instance is to be destroyed, corresponding
+    // located events grabbing entry needs to be dropped as well
+    if (auto* window_manager = connection_->wayland_window_manager())
+      window_manager->UngrabKeyboardEvents(webos_text_model_->device_id(),
+                                           window_);
     webos_text_model_->Reset();
     webos_text_model_->Deactivate();
     webos_text_model_.reset();
