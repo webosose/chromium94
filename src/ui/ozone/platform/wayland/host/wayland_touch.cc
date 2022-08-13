@@ -25,7 +25,19 @@ WaylandTouch::WaylandTouch(wl_touch* touch,
 }
 
 WaylandTouch::~WaylandTouch() {
-  delegate_->OnTouchCancelEvent();
+#if defined(OS_WEBOS)
+  int device_id = obj_.id();
+#endif  // defined(OS_WEBOS)
+  delegate_->OnTouchCancelEvent(
+#if defined(OS_WEBOS)
+      device_id
+#endif  // defined(OS_WEBOS)
+  );
+#if defined(OS_WEBOS)
+  if (auto* window_manager = connection_->wayland_window_manager())
+    window_manager->UngrabTouchEvents(
+        device_id, window_manager->touch_events_grabber(device_id));
+#endif  // defined(OS_WEBOS)
 }
 
 void WaylandTouch::Down(void* data,
@@ -44,10 +56,23 @@ void WaylandTouch::Down(void* data,
   touch->connection_->set_serial(serial, ET_TOUCH_PRESSED);
 
   WaylandWindow* window = wl::RootWindowFromWlSurface(surface);
+#if defined(OS_WEBOS)
+  DCHECK(window);
+  int device_id = touch->obj_.id();
+
+  window->set_touch_device_id(device_id);
+  if (auto* window_manager = touch->connection_->wayland_window_manager())
+    window_manager->GrabTouchEvents(device_id, window);
+#endif  // defined(OS_WEBOS)
   gfx::PointF location(wl_fixed_to_double(x), wl_fixed_to_double(y));
   base::TimeTicks timestamp =
       base::TimeTicks() + base::TimeDelta::FromMilliseconds(time);
-  touch->delegate_->OnTouchPressEvent(window, location, timestamp, id);
+  touch->delegate_->OnTouchPressEvent(window, location, timestamp, id
+#if defined(OS_WEBOS)
+                                      ,
+                                      device_id
+#endif  // defined(OS_WEBOS)
+  );
 }
 
 void WaylandTouch::Up(void* data,
@@ -62,7 +87,12 @@ void WaylandTouch::Up(void* data,
 
   base::TimeTicks timestamp =
       base::TimeTicks() + base::TimeDelta::FromMilliseconds(time);
-  touch->delegate_->OnTouchReleaseEvent(timestamp, id);
+  touch->delegate_->OnTouchReleaseEvent(timestamp, id
+#if defined(OS_WEBOS)
+                                        ,
+                                        touch->obj_.id()
+#endif  // defined(OS_WEBOS)
+  );
 
   // Do not store the |serial| on UP events. Otherwise, Ozone can't create popup
   // windows, which (according to the spec) can only be created on reaction to
@@ -81,13 +111,30 @@ void WaylandTouch::Motion(void* data,
   gfx::PointF location(wl_fixed_to_double(x), wl_fixed_to_double(y));
   base::TimeTicks timestamp =
       base::TimeTicks() + base::TimeDelta::FromMilliseconds(time);
-  touch->delegate_->OnTouchMotionEvent(location, timestamp, id);
+  touch->delegate_->OnTouchMotionEvent(location, timestamp, id
+#if defined(OS_WEBOS)
+                                       ,
+                                       touch->obj_.id()
+#endif  // defined(OS_WEBOS)
+  );
 }
 
 void WaylandTouch::Cancel(void* data, wl_touch* obj) {
   WaylandTouch* touch = static_cast<WaylandTouch*>(data);
   DCHECK(touch);
-  touch->delegate_->OnTouchCancelEvent();
+#if defined(OS_WEBOS)
+  int device_id = touch->obj_.id();
+#endif  // defined(OS_WEBOS)
+  touch->delegate_->OnTouchCancelEvent(
+#if defined(OS_WEBOS)
+      device_id
+#endif  // defined(OS_WEBOS)
+  );
+#if defined(OS_WEBOS)
+  if (auto* window_manager = touch->connection_->wayland_window_manager())
+    window_manager->UngrabTouchEvents(
+        device_id, window_manager->touch_events_grabber(device_id));
+#endif  // defined(OS_WEBOS)
 }
 
 void WaylandTouch::Frame(void* data, wl_touch* obj) {}

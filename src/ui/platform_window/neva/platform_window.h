@@ -123,6 +123,10 @@ class PlatformWindow
   virtual void FocusGroupLayer() {}
   virtual void DetachGroup() {}
   virtual std::string GetDisplayId() { return "-1"; }
+#if defined(OS_WEBOS)
+  virtual int touch_device_id() const { return -1; }
+  virtual void set_touch_device_id(int device_id) {}
+#endif  // defined(OS_WEBOS)
   virtual void OnInputPanelVisibilityChanged(bool state) {}
   virtual void HandleWindowClose(SurfaceGroupWrapper* surface_group) {}
 };

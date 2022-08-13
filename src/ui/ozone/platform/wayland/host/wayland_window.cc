@@ -438,8 +438,18 @@ bool WaylandWindow::CanDispatchEvent(const PlatformEvent& event) {
 #endif  // defined(OS_WEBOS)
     return has_keyboard_focus_;
   }
-  if (event->IsTouchEvent())
+  if (event->IsTouchEvent()) {
+#if defined(OS_WEBOS)
+    // if there is a grabber window corresponding to the source device by which
+    // the touch event has been initially emitted, then the event should be
+    // routed to that grabber
+    if (auto* touch_events_grabber =
+            connection_->wayland_window_manager()->touch_events_grabber(
+                event->source_device_id()))
+      return touch_events_grabber == this;
+#endif  // defined(OS_WEBOS)
     return has_touch_focus_;
+  }
   if (event->IsScrollEvent())
     return has_pointer_focus_;
   return false;

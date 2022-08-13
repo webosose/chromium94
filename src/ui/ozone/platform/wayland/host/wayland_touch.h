@@ -66,12 +66,32 @@ class WaylandTouch::Delegate {
   virtual void OnTouchPressEvent(WaylandWindow* window,
                                  const gfx::PointF& location,
                                  base::TimeTicks timestamp,
-                                 PointerId id) = 0;
-  virtual void OnTouchReleaseEvent(base::TimeTicks timestamp, PointerId id) = 0;
+                                 PointerId id
+#if defined(OS_WEBOS)
+                                 ,
+                                 int device_id = -1
+#endif  // defined(OS_WEBOS)
+                                 ) = 0;
+  virtual void OnTouchReleaseEvent(base::TimeTicks timestamp,
+                                   PointerId id
+#if defined(OS_WEBOS)
+                                   ,
+                                   int device_id = -1
+#endif  // defined(OS_WEBOS)
+                                   ) = 0;
   virtual void OnTouchMotionEvent(const gfx::PointF& location,
                                   base::TimeTicks timestamp,
-                                  PointerId id) = 0;
-  virtual void OnTouchCancelEvent() = 0;
+                                  PointerId id
+#if defined(OS_WEBOS)
+                                  ,
+                                  int device_id = -1
+#endif  // defined(OS_WEBOS)
+                                  ) = 0;
+  virtual void OnTouchCancelEvent(
+#if defined(OS_WEBOS)
+      int device_id = -1
+#endif  // defined(OS_WEBOS)
+      ) = 0;
   virtual std::vector<PointerId> GetActiveTouchPointIds() = 0;
 };
 

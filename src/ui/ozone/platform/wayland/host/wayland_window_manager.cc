@@ -68,6 +68,29 @@ WaylandWindow* WaylandWindowManager::keyboard_events_grabber(
   auto it = keyboard_events_grabber_map_.find(device_id);
   return it == keyboard_events_grabber_map_.end() ? nullptr : it->second;
 }
+
+void WaylandWindowManager::GrabTouchEvents(int device_id,
+                                           WaylandWindow* grabber) {
+  auto it = touch_events_grabber_map_.find(device_id);
+  auto* old_grabber =
+      it == touch_events_grabber_map_.end() ? nullptr : it->second;
+  DCHECK_NE(old_grabber, grabber);
+  touch_events_grabber_map_[device_id] = grabber;
+}
+
+void WaylandWindowManager::UngrabTouchEvents(int device_id,
+                                             WaylandWindow* grabber) {
+  auto it = touch_events_grabber_map_.find(device_id);
+  auto* old_grabber =
+      it == touch_events_grabber_map_.end() ? nullptr : it->second;
+  DCHECK_EQ(old_grabber, grabber);
+  touch_events_grabber_map_.erase(device_id);
+}
+
+WaylandWindow* WaylandWindowManager::touch_events_grabber(int device_id) const {
+  auto it = touch_events_grabber_map_.find(device_id);
+  return it == touch_events_grabber_map_.end() ? nullptr : it->second;
+}
 #endif  // defined(OS_WEBOS)
 
 WaylandWindow* WaylandWindowManager::GetWindow(

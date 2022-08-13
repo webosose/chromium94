@@ -118,12 +118,33 @@ class WaylandEventSource : public PlatformEventSource,
   void OnTouchPressEvent(WaylandWindow* window,
                          const gfx::PointF& location,
                          base::TimeTicks timestamp,
-                         PointerId id) override;
-  void OnTouchReleaseEvent(base::TimeTicks timestamp, PointerId id) override;
+                         PointerId id
+#if defined(OS_WEBOS)
+                         ,
+                         int device_id = -1
+#endif  // defined(OS_WEBOS)
+                         ) override;
+  void OnTouchReleaseEvent(base::TimeTicks timestamp,
+                           PointerId id
+#if defined(OS_WEBOS)
+                           ,
+                           int device_id = -1
+#endif  // defined(OS_WEBOS)
+                           ) override;
   void OnTouchMotionEvent(const gfx::PointF& location,
                           base::TimeTicks timestamp,
-                          PointerId id) override;
-  void OnTouchCancelEvent() override;
+                          PointerId id
+#if defined(OS_WEBOS)
+                          ,
+                          int device_id = -1
+#endif  // defined(OS_WEBOS)
+                          ) override;
+  void OnTouchCancelEvent(
+#if defined(OS_WEBOS)
+      int device_id = -1
+#endif  // defined(OS_WEBOS)
+      ) override;
+
   std::vector<PointerId> GetActiveTouchPointIds() override;
 
   // WaylandZwpPointerGesture::Delegate:

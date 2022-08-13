@@ -76,11 +76,19 @@ class WaylandWindowWebos : public WaylandToplevelWindow {
   void SetContentsBounds();
   void HandleWindowClose(SurfaceGroupWrapper* surface_group) override;
 
+  int touch_device_id() const override { return touch_device_id_; }
+  void set_touch_device_id(int device_id) override {
+    touch_device_id_ = device_id;
+  }
+
  private:
   WaylandExtensionsWebos* webos_extensions_;
 
   // Wrapper around surface group object.
   std::unique_ptr<SurfaceGroupWrapper> surface_group_;
+
+  // Touch device identifier associated to the window.
+  int touch_device_id_ = -1;
 };
 
 }  // namespace ui

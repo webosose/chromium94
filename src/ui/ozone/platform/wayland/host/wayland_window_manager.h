@@ -54,6 +54,15 @@ class WaylandWindowManager {
 
   // Returns current keyboard events grabber by |device_id|.
   WaylandWindow* keyboard_events_grabber(int device_id) const;
+
+  // Stores the |device_id| and |grabber| that should grab the touch events.
+  void GrabTouchEvents(int device_id, WaylandWindow* grabber);
+
+  // Removes the |device_id| and |grabber| that should grab the touch events.
+  void UngrabTouchEvents(int device_id, WaylandWindow* grabber);
+
+  // Returns current touch events grabber by |device_id|.
+  WaylandWindow* touch_events_grabber(int device_id) const;
 #endif  // defined(OS_WEBOS)
 
   // Returns a window found by |widget|.
@@ -120,6 +129,10 @@ class WaylandWindowManager {
   // Stores keyboard device (e.g., virtual keyboard) identifiers and related
   // events grabbers (windows).
   base::flat_map<int, WaylandWindow*> keyboard_events_grabber_map_;
+
+  // Stores touch device (e.g., touchscreen) identifiers and related events
+  // grabbers (windows).
+  base::flat_map<int, WaylandWindow*> touch_events_grabber_map_;
 #endif  // defined(OS_WEBOS)
 
   // Stores strictly monotonically increasing counter for allocating unique

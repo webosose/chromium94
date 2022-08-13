@@ -32,6 +32,11 @@
 #include "ui/ozone/platform/wayland/host/wayland_window.h"
 #include "ui/ozone/platform/wayland/host/wayland_window_manager.h"
 
+#if defined(OS_WEBOS)
+#include "ui/events/ozone/evdev/touch_evdev_types.h"
+#include "ui/gfx/sequential_id_generator.h"
+#endif  // defined(OS_WEBOS)
+
 namespace ui {
 
 namespace {
@@ -48,6 +53,21 @@ constexpr int kGestureScrollFingerCount = 2;
 // Maximum size of the stored recent pointer frame information.
 constexpr int kRecentPointerFrameMaxSize = 20;
 
+#if defined(OS_WEBOS)
+static SequentialIDGenerator g_touch_point_id_generator(0);
+
+PointerId GetTouchPointID(int device_id, PointerId id) {
+  // We need to make the touch point ID unique to system, not only to device.
+  // Otherwise gesture recognizer touch lock will fail. To achieve this we copy
+  // the algorithm used in EventFactoryEvdev.
+  return g_touch_point_id_generator.GetGeneratedID(
+      device_id * kNumTouchEvdevSlots + id);
+}
+
+void ReleaseTouchPointID(PointerId touch_point_id) {
+  g_touch_point_id_generator.ReleaseNumber(touch_point_id);
+}
+#endif  // defined(OS_WEBOS)
 }  // namespace
 
 struct WaylandEventSource::TouchPoint {
@@ -300,10 +320,18 @@ void WaylandEventSource::OnPointerAxisStopEvent(uint32_t axis) {
 void WaylandEventSource::OnTouchPressEvent(WaylandWindow* window,
                                            const gfx::PointF& location,
                                            base::TimeTicks timestamp,
-                                           PointerId id) {
+                                           PointerId id
+#if defined(OS_WEBOS)
+                                           ,
+                                           int device_id
+#endif  // defined(OS_WEBOS)
+) {
   DCHECK(window);
   HandleTouchFocusChange(window, true);
 
+#if defined(OS_WEBOS)
+  id = GetTouchPointID(device_id, id);
+#endif  // defined(OS_WEBOS)
   // Make sure this touch point wasn't present before.
   auto success = touch_points_.try_emplace(
       id, std::make_unique<TouchPoint>(location, window));
@@ -314,11 +342,22 @@ void WaylandEventSource::OnTouchPressEvent(WaylandWindow* window,
 
   PointerDetails details(EventPointerType::kTouch, id);
   TouchEvent event(ET_TOUCH_PRESSED, location, location, timestamp, details);
+#if defined(OS_WEBOS)
+  event.set_source_device_id(device_id);
+#endif  // defined(OS_WEBOS)
   DispatchEvent(&event);
 }
 
 void WaylandEventSource::OnTouchReleaseEvent(base::TimeTicks timestamp,
-                                             PointerId id) {
+                                             PointerId id
+#if defined(OS_WEBOS)
+                                             ,
+                                             int device_id
+#endif  // defined(OS_WEBOS)
+) {
+#if defined(OS_WEBOS)
+  id = GetTouchPointID(device_id, id);
+#endif  // defined(OS_WEBOS)
   // Make sure this touch point was present before.
   const auto it = touch_points_.find(id);
   if (it == touch_points_.end()) {
@@ -331,6 +370,10 @@ void WaylandEventSource::OnTouchReleaseEvent(base::TimeTicks timestamp,
   PointerDetails details(EventPointerType::kTouch, id);
 
   TouchEvent event(ET_TOUCH_RELEASED, location, location, timestamp, details);
+#if defined(OS_WEBOS)
+  event.set_source_device_id(device_id);
+  ReleaseTouchPointID(id);
+#endif  // defined(OS_WEBOS)
   DispatchEvent(&event);
 
   HandleTouchFocusChange(touch_point->window, false, id);
@@ -339,7 +382,15 @@ void WaylandEventSource::OnTouchReleaseEvent(base::TimeTicks timestamp,
 
 void WaylandEventSource::OnTouchMotionEvent(const gfx::PointF& location,
                                             base::TimeTicks timestamp,
-                                            PointerId id) {
+                                            PointerId id
+#if defined(OS_WEBOS)
+                                            ,
+                                            int device_id
+#endif  // defined(OS_WEBOS)
+) {
+#if defined(OS_WEBOS)
+  id = GetTouchPointID(device_id, id);
+#endif  // defined(OS_WEBOS)
   const auto it = touch_points_.find(id);
   // Make sure this touch point was present before.
   if (it == touch_points_.end()) {
@@ -349,10 +400,17 @@ void WaylandEventSource::OnTouchMotionEvent(const gfx::PointF& location,
   it->second->last_known_location = location;
   PointerDetails details(EventPointerType::kTouch, id);
   TouchEvent event(ET_TOUCH_MOVED, location, location, timestamp, details);
+#if defined(OS_WEBOS)
+  event.set_source_device_id(device_id);
+#endif  // defined(OS_WEBOS)
   DispatchEvent(&event);
 }
 
-void WaylandEventSource::OnTouchCancelEvent() {
+void WaylandEventSource::OnTouchCancelEvent(
+#if defined(OS_WEBOS)
+    int device_id
+#endif  // defined(OS_WEBOS)
+) {
   // Some compositors emit a TouchCancel event when a drag'n drop
   // session is started on the server, eg Exo.
   // On Chrome, this event would actually abort the whole drag'n drop
@@ -363,13 +421,29 @@ void WaylandEventSource::OnTouchCancelEvent() {
   gfx::PointF location;
   base::TimeTicks timestamp = base::TimeTicks::Now();
   for (auto& touch_point : touch_points_) {
-    PointerId id = touch_point.first;
-    TouchEvent event(ET_TOUCH_CANCELLED, location, location, timestamp,
-                     PointerDetails(EventPointerType::kTouch, id));
-    DispatchEvent(&event);
-    HandleTouchFocusChange(touch_point.second->window, false);
+#if defined(OS_WEBOS)
+    if (touch_point.second->window->touch_device_id() == device_id) {
+#endif  // defined(OS_WEBOS)
+      PointerId id = touch_point.first;
+      TouchEvent event(ET_TOUCH_CANCELLED, location, location, timestamp,
+                       PointerDetails(EventPointerType::kTouch, id));
+#if defined(OS_WEBOS)
+      event.set_source_device_id(device_id);
+      ReleaseTouchPointID(id);
+#endif  // defined(OS_WEBOS)
+      DispatchEvent(&event);
+      HandleTouchFocusChange(touch_point.second->window, false);
+#if defined(OS_WEBOS)
+    }
+#endif  // defined(OS_WEBOS)
   }
+#if defined(OS_WEBOS)
+  base::EraseIf(touch_points_, [device_id](const auto& point) {
+    return point.second->window->touch_device_id() == device_id;
+  });
+#else   // !defined(OS_WEBOS)
   touch_points_.clear();
+#endif  // defined(OS_WEBOS)
 }
 
 std::vector<PointerId> WaylandEventSource::GetActiveTouchPointIds() {
