@@ -7,6 +7,7 @@
 #ifndef NEVA_APP_RUNTIME_BROWSER_NOTIFICATIONS_NOTIFICATION_PERMISSION_CONTEXT_H_
 #define NEVA_APP_RUNTIME_BROWSER_NOTIFICATIONS_NOTIFICATION_PERMISSION_CONTEXT_H_
 
+#include "components/content_settings/core/browser/content_settings_utils.h"
 #include "components/content_settings/core/common/content_settings.h"
 #include "components/permissions/permission_context_base.h"
 
@@ -36,14 +37,6 @@ class NotificationPermissionContext
       content::BrowserContext* browser_context);
   ~NotificationPermissionContext() override;
 
-  // |callback| is called upon resolution of the request, but not if a prompt
-  // is shown and ignored.
-  void RequestPermission(content::WebContents* web_contents,
-                         const permissions::PermissionRequestID& id,
-                         const GURL& requesting_frame,
-                         bool user_gesture,
-                         BrowserPermissionCallback callback) override;
-
  private:
   // PermissionContextBase implementation.
   ContentSetting GetPermissionStatusInternal(
@@ -62,6 +55,10 @@ class NotificationPermissionContext
                             ContentSetting content_setting,
                             bool is_one_time) override;
   bool IsRestrictedToSecureOrigins() const override;
+
+  content_settings::PatternPair GetContentSettingPatternsForNonLocalType(
+      const GURL& primary_url,
+      const GURL& secondary_url);
 
   base::WeakPtrFactory<NotificationPermissionContext> weak_factory_ui_thread_{
       this};

@@ -8,9 +8,12 @@
 
 #include "components/content_settings/core/browser/cookie_settings.h"
 #include "neva/app_runtime/browser/host_content_settings_map_factory.h"
+#include "neva/app_runtime/browser/permissions/permission_decision_auto_blocker_factory.h"
 #include "neva/app_runtime/browser/permissions/permission_manager_factory.h"
 #include "neva/app_runtime/browser/permissions/permission_prompt.h"
 #include "neva/app_runtime/browser/permissions/permission_prompt_webos.h"
+
+namespace neva_app_runtime {
 
 // static
 NevaPermissionsClient* NevaPermissionsClient::GetInstance() {
@@ -39,7 +42,8 @@ bool NevaPermissionsClient::IsSubresourceFilterActivated(
 permissions::PermissionDecisionAutoBlocker*
 NevaPermissionsClient::GetPermissionDecisionAutoBlocker(
     content::BrowserContext* browser_context) {
-  return nullptr;
+  return PermissionDecisionAutoBlockerFactory::GetForBrowserContext(
+      browser_context);
 }
 
 permissions::PermissionManager* NevaPermissionsClient::GetPermissionManager(
@@ -65,3 +69,5 @@ NevaPermissionsClient::CreatePrompt(
     permissions::PermissionPrompt::Delegate* delegate) {
   return CreatePermissionPrompt(web_contents, delegate);
 }
+
+}  // namespace neva_app_runtime

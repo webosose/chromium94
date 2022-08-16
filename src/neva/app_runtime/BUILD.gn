@@ -119,6 +119,8 @@ static_library("app_runtime") {
     "browser/notifications/platform_notification_service_impl.h",
     "browser/permissions/neva_permissions_client.cc",
     "browser/permissions/neva_permissions_client.h",
+    "browser/permissions/permission_decision_auto_blocker_factory.cc",
+    "browser/permissions/permission_decision_auto_blocker_factory.h",
     "browser/permissions/permission_manager_factory.cc",
     "browser/permissions/permission_manager_factory.h",
     "browser/permissions/permission_prompt.h",

@@ -11,6 +11,8 @@
 #include "build/build_config.h"
 #include "components/permissions/permissions_client.h"
 
+namespace neva_app_runtime {
+
 class NevaPermissionsClient : public permissions::PermissionsClient {
  public:
   NevaPermissionsClient(const NevaPermissionsClient&) = delete;
@@ -44,5 +46,7 @@ class NevaPermissionsClient : public permissions::PermissionsClient {
 
   NevaPermissionsClient() = default;
 };
+
+}  // namespace neva_app_runtime
 
 #endif  // NEVA_APP_RUNTIME_BROWSER_PERMISSIONS_NEVA_PERMISSIONS_CLIENT_H_
