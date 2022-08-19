@@ -350,6 +350,9 @@ void WindowTreeHostPlatform::OnBoundsChanged(const BoundsChange& change) {
   gfx::Rect old_bounds = bounds_in_pixels_;
   auto weak_ref = GetWeakPtr();
   bounds_in_pixels_ = change.bounds;
+#if defined(OS_WEBOS)
+  platform_window_->SetContentsSize(bounds_in_pixels_.size());
+#endif
   if (bounds_in_pixels_.origin() != old_bounds.origin()) {
     OnHostMovedInPixels(bounds_in_pixels_.origin());
     // Changing the bounds may destroy this.
