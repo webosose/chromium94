@@ -180,15 +180,15 @@ void WebosTextModelWrapper::SetSurroundingText(const std::string& text,
 void WebosTextModelWrapper::Activate() {
   // This log should be kept for compliance to existing TCs scenarios.
   VLOG(1) << "ActivateTextModel";
-  text_model_activate(text_model_.get(), kSerial, seat_->seat(),
-                      window_->root_surface()->surface());
-  is_activated_ = true;
+  if (!is_activated_)
+    text_model_activate(text_model_.get(), kSerial, seat_->seat(),
+                        window_->root_surface()->surface());
 }
 
 void WebosTextModelWrapper::Deactivate() {
   // This log should be kept for compliance to existing TCs scenarios.
   VLOG(1) << "DeactivateTextModel";
-  if (IsActivated()) {
+  if (is_activated_) {
     text_model_deactivate(text_model_.get(), seat_->seat());
     is_activated_ = false;
   }
@@ -376,7 +376,6 @@ void WebosTextModelWrapper::Leave(void* data, text_model* text_model) {
                                          text_model_wrapper->window_);
 
   if (text_model_wrapper->IsActivated()) {
-    text_model_wrapper->is_activated_ = false;
     text_model_wrapper->state_ = TextModelState::kHidden;
     text_model_wrapper->input_panel_->HideInputPanel(
         ImeHiddenType::kDeactivate);
