@@ -270,9 +270,13 @@ class BLINK_PLATFORM_EXPORT WebMediaPlayerImpl
 
   base::WeakPtr<WebMediaPlayer> AsWeakPtr() override;
 
+#if defined(USE_NEVA_MEDIA)
+  bool IsBackgroundMediaSuspendEnabled() const;
+#else
   bool IsBackgroundMediaSuspendEnabled() const {
     return is_background_suspend_enabled_;
   }
+#endif
 
   // Distinct states that |delegate_| can be in. (Public for testing.)
   enum class DelegateState {

@@ -16,8 +16,8 @@
 
 #include "neva/app_runtime/webview.h"
 
-#include "base/command_line.h"
 #include "base/bind.h"
+#include "base/command_line.h"
 #include "base/files/file_path.h"
 #include "base/logging_category.h"
 #include "base/memory/memory_pressure_listener.h"
@@ -25,6 +25,7 @@
 #include "browser/app_runtime_browser_context_adapter.h"
 #include "cc/base/switches.h"
 #include "components/media_capture_util/devices_dispatcher.h"
+#include "components/media_control/browser/neva/media_suspender.h"
 #include "content/browser/child_process_security_policy_impl.h"
 #include "content/browser/renderer_host/render_view_host_impl.h"
 #include "content/browser/renderer_host/render_widget_host_view_aura.h"
@@ -73,6 +74,7 @@
 
 #if defined(USE_NEVA_MEDIA)
 #include "content/public/browser/neva/media_state_manager.h"
+#include "media/base/media_switches_neva.h"
 #endif
 
 #if defined(ENABLE_PLUGINS)
@@ -201,6 +203,8 @@ void WebView::CreateWebContents() {
   content::WebContents::CreateParams params(browser_context, nullptr);
   web_contents_ = content::WebContents::Create(params);
   injection_manager_ = std::make_unique<WebAppInjectionManager>();
+  media_suspender_ =
+      std::make_unique<media_control::MediaSuspender>(web_contents_.get());
 }
 
 content::WebContents* WebView::GetWebContents() {
@@ -641,6 +645,17 @@ void WebView::SetUseUnlimitedMediaPolicy(bool enabled) {
   renderer_prefs->use_unlimited_media_policy = enabled;
 
   web_contents_->SyncRendererPrefs();
+}
+
+void WebView::SetEnableBackgroundRun(bool enabled) {
+#if defined(USE_NEVA_MEDIA)
+  if (!base::CommandLine::ForCurrentProcess()->HasSwitch(
+          switches::kDisableWebMediaPlayerNeva)) {
+    return;
+  }
+#endif
+
+  media_suspender_->SetBackgroundMediaPlaybackEnabled(enabled);
 }
 
 void WebView::UpdatePreferencesAttributeForPrefs(
