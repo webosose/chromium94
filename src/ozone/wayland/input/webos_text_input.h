@@ -142,7 +142,7 @@ class WaylandTextInput {
     void Deactivate();
     void Show();
     void Hide();
-
+    void Update();
 
     text_model* model = nullptr;
     WaylandSeat* seat = nullptr;

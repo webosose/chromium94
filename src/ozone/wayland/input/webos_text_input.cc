@@ -139,7 +139,7 @@ void WaylandTextInput::ShowInputPanel(wl_seat* input_seat, unsigned handle) {
     panel = CreateInputPanel(handle);
 
   if (panel && panel->model) {
-    panel->activated ? panel->Show() : panel->Activate();
+    panel->activated ? panel->Show() : panel->Activate(), panel->Update();
   }
 }
 
@@ -166,11 +166,7 @@ void WaylandTextInput::SetTextInputInfo(
     panel->text_input_flags = text_input_info.flags;
     panel->max_text_length = text_input_info.max_length;
     if (panel->model) {
-      text_model_set_content_type(
-          panel->model,
-          ContentHintFromInputContentType(panel->input_content_type,
-                                          panel->text_input_flags),
-          ContentPurposeFromInputContentType(panel->input_content_type));
+      panel->Update();
 
       // Set maximum text length (if it was previously set only)
       if (panel->max_text_length >= 0)
@@ -257,6 +253,14 @@ void WaylandTextInput::InputPanel::Show() {
 void WaylandTextInput::InputPanel::Hide() {
   if (model)
     text_model_hide_input_panel(model);
+}
+
+void WaylandTextInput::Update() {
+  if (model)
+    text_model_set_content_type(
+        model,
+        ContentHintFromInputContentType(input_content_type, text_input_flags),
+        ContentPurposeFromInputContentType(input_content_type));
 }
 
 void WaylandTextInput::OnWindowAboutToDestroy(unsigned windowhandle) {
