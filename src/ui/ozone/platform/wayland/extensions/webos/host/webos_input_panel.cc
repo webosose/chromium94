@@ -60,6 +60,13 @@ void WebosInputPanel::SetTextInputInfo(const TextInputInfo& text_input_info) {
   input_content_type_ = text_input_info.type;
   input_flags_ = text_input_info.flags;
   input_panel_rect_ = text_input_info.input_panel_rectangle;
+  if (text_input_info.max_length >= 0) {
+    VLOG_IF(1,
+            text_input_info.max_length > std::numeric_limits<uint32_t>::max());
+    max_text_length_ =
+        base::saturated_cast<std::uint32_t>(text_input_info.max_length);
+  } else
+    max_text_length_ = absl::nullopt;
 
   if (webos_text_model_ && webos_text_model_->IsActivated())
     UpdateTextModel();
@@ -109,6 +116,10 @@ void WebosInputPanel::UpdateTextModel() {
           input_panel_rect_.x(), input_panel_rect_.y(),
           input_panel_rect_.width(), input_panel_rect_.height());
     webos_text_model_->SetContentType(input_content_type_, input_flags_);
+
+    if (max_text_length_.has_value()) {
+      webos_text_model_->SetMaxTextLength(max_text_length_.value());
+    }
   }
 }
 

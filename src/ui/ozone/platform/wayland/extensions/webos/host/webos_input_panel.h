@@ -20,6 +20,7 @@
 
 #include <memory>
 
+#include "third_party/abseil-cpp/absl/types/optional.h"
 #include "ui/base/ime/neva/input_method_common.h"
 #include "ui/ozone/platform/wayland/host/input_panel.h"
 
@@ -64,6 +65,7 @@ class WebosInputPanel : public InputPanel {
   InputContentType input_content_type_ = InputContentType::kNone;
   int input_flags_ = 0;
   gfx::Rect input_panel_rect_;
+  absl::optional<std::uint32_t> max_text_length_;
 };
 
 }  // namespace ui

@@ -233,7 +233,7 @@ void WebosTextModelWrapper::HideInputPanel() {
 }
 
 void WebosTextModelWrapper::SetMaxTextLength(std::uint32_t length) {
-  NOTIMPLEMENTED_LOG_ONCE();
+  text_model_set_max_text_length(text_model_.get(), length);
 }
 
 void WebosTextModelWrapper::SetPlatformData(const std::string& text) {
