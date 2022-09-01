@@ -18,6 +18,7 @@
 
 #include "base/bind.h"
 #include "base/memory/memory_pressure_listener.h"
+#include "components/media_control/renderer/media_playback_options.h"
 #include "content/public/common/page_visibility_state.h"
 #include "content/public/renderer/render_frame.h"
 #include "content/public/renderer/render_view.h"
@@ -50,6 +51,8 @@ AppRuntimeRenderFrameObserver::AppRuntimeRenderFrameObserver(
   render_frame->GetAssociatedInterfaceRegistry()->AddInterface(
       base::BindRepeating(&AppRuntimeRenderFrameObserver::BindPendingReceiver,
                           base::Unretained(this)));
+
+  new media_control::MediaPlaybackOptions(render_frame);
 }
 
 AppRuntimeRenderFrameObserver::~AppRuntimeRenderFrameObserver() = default;

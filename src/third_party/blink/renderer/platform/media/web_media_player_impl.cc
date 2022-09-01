@@ -3347,6 +3347,14 @@ void WebMediaPlayerImpl::ScheduleIdlePauseTimer() {
     return;
 #endif
 
+#if defined(USE_NEVA_MEDIA)
+  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+          switches::kDisableWebMediaPlayerNeva) && IsHidden()) {
+    // In webOS resumeing playback whiile in background is not allowed
+    return;
+  }
+#endif
+
   // Idle timeout chosen arbitrarily.
   background_pause_timer_.Start(FROM_HERE, base::TimeDelta::FromSeconds(5),
                                 client_, &WebMediaPlayerClient::PausePlayback);
@@ -3514,8 +3522,7 @@ base::WeakPtr<WebMediaPlayer> WebMediaPlayerImpl::AsWeakPtr() {
 bool WebMediaPlayerImpl::IsBackgroundMediaSuspendEnabled() const {
   if (base::CommandLine::ForCurrentProcess()->HasSwitch(
           switches::kDisableWebMediaPlayerNeva)) {
-    return is_background_suspend_enabled_ &&
-           !is_background_video_playback_enabled_;
+    return !is_background_video_playback_enabled_;
   }
 
   return is_background_suspend_enabled_;

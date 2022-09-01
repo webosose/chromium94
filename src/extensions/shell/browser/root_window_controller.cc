@@ -29,7 +29,9 @@
 ///@}
 
 #if defined(USE_NEVA_MEDIA)
+#include "base/command_line.h"
 #include "content/public/browser/neva/media_state_manager.h"
+#include "media/base/media_switches_neva.h"
 #endif
 
 #if defined(OS_WEBOS)
@@ -134,6 +136,28 @@ void DispatchSetInsetY(int height, content::WebContents* web_contents) {
           base::TimeDelta::FromMilliseconds(kKeyboardAnimationTime));
     }
   }
+}
+#endif
+
+#if defined(USE_NEVA_MEDIA)
+void OnWindowVisibilityChanged(ui::WidgetState new_state,
+                               content::WebContents* web_contents) {
+  bool is_hidden = (new_state == ui::WidgetState::MINIMIZED);
+  bool is_shown = (new_state == ui::WidgetState::MAXIMIZED ||
+                   new_state == ui::WidgetState::FULLSCREEN);
+  if (base::CommandLine::ForCurrentProcess()->HasSwitch(
+          switches::kDisableWebMediaPlayerNeva)) {
+    if (is_hidden)
+      web_contents->WasHidden();
+    else if (is_shown)
+      web_contents->WasShown();
+    return;
+  }
+
+  if (is_hidden)
+    content::MediaStateManager::GetInstance()->SuspendAllMedia(web_contents);
+  else if (is_shown)
+    content::MediaStateManager::GetInstance()->ResumeAllMedia(web_contents);
 }
 #endif
 
@@ -255,6 +279,9 @@ void RootWindowController::OnWindowHostStateChanged(aura::WindowTreeHost* host,
                 // Suspend or resume only for non-suspended WebViewGuest
                 // Embeder will take care of suspended WebViewGuest
                 if (guest_view != nullptr && !guest_view->IsSuspended()) {
+#if defined(USE_NEVA_MEDIA)
+                  OnWindowVisibilityChanged(new_state, guest_contents);
+#endif  // USE_NEVA_MEDIA
                   content::RenderProcessHost* host =
                       guest_view->web_contents()->GetMainFrame()->GetProcess();
                   if (host) {
@@ -264,19 +291,6 @@ void RootWindowController::OnWindowHostStateChanged(aura::WindowTreeHost* host,
                              new_state == ui::WidgetState::FULLSCREEN)
                       host->GetRendererInterface()->ProcessResume();
                   }
-
-#if defined(USE_NEVA_MEDIA)
-                  if (new_state == ui::WidgetState::MINIMIZED) {
-                    content::MediaStateManager::GetInstance()->SuspendAllMedia(
-                        guest_contents);
-                    guest_contents->WasHidden();
-                  } else if (new_state == ui::WidgetState::MAXIMIZED ||
-                             new_state == ui::WidgetState::FULLSCREEN) {
-                    content::MediaStateManager::GetInstance()->ResumeAllMedia(
-                        guest_contents);
-                    guest_contents->WasShown();
-                  }
-#endif  // USE_NEVA_MEDIA
                 }
 
                 return false;

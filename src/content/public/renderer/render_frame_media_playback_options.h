@@ -13,7 +13,7 @@ namespace content {
 // Default value for is_background_suspend_enabled is determined statically in
 // Chromium, but some content embedders (e.g. Cast) may need to change it at
 // runtime.
-#if defined(OS_ANDROID) || !defined(USE_NEVA_MEDIA)
+#if defined(OS_ANDROID)
 const bool kIsBackgroundMediaSuspendEnabled = true;
 #else
 const bool kIsBackgroundMediaSuspendEnabled = false;
@@ -26,6 +26,7 @@ struct RenderFrameMediaPlaybackOptions {
 
   // Whether background video is allowed to play for given |render_frame|.
 #if defined(OS_WEBOS)
+  // In webOS, background video playback is disabled by default
   bool is_background_video_playback_enabled = false;
 #else
   bool is_background_video_playback_enabled = true;
