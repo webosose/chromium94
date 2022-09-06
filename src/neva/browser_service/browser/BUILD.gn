@@ -13,6 +13,15 @@
 # limitations under the License.
 #
 # SPDX-License-Identifier: Apache-2.0
+import("//neva/neva.gni")
+
+
+if (use_webrisk_service) {
+  import("//neva/browser_service/browser/webrisk/core/webrisk.gni")
+  proto_library("webrisk_proto") {
+    sources = [ "//neva/browser_service/browser/webrisk/core/webrisk.proto" ]
+  }
+}
 
 source_set("browser_service_browser") {
   sources = [
@@ -36,4 +45,22 @@ source_set("browser_service_browser") {
     "//ui/base:buildflags",
     "//ui/gfx/x/keysyms",
   ]
+
+  if (use_neva_browser_service) {
+    sources += [
+      "//neva/browser_service/browser/malware_detection_service.h",
+      "//neva/browser_service/browser/malware_url_loader_throttle.cc",
+      "//neva/browser_service/browser/malware_url_loader_throttle.h",
+    ]
+
+    if (use_webrisk_service) {
+      sources += webrisk_sources
+      public_deps += [ ":webrisk_proto" ]
+    } else {
+      sources += [
+        "//neva/browser_service/browser/malware_detection_service_proxy.cc",
+        "//neva/browser_service/browser/malware_detection_service_proxy.h",
+      ]
+    }
+  }
 }
