@@ -60,6 +60,19 @@ PlatformWindowState ToPlatformWindowState(uint32_t state) {
   }
 }
 
+bool ToActivationState(uint32_t state) {
+  switch (state) {
+    case WL_WEBOS_SHELL_SURFACE_STATE_DEFAULT:
+    case WL_WEBOS_SHELL_SURFACE_STATE_MAXIMIZED:
+    case WL_WEBOS_SHELL_SURFACE_STATE_FULLSCREEN:
+      return true;
+    case WL_WEBOS_SHELL_SURFACE_STATE_MINIMIZED:
+      return false;
+    default:
+      return true;
+  }
+}
+
 WebosShellSurfaceWrapper::WebosShellSurfaceWrapper(
     WaylandWindowWebos* wayland_window,
     WaylandConnection* connection)
@@ -186,6 +199,8 @@ void WebosShellSurfaceWrapper::StateChanged(
     VLOG(1) << __PRETTY_FUNCTION__ << ": state=" << state;
     shell_surface_wrapper->wayland_window_->HandleStateChanged(
         ToPlatformWindowState(state));
+    shell_surface_wrapper->wayland_window_->HandleActivationChanged(
+        ToActivationState(state));
   } else {
     LOG(INFO) << __PRETTY_FUNCTION__ << ": state=" << state
               << ", but no window for this shell";
@@ -218,8 +233,10 @@ void WebosShellSurfaceWrapper::Exposed(
       static_cast<WebosShellSurfaceWrapper*>(data);
   DCHECK(shell_surface_wrapper);
   DCHECK(shell_surface_wrapper->wayland_window_);
-  if (shell_surface_wrapper->wayland_window_)
+  if (shell_surface_wrapper->wayland_window_) {
+    shell_surface_wrapper->wayland_window_->HandleActivationChanged(true);
     shell_surface_wrapper->wayland_window_->HandleWindowHostExposed();
+  }
 }
 
 void WebosShellSurfaceWrapper::StateAboutToChange(

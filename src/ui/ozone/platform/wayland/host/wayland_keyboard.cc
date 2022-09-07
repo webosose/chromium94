@@ -164,13 +164,8 @@ void WaylandKeyboard::Enter(void* data,
 
   ///@name USE_NEVA_APPRUNTIME
   ///@{
-  if (auto* window = wl::RootWindowFromWlSurface(surface)) {
+  if (auto* window = wl::RootWindowFromWlSurface(surface))
     window->HandleKeyboardEnter();
-
-    // Required for webOS and AGL which don't support activation update via
-    // surface configure event
-    window->HandleActivationChanged(true);
-  }
   ///@}
 }
 
@@ -190,13 +185,8 @@ void WaylandKeyboard::Leave(void* data,
 
   ///@name USE_NEVA_APPRUNTIME
   ///@{
-  if (auto* window = wl::RootWindowFromWlSurface(surface)) {
+  if (auto* window = wl::RootWindowFromWlSurface(surface))
     window->HandleKeyboardLeave();
-
-    // Required for webOS and AGL which don't support activation update via
-    // surface configure event
-    window->HandleActivationChanged(false);
-  }
   ///@}
 }
 
