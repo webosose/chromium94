@@ -50,7 +50,9 @@ operator|=(UnderlyingType<E>& lhs, E rhs) {
 // <value of underlying type> & <constant of underlying type> operator
 // returning a <value of underlying type>
 template <typename E>
-typename std::enable_if_t<std::is_enum<E>::value, UnderlyingType<E>>
+typename std::enable_if_t<std::is_enum<E>::value &&
+                              !std::is_convertible<E, UnderlyingType<E>>::value,
+                          UnderlyingType<E>>
 operator&(UnderlyingType<E> lhs, E rhs) {
   return lhs & static_cast<UnderlyingType<E>>(rhs);
 }
