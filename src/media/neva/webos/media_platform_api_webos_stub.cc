@@ -24,8 +24,8 @@ scoped_refptr<MediaPlatformAPI> MediaPlatformAPI::Create(
     bool video,
     const std::string& app_id,
     const VideoSizeChangedCB& video_size_changed_cb,
-    const base::Closure& resume_done_cb,
-    const base::Closure& suspend_done_cb,
+    const base::RepeatingClosure& resume_done_cb,
+    const base::RepeatingClosure& suspend_done_cb,
     const ActiveRegionCB& active_region_cb,
     const PipelineStatusCB& error_cb) {
   return base::MakeRefCounted<MediaPlatformAPIWebOSStub>();
