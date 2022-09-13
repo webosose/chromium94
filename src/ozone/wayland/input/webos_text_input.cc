@@ -255,7 +255,7 @@ void WaylandTextInput::InputPanel::Hide() {
     text_model_hide_input_panel(model);
 }
 
-void WaylandTextInput::Update() {
+void WaylandTextInput::InputPanel::Update() {
   if (model)
     text_model_set_content_type(
         model,
