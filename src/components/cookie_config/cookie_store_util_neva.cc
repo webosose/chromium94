@@ -31,6 +31,8 @@ void CookieNevaCryptoDelegate::SetOSCrypt(
   VLOG(3) << __func__ << ": attached remote mojo OSCrypt";
   os_crypt_.reset();
   os_crypt_.Bind(std::move(os_crypt));
+  os_crypt_.set_disconnect_with_reason_handler(base::BindOnce(
+      &CookieNevaCryptoDelegate::OnConnectionError, base::Unretained(this)));
 }
 
 void CookieNevaCryptoDelegate::SetDefaultCryptoDelegate(
@@ -102,6 +104,13 @@ bool CookieNevaCryptoDelegate::DecryptString(const std::string& ciphertext,
   return default_delegate_
              ? default_delegate_->DecryptString(ciphertext, plaintext)
              : false;
+}
+
+void CookieNevaCryptoDelegate::OnConnectionError(
+    uint32_t custom_reason,
+    const std::string& description) {
+  LOG(ERROR) << "Mojo connection error " << custom_reason << ": "
+             << description;
 }
 
 CookieNevaCryptoDelegate* GetCookieNevaCryptoDelegate() {

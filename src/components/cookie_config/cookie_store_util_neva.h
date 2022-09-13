@@ -48,6 +48,9 @@ class CookieNevaCryptoDelegate : public net::CookieCryptoDelegate {
 
   CookieNevaCryptoDelegate();
 
+  void OnConnectionError(uint32_t custom_reason,
+                         const std::string& description);
+
   net::CookieCryptoDelegate* default_delegate_ = nullptr;
   mojo::Remote<pal::mojom::OSCrypt> os_crypt_;
 };
