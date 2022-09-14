@@ -2770,14 +2770,9 @@ void StoragePartitionImpl::InitNetworkContext() {
   network_context_.set_disconnect_handler(base::BindOnce(
       &StoragePartitionImpl::InitNetworkContext, weak_factory_.GetWeakPtr()));
 
-  auto os_crypt_impl = std::make_unique<pal::OSCryptImpl>();
-  if (os_crypt_impl->IsEncryptionAvailable()) {
-    mojo::PendingRemote<pal::mojom::OSCrypt> os_crypt_remote;
-    mojo::MakeSelfOwnedReceiver(
-        std::move(os_crypt_impl),
-        os_crypt_remote.InitWithNewPipeAndPassReceiver());
-    network_context_->SetOSCrypt(std::move(os_crypt_remote));
-  }
+  os_crypt_impl_ = std::make_unique<pal::OSCryptImpl>();
+  if (os_crypt_impl_->IsEncryptionAvailable())
+    network_context_->SetOSCrypt(os_crypt_impl_->CreatePendingRemoteAndBind());
 }
 
 network::mojom::URLLoaderFactory*

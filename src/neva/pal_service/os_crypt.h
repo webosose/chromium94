@@ -19,6 +19,7 @@
 
 #include <memory>
 
+#include "mojo/public/cpp/bindings/receiver.h"
 #include "neva/pal_service/os_crypt_delegate.h"
 #include "neva/pal_service/public/mojom/os_crypt.mojom.h"
 
@@ -34,6 +35,8 @@ class OSCryptImpl : public mojom::OSCrypt {
 
   bool IsEncryptionAvailable() const;
 
+  mojo::PendingRemote<pal::mojom::OSCrypt> CreatePendingRemoteAndBind();
+
   // mojom::OSCrypt
   void EncryptString(
       const std::string& plaintext,
@@ -45,6 +48,8 @@ class OSCryptImpl : public mojom::OSCrypt {
  private:
   int GenerateTracingId();
   std::unique_ptr<OSCryptDelegate> delegate_;
+
+  mojo::Receiver<pal::mojom::OSCrypt> receiver_{this};
 };
 
 }  // namespace pal

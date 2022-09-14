@@ -19,7 +19,8 @@
 
 #include <memory>
 
-#include "base/no_destructor.h"
+#include "base/memory/ref_counted.h"
+#include "base/sequenced_task_runner.h"
 #include "mojo/public/cpp/bindings/pending_remote.h"
 #include "mojo/public/cpp/bindings/remote.h"
 #include "net/extras/sqlite/cookie_crypto_delegate.h"
@@ -27,8 +28,13 @@
 
 namespace cookie_config {
 
-class CookieNevaCryptoDelegate : public net::CookieCryptoDelegate {
+class CookieNevaCryptoDelegate
+    : public base::RefCountedThreadSafe<CookieNevaCryptoDelegate>,
+      public net::CookieCryptoDelegate {
  public:
+  explicit CookieNevaCryptoDelegate(
+      const scoped_refptr<base::SequencedTaskRunner>& task_runner);
+
   CookieNevaCryptoDelegate(const CookieNevaCryptoDelegate&) = delete;
   CookieNevaCryptoDelegate& operator=(const CookieNevaCryptoDelegate&) = delete;
 
@@ -44,18 +50,14 @@ class CookieNevaCryptoDelegate : public net::CookieCryptoDelegate {
                      std::string* plaintext) override;
 
  private:
-  friend base::NoDestructor<CookieNevaCryptoDelegate>;
-
-  CookieNevaCryptoDelegate();
-
   void OnConnectionError(uint32_t custom_reason,
                          const std::string& description);
 
   net::CookieCryptoDelegate* default_delegate_ = nullptr;
+
+  scoped_refptr<base::SequencedTaskRunner> task_runner_;
   mojo::Remote<pal::mojom::OSCrypt> os_crypt_;
 };
-
-CookieNevaCryptoDelegate* GetCookieNevaCryptoDelegate();
 
 }  // namespace cookie_config
 

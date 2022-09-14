@@ -555,8 +555,7 @@ class COMPONENT_EXPORT(NETWORK_SERVICE) NetworkContext
       mojo::PendingRemote<mojom::URLLoaderFactory>
           url_loader_factory_for_cert_net_fetcher,
       scoped_refptr<SessionCleanupCookieStore>);
-  scoped_refptr<SessionCleanupCookieStore> MakeSessionCleanupCookieStore()
-      const;
+  scoped_refptr<SessionCleanupCookieStore> MakeSessionCleanupCookieStore();
 
   // Invoked when the HTTP cache was cleared. Invokes |callback|.
   void OnHttpCacheCleared(ClearHttpCacheCallback callback,
@@ -605,6 +604,8 @@ class COMPONENT_EXPORT(NETWORK_SERVICE) NetworkContext
       std::unique_ptr<SQLiteTrustTokenPersister> persister);
 
   NetworkService* const network_service_;
+
+  scoped_refptr<cookie_config::CookieNevaCryptoDelegate> crypto_delegate_;
 
   mojo::Remote<mojom::NetworkContextClient> client_;
 

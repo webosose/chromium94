@@ -17,6 +17,8 @@
 module pal.mojom;
 
 interface OSCrypt {
+  [Sync]
   EncryptString(string plaintext) => (bool success, string ciphertext);
+  [Sync]
   DecryptString(string ciphertext) => (bool success, string plaintext);
 };

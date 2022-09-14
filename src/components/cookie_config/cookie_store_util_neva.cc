@@ -20,7 +20,9 @@
 
 namespace cookie_config {
 
-CookieNevaCryptoDelegate::CookieNevaCryptoDelegate() = default;
+CookieNevaCryptoDelegate::CookieNevaCryptoDelegate(
+    const scoped_refptr<base::SequencedTaskRunner>& task_runner)
+    : task_runner_(task_runner) {}
 
 bool CookieNevaCryptoDelegate::HasOSCrypt() {
   return os_crypt_.is_bound() && os_crypt_.is_connected();
@@ -30,7 +32,7 @@ void CookieNevaCryptoDelegate::SetOSCrypt(
     mojo::PendingRemote<pal::mojom::OSCrypt> os_crypt) {
   VLOG(3) << __func__ << ": attached remote mojo OSCrypt";
   os_crypt_.reset();
-  os_crypt_.Bind(std::move(os_crypt));
+  os_crypt_.Bind(std::move(os_crypt), task_runner_);
   os_crypt_.set_disconnect_with_reason_handler(base::BindOnce(
       &CookieNevaCryptoDelegate::OnConnectionError, base::Unretained(this)));
 }
@@ -50,25 +52,16 @@ bool CookieNevaCryptoDelegate::EncryptString(const std::string& plaintext,
                                              std::string* ciphertext) {
   if (HasOSCrypt()) {
     bool success = true;
-    base::WaitableEvent finished(
-        base::WaitableEvent::ResetPolicy::MANUAL,
-        base::WaitableEvent::InitialState::NOT_SIGNALED);
-    os_crypt_->EncryptString(
-        plaintext, base::BindOnce(
-                       [](base::WaitableEvent* finished, bool* success,
-                          std::string* ciphertext, bool remote_success,
-                          const std::string& remote_ciphertext) {
-                         *success = remote_success;
-                         *ciphertext = remote_ciphertext;
-                         finished->Signal();
-                       },
-                       &finished, &success, ciphertext));
-    finished.Wait();
+    if (!os_crypt_->EncryptString(plaintext, &success, ciphertext)) {
+      success = false;
+      LOG(ERROR) << __func__ << ": mojo call failed.";
+    }
     if (success) {
       VLOG(3) << __func__ << ": used PAL encryption.";
       return true;
     }
   }
+
   VLOG(3) << __func__
           << ": no PAL encryption. Fallback to default implementation.";
   return default_delegate_
@@ -80,20 +73,10 @@ bool CookieNevaCryptoDelegate::DecryptString(const std::string& ciphertext,
                                              std::string* plaintext) {
   if (HasOSCrypt()) {
     bool success = true;
-    base::WaitableEvent finished(
-        base::WaitableEvent::ResetPolicy::MANUAL,
-        base::WaitableEvent::InitialState::NOT_SIGNALED);
-    os_crypt_->DecryptString(
-        ciphertext, base::BindOnce(
-                        [](base::WaitableEvent* finished, bool* success,
-                           std::string* plaintext, bool remote_success,
-                           const std::string& remote_plaintext) {
-                          *success = remote_success;
-                          *plaintext = remote_plaintext;
-                          finished->Signal();
-                        },
-                        &finished, &success, plaintext));
-    finished.Wait();
+    if (!os_crypt_->DecryptString(ciphertext, &success, plaintext)) {
+      success = false;
+      LOG(ERROR) << __func__ << ": mojo call failed.";
+    }
     if (success) {
       VLOG(3) << __func__ << ": used PAL encryption.";
       return true;
@@ -111,11 +94,6 @@ void CookieNevaCryptoDelegate::OnConnectionError(
     const std::string& description) {
   LOG(ERROR) << "Mojo connection error " << custom_reason << ": "
              << description;
-}
-
-CookieNevaCryptoDelegate* GetCookieNevaCryptoDelegate() {
-  static base::NoDestructor<CookieNevaCryptoDelegate> instance;
-  return instance.get();
 }
 
 }  // namespace cookie_config

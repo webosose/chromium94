@@ -39,6 +39,11 @@ bool OSCryptImpl::IsEncryptionAvailable() const {
   return delegate_ ? delegate_->IsEncryptionAvailable() : false;
 }
 
+mojo::PendingRemote<pal::mojom::OSCrypt>
+OSCryptImpl::CreatePendingRemoteAndBind() {
+  return receiver_.BindNewPipeAndPassRemote();
+}
+
 void OSCryptImpl::EncryptString(
     const std::string& plaintext,
     pal::mojom::OSCrypt::EncryptStringCallback callback) {
