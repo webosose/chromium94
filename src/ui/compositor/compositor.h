@@ -495,7 +495,7 @@ class COMPOSITOR_EXPORT Compositor : public cc::LayerTreeHostClient,
 #if defined(USE_NEVA_APPRUNTIME)
   bool disable_drawing_ = true;
   bool display_visibility_enabled_ = true;
-  base::TimeDelta display_first_activate_timeout_;
+  absl::optional<base::TimeDelta> display_first_activate_timeout_;
 #endif
 
   LayerAnimatorCollection layer_animator_collection_;
