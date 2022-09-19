@@ -302,11 +302,12 @@ bool ContentSettingsPattern::Builder::Validate(const PatternParts& parts) {
 
   // file:// URL patterns have an empty host and port.
   if (parts.scheme == url::kFileScheme) {
-    if (parts.has_domain_wildcard || !parts.port.empty()
-#if !defined(USE_NEVA_APPRUNTIME)
-        || !parts.host.empty()
+#if defined(USE_NEVA_APPRUNTIME)
+    // If file scheme has an app-id as a hostname, path would be empty.
+    if (!parts.host.empty() && parts.path.empty())
+      return true;
 #endif
-    )
+    if (parts.has_domain_wildcard || !parts.port.empty() || !parts.host.empty())
       return false;
     if (parts.is_path_wildcard)
       return parts.path.empty();

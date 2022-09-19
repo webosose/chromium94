@@ -113,7 +113,6 @@ NotificationPermissionContext::GetContentSettingPatternsForNonLocalType(
   std::unique_ptr<ContentSettingsPattern::BuilderInterface> builder =
       ContentSettingsPattern::CreateBuilder();
   builder->WithScheme(primary_url.scheme())
-      ->WithPath(primary_url.host())
       ->WithHost(primary_url.host());
 
   patterns.first = builder->Build();
