@@ -493,6 +493,7 @@ source_set("browser_sources") {
     "//services/metrics/public/cpp:metrics_cpp",
     "//third_party/blink/public/common:buildflags",
     "//third_party/blink/public/common:headers",
+    "//third_party/blink/public/mojom:mojom_platform",
     "//ui/accessibility",
     "//ui/base",
     "//ui/base/clipboard",
