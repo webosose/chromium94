@@ -18,17 +18,20 @@
 
 #include <glib.h>
 
+#include "base/bind.h"
 #include "base/callback_helpers.h"
 #include "base/logging.h"
 #include "base/rand_util.h"
+#include "base/task/thread_pool.h"
 
 namespace base {
 
 namespace {
 
-const char kURIAudio[] = "luna://com.webos.audio";
+const char kURIAudio[] = "luna://com.webos.service.audio";
 const char kURISetting[] = "luna://com.webos.settingsservice";
 const char kURIMediaController[] = "luna://com.webos.service.mediacontroller";
+const char kURICamera[] = "luna://com.webos.service.camera2";
 
 const std::string kLunaClientNameMedia = "com.webos.media.client";
 
@@ -62,7 +65,9 @@ std::string LunaServiceClient::GetServiceURI(URIType type,
   static std::map<URIType, std::string> kURIMap = {
       {URIType::AUDIO, kURIAudio},
       {URIType::SETTING, kURISetting},
-      {URIType::MEDIACONTROLLER, kURIMediaController}};
+      {URIType::MEDIACONTROLLER, kURIMediaController},
+      {URIType::CAMERA, kURICamera},
+  };
   auto luna_service_uri = [&type]() {
     std::map<URIType, std::string>::iterator it;
     it = kURIMap.find(type);
@@ -83,11 +88,19 @@ LunaServiceClient::LunaServiceClient(ClientType type) {
 }
 
 LunaServiceClient::LunaServiceClient(const std::string& identifier,
-                                     bool application_service) {
+                                     bool run_gmain_context,
+                                     bool application_service)
+    : run_gmain_context_(run_gmain_context) {
   Initialize(identifier, application_service);
+
+  if (run_gmain_context_) {
+    gmain_task_runner_ = ThreadPool::CreateSingleThreadTaskRunner(
+        {base::MayBlock(), TaskShutdownBehavior::BLOCK_SHUTDOWN});
+  }
 }
 
 LunaServiceClient::~LunaServiceClient() {
+  run_gmain_context_ = false;
   UnregisterService();
 }
 
@@ -95,16 +108,17 @@ bool HandleAsync(LSHandle* sh, LSMessage* reply, void* ctx) {
   LunaServiceClient::ResponseHandlerWrapper* wrapper =
       static_cast<LunaServiceClient::ResponseHandlerWrapper*>(ctx);
 
+  wrapper->async_done = true;
+
   LSMessageRef(reply);
   std::string dump = LSMessageGetPayload(reply);
-  LOG(INFO) << "[RES] - " << wrapper->uri << " " << dump;
+  VLOG(1) << __func__ << "[RES] - " << wrapper->uri << " " << dump;
   if (!wrapper->callback.is_null())
     std::move(wrapper->callback).Run(dump);
 
   LSMessageUnref(reply);
 
   delete wrapper;
-
   return true;
 }
 
@@ -114,7 +128,7 @@ bool HandleSubscribe(LSHandle* sh, LSMessage* reply, void* ctx) {
 
   LSMessageRef(reply);
   std::string dump = LSMessageGetPayload(reply);
-  LOG(INFO) << "[SUB-RES] - " << wrapper->uri << " " << dump;
+  VLOG(1) << __func__ << "[SUB-RES] - " << wrapper->uri << " " << dump;
   if (!wrapper->callback.is_null())
     wrapper->callback.Run(dump);
 
@@ -125,6 +139,11 @@ bool HandleSubscribe(LSHandle* sh, LSMessage* reply, void* ctx) {
 
 bool LunaServiceClient::CallAsync(const std::string& uri,
                                   const std::string& param) {
+  if (!handle_) {
+    LOG(ERROR) << __func__ << " LSHandle not initialized";
+    return false;
+  }
+
   ResponseCB nullcb;
   return CallAsync(uri, param, nullcb);
 }
@@ -132,27 +151,35 @@ bool LunaServiceClient::CallAsync(const std::string& uri,
 bool LunaServiceClient::CallAsync(const std::string& uri,
                                   const std::string& param,
                                   const ResponseCB& callback) {
+  if (!handle_) {
+    LOG(ERROR) << __func__ << " LSHandle not initialized";
+    return false;
+  }
+
   AutoLSError error;
   ResponseHandlerWrapper* wrapper = new ResponseHandlerWrapper;
-  if (!wrapper)
+  if (!wrapper) {
+    LOG(ERROR) << __func__ << " Failed to allocate wrapper";
     return false;
+  }
 
   wrapper->callback = callback;
   wrapper->uri = uri;
   wrapper->param = param;
 
-  if (!handle_) {
+  VLOG(1) << __func__ << "[REQ] - " << uri << " " << param;
+  if (!LSCallOneReply(handle_, uri.c_str(), param.c_str(), HandleAsync, wrapper,
+                      nullptr, &error)) {
+    LOG(ERROR) << __func__ << " " << uri << ": fail[" << error.message << "]";
+    std::move(wrapper->callback).Run("");
     delete wrapper;
     return false;
   }
 
-  LOG(INFO) << "[REQ] - " << uri << " " << param;
-  if (!LSCallOneReply(handle_, uri.c_str(), param.c_str(), HandleAsync, wrapper,
-                      NULL, &error)) {
-    LOG(ERROR) << "[SUB] " << uri << ": fail[" << error.message << "]";
-    std::move(wrapper->callback).Run("");
-    delete wrapper;
-    return false;
+  if (gmain_task_runner_) {
+    gmain_task_runner_->PostTask(
+        FROM_HERE, base::BindOnce(&LunaServiceClient::RunGMainContextLoop,
+                                  base::Unretained(this), wrapper));
   }
 
   return true;
@@ -160,8 +187,13 @@ bool LunaServiceClient::CallAsync(const std::string& uri,
 
 bool LunaServiceClient::Subscribe(const std::string& uri,
                                   const std::string& param,
-                                  LSMessageToken* subscribeKey,
+                                  LSMessageToken* subscribe_key,
                                   const ResponseCB& callback) {
+  if (!handle_) {
+    LOG(ERROR) << __func__ << " LSHandle not initialized";
+    return false;
+  }
+
   AutoLSError error;
   ResponseHandlerWrapper* wrapper = new ResponseHandlerWrapper;
   if (!wrapper)
@@ -171,40 +203,36 @@ bool LunaServiceClient::Subscribe(const std::string& uri,
   wrapper->uri = uri;
   wrapper->param = param;
 
-  if (!handle_) {
-    delete wrapper;
-    return false;
-  }
-
   VLOG(1) << "[REQ] - " << uri << " " << param;
   if (!LSCall(handle_, uri.c_str(), param.c_str(), HandleSubscribe, wrapper,
-              subscribeKey, &error)) {
-    LOG(ERROR) << "[SUB] " << uri << ": fail[" << error.message << "]";
+              subscribe_key, &error)) {
+    LOG(ERROR) << __func__ << " " << uri << ": fail[" << error.message << "]";
     delete wrapper;
     return false;
   }
 
-  handlers_[*subscribeKey] = std::unique_ptr<ResponseHandlerWrapper>(wrapper);
+  handlers_[*subscribe_key] = std::unique_ptr<ResponseHandlerWrapper>(wrapper);
 
   return true;
 }
 
-bool LunaServiceClient::Unsubscribe(LSMessageToken subscribeKey) {
+bool LunaServiceClient::Unsubscribe(LSMessageToken subscribe_key) {
   AutoLSError error;
 
   if (!handle_)
     return false;
 
-  if (!LSCallCancel(handle_, subscribeKey, &error)) {
-    LOG(INFO) << "[UNSUB] " << subscribeKey << " fail[" << error.message << "]";
-    handlers_.erase(subscribeKey);
+  if (!LSCallCancel(handle_, subscribe_key, &error)) {
+    LOG(ERROR) << __func__ << " " << subscribe_key << " [" << error.message
+               << "]";
+    handlers_.erase(subscribe_key);
     return false;
   }
 
-  if (handlers_[subscribeKey])
-    handlers_[subscribeKey]->callback.Reset();
+  if (handlers_[subscribe_key])
+    handlers_[subscribe_key]->callback.Reset();
 
-  handlers_.erase(subscribeKey);
+  handlers_.erase(subscribe_key);
 
   return true;
 }
@@ -225,7 +253,7 @@ void LunaServiceClient::Initialize(const std::string& identifier,
       LogError("Fail to attach a service to a mainloop", error);
     }
   } else {
-    LOG(INFO) << "Failed to register service " << identifier.c_str();
+    LOG(ERROR) << __func__ << "Failed to register: " << identifier.c_str();
   }
 }
 
@@ -268,8 +296,18 @@ bool LunaServiceClient::UnregisterService() {
     LogError("Fail to unregister service", error);
     return false;
   }
+  handle_ = nullptr;
   g_main_context_unref(context_);
   return true;
+}
+
+void LunaServiceClient::RunGMainContextLoop(
+    LunaServiceClient::ResponseHandlerWrapper* wrapper) {
+  if (!wrapper)
+    return;
+
+  while (run_gmain_context_ && !wrapper->async_done)
+    g_main_context_iteration(context_, FALSE);
 }
 
 }  // namespace base
