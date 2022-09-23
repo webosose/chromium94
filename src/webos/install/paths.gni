@@ -46,6 +46,7 @@ declare_args() {
 
   includedir = "/usr/include"
   libdir = "/usr/lib"
+  webos_pkgconfigdir = "/usr/share/pkgconfig"
 
   cbe_data_dir = "$libdir/cbe"
   cbe_data_locales_dir = "$cbe_data_dir/neva_locales"

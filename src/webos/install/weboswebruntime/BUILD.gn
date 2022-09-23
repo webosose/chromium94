@@ -38,6 +38,7 @@ copy("weboswebruntime") {
     "//webos:webos_resources",                  # for webos_content.pak
     ":locales",
     ":headers",
+    ":pkgconfig",
     ":debugging_buildflags_header",
     ":logging_buildflags_header",
     ":tracing_buildflags_header",
@@ -148,6 +149,11 @@ copy("headers") {
   sources = headers
 
   outputs = [ "$image_path/$includedir/webruntime/{{source_root_relative_dir}}/{{source_file_part}}" ]
+}
+
+copy("pkgconfig") {
+  sources = [ "//webos/install/weboswebruntime/libcbe.pc" ]
+  outputs = [ "$image_path/$webos_pkgconfigdir/{{source_file_part}}" ]
 }
 
 copy("logging_buildflags_header") {
