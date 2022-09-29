@@ -45,8 +45,8 @@ void DelegatedFrameHost::ResumeDrawing() {
 }
 
 void DelegatedFrameHost::SuspendDrawing() {
-  if (compositor_)
-    compositor_->SuspendDrawing();
+  // Suspending compositor's drawing prevents garbage collection
+  // in SurfaceManager. Delay some time to suspend.
   EvictDelegatedFrame();
   background_cleanup_task_.Reset(base::BindOnce(
       &DelegatedFrameHost::DoBackgroundCleanup, weak_factory_.GetWeakPtr()));
@@ -56,6 +56,8 @@ void DelegatedFrameHost::SuspendDrawing() {
 }
 
 void DelegatedFrameHost::DoBackgroundCleanup() {
+  if (compositor_)
+    compositor_->SuspendDrawing();
   viz::FrameEvictionManager::GetInstance()->PurgeAllUnlockedFrames();
 }
 
