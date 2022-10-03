@@ -88,6 +88,12 @@ AppRuntimeBrowserContext::AppRuntimeBrowserContext(
   user_prefs::UserPrefs::Set(this, pref_service_.get());
 
   PushMessagingServiceImpl::InitializeForProfile(this);
+
+#if defined(__clang__)
+  LOG(INFO) << "Compiler: clang";
+#elif defined(COMPILER_GCC)
+  LOG(INFO) << "Compiler: gcc";
+#endif
 }
 
 AppRuntimeBrowserContext::~AppRuntimeBrowserContext() {}
