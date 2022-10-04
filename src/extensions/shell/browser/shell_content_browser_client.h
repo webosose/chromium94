@@ -186,6 +186,14 @@ class ShellContentBrowserClient : public content::ContentBrowserClient {
           callback) {
     override_web_preferences_callback_ = std::move(callback);
   }
+
+  std::vector<std::unique_ptr<blink::URLLoaderThrottle>>
+  CreateURLLoaderThrottles(
+      const network::ResourceRequest& request,
+      content::BrowserContext* browser_context,
+      const base::RepeatingCallback<content::WebContents*()>& wc_getter,
+      content::NavigationUIData* navigation_ui_data,
+      int frame_tree_node_id) override;
 #endif
 #if defined(USE_NEVA_APPRUNTIME)
   blink::UserAgentMetadata GetUserAgentMetadata() override;
