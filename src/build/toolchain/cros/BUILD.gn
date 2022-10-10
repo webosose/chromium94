@@ -182,7 +182,6 @@ clang_toolchain("v8_snapshot_clang_${target_cpu}") {
   extra_ldflags = cros_v8_snapshot_extra_ldflags
 
   toolchain_args = {
-    cc_wrapper = ""
     is_clang = true
     use_custom_libcxx = true
     if (target_cpu == "x86" || target_cpu == "arm" || target_cpu == "mipsel") {
