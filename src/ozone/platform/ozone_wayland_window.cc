@@ -79,12 +79,14 @@ void CreateBitmapFromPng(
 OzoneWaylandWindow::OzoneWaylandWindow(PlatformWindowDelegate* delegate,
                                        OzoneGpuPlatformSupportHost* sender,
                                        WindowManagerWayland* window_manager,
-                                       const gfx::Rect& bounds)
+                                       const gfx::Rect& bounds,
+                                       ui::PlatformWindowOpacity opacity)
     : delegate_(delegate),
       sender_(sender),
       window_manager_(window_manager),
       transparent_(false),
       bounds_(bounds),
+      opacity_(opacity),
       parent_(0),
       type_(WidgetType::WINDOWFRAMELESS),
       state_(WidgetState::UNINITIALIZED),
@@ -370,7 +372,7 @@ void OzoneWaylandWindow::OnGpuProcessLaunched() {
 }
 
 void OzoneWaylandWindow::DeferredSendingToGpu() {
-  sender_->Send(new WaylandDisplay_Create(handle_));
+  sender_->Send(new WaylandDisplay_Create(handle_, opacity_));
   if (init_window_)
     sender_->Send(
         new WaylandDisplay_InitWindow(handle_, parent_, bounds_, type_));

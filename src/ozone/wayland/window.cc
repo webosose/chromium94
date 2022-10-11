@@ -36,11 +36,12 @@
 
 namespace ozonewayland {
 
-WaylandWindow::WaylandWindow(unsigned handle)
+WaylandWindow::WaylandWindow(unsigned handle, ui::PlatformWindowOpacity opacity)
     : shell_surface_(NULL),
       window_(NULL),
       type_(None),
       handle_(handle),
+      opacity_(opacity),
 #if defined(OS_WEBOS)
       surface_group_(0),
       is_surface_group_client_(false),
@@ -327,7 +328,13 @@ void WaylandWindow::AddRegion(int left, int top, int right, int bottom) {
   struct wl_region *region = wl_compositor_create_region(com);
   wl_region_add(region, left, top, right, bottom);
   wl_surface_set_input_region(shell_surface_->GetWLSurface(), region);
-  wl_surface_set_opaque_region(shell_surface_->GetWLSurface(), region);
+#if defined(OS_WEBOS)
+  // The below call causes disengagement of alpha-blending for non-opaque
+  // surfaces since QtWayland (the LSM component is based on) v.6.4.0, thus,
+  // leaving the condition for the webOS platform only.
+  if (opacity_ == ui::PlatformWindowOpacity::kOpaqueWindow)
+#endif  // defined(OS_WEBOS)
+    wl_surface_set_opaque_region(shell_surface_->GetWLSurface(), region);
   wl_region_destroy(region);
 }
 
@@ -335,7 +342,13 @@ void WaylandWindow::SubRegion(int left, int top, int right, int bottom) {
   wl_compositor* com = WaylandDisplay::GetInstance()->GetCompositor();
   struct wl_region *region = wl_compositor_create_region(com);
   wl_region_subtract(region, left, top, right, bottom);
-  wl_surface_set_opaque_region(shell_surface_->GetWLSurface(), region);
+#if defined(OS_WEBOS)
+  // The below call causes disengagement of alpha-blending for non-opaque
+  // surfaces since QtWayland (the LSM component is based on) v.6.4.0, thus,
+  // leaving the condition for the webOS platform only.
+  if (opacity_ == ui::PlatformWindowOpacity::kOpaqueWindow)
+#endif  // defined(OS_WEBOS)
+    wl_surface_set_opaque_region(shell_surface_->GetWLSurface(), region);
   wl_region_destroy(region);
 }
 

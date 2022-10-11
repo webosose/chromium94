@@ -26,6 +26,7 @@
 
 #include "ui/gfx/geometry/rect.h"
 #include "ui/gfx/location_hint.h"
+#include "ui/platform_window/platform_window_init_properties.h"
 #include "ui/views/widget/desktop_aura/neva/ui_constants.h"
 
 struct wl_egl_window;
@@ -56,7 +57,7 @@ class WaylandWindow {
   };
 
   // Creates a window and maps it to handle.
-  explicit WaylandWindow(unsigned handle);
+  explicit WaylandWindow(unsigned handle, ui::PlatformWindowOpacity opacity);
   WaylandWindow(const WaylandWindow&) = delete;
   WaylandWindow& operator=(const WaylandWindow&) = delete;
   ~WaylandWindow();
@@ -108,6 +109,7 @@ class WaylandWindow {
 
   ShellType type_;
   unsigned handle_;
+  ui::PlatformWindowOpacity opacity_;
 #if defined(OS_WEBOS)
   WebOSSurfaceGroup* surface_group_;
   bool is_surface_group_client_;

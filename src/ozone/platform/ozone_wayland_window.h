@@ -32,6 +32,7 @@
 #include "ui/gfx/location_hint.h"
 #include "ui/gfx/native_widget_types.h"
 #include "ui/platform_window/platform_window.h"
+#include "ui/platform_window/platform_window_init_properties.h"
 #include "ui/views/widget/desktop_aura/neva/ui_constants.h"
 
 class SkBitmap;
@@ -54,7 +55,8 @@ class OzoneWaylandWindow : public PlatformWindow,
   OzoneWaylandWindow(PlatformWindowDelegate* delegate,
                      OzoneGpuPlatformSupportHost* sender,
                      WindowManagerWayland* window_manager,
-                     const gfx::Rect& bounds);
+                     const gfx::Rect& bounds,
+                     ui::PlatformWindowOpacity opacity);
   OzoneWaylandWindow(const OzoneWaylandWindow&) = delete;
   OzoneWaylandWindow& operator=(const OzoneWaylandWindow&) = delete;
   ~OzoneWaylandWindow() override;
@@ -168,6 +170,7 @@ class OzoneWaylandWindow : public PlatformWindow,
   WindowManagerWayland* window_manager_;  // Not owned.
   bool transparent_;
   gfx::Rect bounds_;
+  ui::PlatformWindowOpacity opacity_;
   bool resize_enabled_ = true;
   unsigned handle_;
   unsigned parent_;

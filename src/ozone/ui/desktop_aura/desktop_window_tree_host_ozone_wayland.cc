@@ -58,6 +58,23 @@ DEFINE_UI_CLASS_PROPERTY_TYPE(views::DesktopWindowTreeHostOzone*)
 
 namespace views {
 
+namespace {
+
+ui::PlatformWindowOpacity GetPlatformWindowOpacity(
+    Widget::InitParams::WindowOpacity opacity) {
+  switch (opacity) {
+    case Widget::InitParams::WindowOpacity::kInferred:
+      return ui::PlatformWindowOpacity::kInferOpacity;
+    case Widget::InitParams::WindowOpacity::kOpaque:
+      return ui::PlatformWindowOpacity::kOpaqueWindow;
+    case Widget::InitParams::WindowOpacity::kTranslucent:
+      return ui::PlatformWindowOpacity::kTranslucentWindow;
+  }
+  return ui::PlatformWindowOpacity::kOpaqueWindow;
+}
+
+}  // namespace
+
 std::list<gfx::AcceleratedWidget>*
 DesktopWindowTreeHostOzone::open_windows_ = NULL;
 
@@ -1093,6 +1110,7 @@ void DesktopWindowTreeHostOzone::InitOzoneWindow(
   const gfx::Rect& bounds_in_pixels = ToPixelRect(bounds);
   properties.bounds =
       gfx::Rect(bounds_in_pixels.origin(), AdjustSize(bounds_in_pixels.size()));
+  properties.opacity = GetPlatformWindowOpacity(params.opacity);
   platform_window_ = ui::OzonePlatform::GetInstance()->CreatePlatformWindow(
       this, std::move(properties));
   DCHECK(window_);

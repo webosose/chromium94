@@ -105,9 +105,9 @@ class OzonePlatformWayland : public OzonePlatform {
   std::unique_ptr<PlatformWindow> CreatePlatformWindow(
       PlatformWindowDelegate* delegate,
       PlatformWindowInitProperties properties) override {
-    return std::unique_ptr<PlatformWindow>(
-        new OzoneWaylandWindow(delegate, gpu_platform_host_.get(),
-                               window_manager_.get(), properties.bounds));
+    return std::unique_ptr<PlatformWindow>(new OzoneWaylandWindow(
+        delegate, gpu_platform_host_.get(), window_manager_.get(),
+        properties.bounds, properties.opacity));
   }
 
   std::unique_ptr<InputMethod> CreateInputMethod(

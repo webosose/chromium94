@@ -368,8 +368,10 @@ void WaylandDisplay::InitializeDisplay() {
   }
 }
 
-WaylandWindow* WaylandDisplay::CreateAcceleratedSurface(unsigned w) {
-  WaylandWindow* window = new WaylandWindow(w);
+WaylandWindow* WaylandDisplay::CreateAcceleratedSurface(
+    unsigned w,
+    ui::PlatformWindowOpacity opacity) {
+  WaylandWindow* window = new WaylandWindow(w, opacity);
   widget_map_[w].reset(window);
 
   VLOG(1) << __func__ << " id=" << w << " widget=" << window;
@@ -550,9 +552,10 @@ void WaylandDisplay::SetWidgetTitle(unsigned w, const std::u16string& title) {
   FlushDisplay();
 }
 
-void WaylandDisplay::CreateWidget(unsigned widget) {
+void WaylandDisplay::CreateWidget(unsigned widget,
+                                  ui::PlatformWindowOpacity opacity) {
   if (!GetWidget(widget))
-    CreateAcceleratedSurface(widget);
+    CreateAcceleratedSurface(widget, opacity);
 }
 
 void WaylandDisplay::InitWindow(unsigned handle,

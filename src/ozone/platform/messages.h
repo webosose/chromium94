@@ -22,8 +22,8 @@
 
 #include "base/memory/platform_shared_memory_region.h"
 #include "ipc/ipc_message_macros.h"
-#include "ipc/ipc_message_utils.h"
 #include "ipc/ipc_message_start.h"
+#include "ipc/ipc_message_utils.h"
 #include "ipc/ipc_param_traits.h"
 #include "ipc/neva/redefined_param_traits_macros.h"
 #include "ipc/param_traits_macros.h"
@@ -41,6 +41,7 @@
 #include "ui/platform_window/neva/window_group_configuration.h"
 #include "ui/platform_window/neva/window_group_configuration_param_traits.h"
 #include "ui/platform_window/neva/xinput_types.h"
+#include "ui/platform_window/platform_window_init_properties.h"
 #include "ui/views/widget/desktop_aura/neva/ui_constants.h"
 
 #define IPC_MESSAGE_START LastIPCMsgStart
@@ -60,6 +61,8 @@ IPC_ENUM_TRAITS_MAX_VALUE(ui::KeyMask,
 IPC_ENUM_TRAITS_MAX_VALUE(ui::XInputKeySymbolType, ui::XINPUT_NATIVE_KEY_SYMBOL)
 IPC_ENUM_TRAITS_MAX_VALUE(ui::XInputEventType, ui::XINPUT_RELEASE)
 IPC_ENUM_TRAITS_MAX_VALUE(gfx::LocationHint, gfx::LocationHint::kSouthEast)
+IPC_ENUM_TRAITS_MAX_VALUE(ui::PlatformWindowOpacity,
+                          ui::PlatformWindowOpacity::kTranslucentWindow)
 
 IPC_STRUCT_TRAITS_BEGIN(ui::TextInputInfo)
   IPC_STRUCT_TRAITS_MEMBER(type)
@@ -260,8 +263,10 @@ IPC_MESSAGE_CONTROL2(WaylandDisplay_State,  // NOLINT(readability/fn_size)
                      unsigned /* window handle */,
                      ui::WidgetState /*state*/)
 
-IPC_MESSAGE_CONTROL1(WaylandDisplay_Create,  // NOLINT(readability/fn_size)
-                     unsigned /* window handle */)
+IPC_MESSAGE_CONTROL2(WaylandDisplay_Create,  // NOLINT(readability/fn_size)
+                     unsigned /* window handle */,
+                     ui::PlatformWindowOpacity /* window opacity */
+)
 
 IPC_MESSAGE_CONTROL4(WaylandDisplay_InitWindow,  // NOLINT(readability/fn_size)
                      unsigned /* window handle */,

@@ -52,6 +52,7 @@
 #include "ui/ozone/public/gpu_platform_support.h"
 #include "ui/ozone/public/surface_factory_ozone.h"
 #include "ui/platform_window/neva/xinput_types.h"
+#include "ui/platform_window/platform_window_init_properties.h"
 
 #if defined(USE_NEVA_MEDIA)
 #include "base/unguessable_token.h"
@@ -289,7 +290,10 @@ class WaylandDisplay : public ui::SurfaceFactoryOzone,
   // surface(i.e. toplevel, menu) is none. One needs to explicitly call
   // WaylandWindow::SetShellAttributes to set this. The ownership of
   // WaylandWindow is not passed to the caller.
-  WaylandWindow* CreateAcceleratedSurface(unsigned w);
+  WaylandWindow* CreateAcceleratedSurface(
+      unsigned w,
+      ui::PlatformWindowOpacity opacity =
+          ui::PlatformWindowOpacity::kOpaqueWindow);
 
   // Starts polling on display fd. This should be used when one needs to
   // continuously read pending events coming from Wayland compositor and
@@ -309,7 +313,7 @@ class WaylandDisplay : public ui::SurfaceFactoryOzone,
   WaylandWindow* GetWidget(unsigned w) const;
   void SetWidgetState(unsigned widget, ui::WidgetState state);
   void SetWidgetTitle(unsigned w, const std::u16string& title);
-  void CreateWidget(unsigned widget);
+  void CreateWidget(unsigned widget, ui::PlatformWindowOpacity opacity);
   void InitWindow(unsigned widget,
                   unsigned parent,
                   const gfx::Rect& rect,
