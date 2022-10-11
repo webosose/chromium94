@@ -14,6 +14,8 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
+#include "base/logging.h"
+
 #include "ui/ozone/platform/wayland/extensions/webos/host/webos_input_panel.h"
 
 #include "ui/ozone/platform/wayland/extensions/webos/host/wayland_extensions_webos.h"
