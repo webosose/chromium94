@@ -297,6 +297,13 @@ source_set("app_shell_lib") {
     }
   }
 
+  if (use_neva_browser_service) {
+    sources += [
+      "//extensions/shell/neva/shell_permission_prompt.cc",
+      "//extensions/shell/neva/shell_permission_prompt.h",
+    ]
+  }
+
   if (is_webos) {
     sources += [
       "neva/platform_shutdown_signal_handler.cc",

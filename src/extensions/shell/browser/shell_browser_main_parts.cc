@@ -294,6 +294,14 @@ int ShellBrowserMainParts::PreCreateThreads() {
   content::ChildProcessSecurityPolicy::GetInstance()->RegisterWebSafeScheme(
       kExtensionScheme);
 
+#if defined(USE_NEVA_BROWSER_SERVICE)
+  if (!neva_permission_client_delegate_)
+    neva_permission_client_delegate_.reset(new NevaPermissionsClientDelegate());
+
+  neva_app_runtime::NevaPermissionsClient::GetInstance()->SetDelegate(
+      neva_permission_client_delegate_.get());
+#endif
+
   // Return no error.
   return 0;
 }

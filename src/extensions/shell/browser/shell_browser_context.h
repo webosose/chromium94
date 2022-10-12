@@ -27,6 +27,11 @@ class ShellBrowserContext final : public content::ShellBrowserContext {
       override;
 #endif  // defined(USE_NEVA_APPRUNTIME)
 
+#if defined(USE_NEVA_BROWSER_SERVICE)
+  content::PermissionControllerDelegate* GetPermissionControllerDelegate()
+      override;
+#endif
+
  private:
   scoped_refptr<storage::SpecialStoragePolicy> storage_policy_;
 

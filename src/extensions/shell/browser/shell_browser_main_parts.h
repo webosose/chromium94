@@ -16,6 +16,10 @@
 #include "content/public/browser/browser_main_parts.h"
 #include "content/public/common/main_function_params.h"
 
+#if defined(USE_NEVA_BROWSER_SERVICE)
+#include "extensions/shell/neva/shell_permission_prompt.h"
+#endif
+
 class PrefService;
 
 namespace content {
@@ -110,6 +114,9 @@ class ShellBrowserMainParts : public content::BrowserMainParts {
 #if defined(USE_NEVA_BROWSER_SERVICE)
   // Store instance of malware detection service
   scoped_refptr<neva::MalwareDetectionService> malware_detection_service_;
+
+  std::unique_ptr<NevaPermissionsClientDelegate>
+      neva_permission_client_delegate_;
 #endif
 
   // The DesktopController outlives ExtensionSystem and context-keyed services.

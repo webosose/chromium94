@@ -50,6 +50,7 @@
 #include "extensions/shell/common/version.h"  // Generated file.
 #include "neva/browser_service/browser/cookiemanager_service_impl.h"
 #include "neva/browser_service/browser/popupblocker_service_impl.h"
+#include "neva/browser_service/browser/userpermission_service_impl.h"
 #include "services/metrics/public/cpp/ukm_source_id.h"
 #include "third_party/blink/public/common/associated_interfaces/associated_interface_registry.h"
 #include "url/gurl.h"
@@ -361,6 +362,14 @@ void ShellContentBrowserClient::ExposeInterfacesToRenderer(
             std::move(receiver));
       };
   registry->AddInterface(base::BindRepeating(cookiemanager_service),
+                         content::GetUIThreadTaskRunner({}));
+  auto userpermission_service =
+      [](mojo::PendingReceiver<browser::mojom::UserPermissionService>
+             receiver) {
+        browser::BrowserService::GetBrowserService()->BindUserPermissionService(
+            std::move(receiver));
+      };
+  registry->AddInterface(base::BindRepeating(userpermission_service),
                          content::GetUIThreadTaskRunner({}));
 #endif
 }

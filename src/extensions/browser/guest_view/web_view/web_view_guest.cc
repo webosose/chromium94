@@ -97,6 +97,10 @@
 #endif  // OS_WEBOS
 #endif  // USE_NEVA_APPRUNTIME
 
+#if defined(USE_NEVA_BROWSER_SERVICE)
+#include "components/permissions/permission_request_manager.h"
+#endif  // USE_NEVA_BROWSER_SERVICE
+
 using base::UserMetricsAction;
 using content::GlobalRequestID;
 using content::RenderFrameHost;
@@ -544,6 +548,10 @@ void WebViewGuest::CreateWebContents(const base::DictionaryValue& create_params,
   // TODO(erikchen): Fix ownership semantics for guest views.
   // https://crbug.com/832879.
   WebContents* new_contents = WebContents::Create(params).release();
+
+#if defined(USE_NEVA_BROWSER_SERVICE)
+  permissions::PermissionRequestManager::CreateForWebContents(new_contents);
+#endif
 
   // Grant access to the origin of the embedder to the guest process. This
   // allows blob: and filesystem: URLs with the embedder origin to be created

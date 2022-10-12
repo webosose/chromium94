@@ -15,6 +15,10 @@
 #include "neva/user_agent/browser/client_hints.h"
 #endif  // defined(USE_NEVA_APPRUNTIME)
 
+#if defined(USE_NEVA_BROWSER_SERVICE)
+#include "neva/app_runtime/browser/permissions/permission_manager_factory.h"
+#endif
+
 namespace extensions {
 
 // Create a normal recording browser context. If we used an incognito context
@@ -42,5 +46,12 @@ ShellBrowserContext::GetClientHintsControllerDelegate() {
   return new neva_user_agent::ClientHints();
 }
 #endif  // defined(USE_NEVA_APPRUNTIME)
+
+#if defined(USE_NEVA_BROWSER_SERVICE)
+content::PermissionControllerDelegate*
+ShellBrowserContext::GetPermissionControllerDelegate() {
+  return PermissionManagerFactory::GetForBrowserContext(this);
+}
+#endif
 
 }  // namespace extensions

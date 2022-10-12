@@ -27,6 +27,12 @@
 #include "neva/app_runtime/public/webview_controller_delegate.h"
 #endif  // defined(USE_NEVA_APPRUNTIME) && defined(OS_WEBOS)
 
+#if defined(USE_NEVA_BROWSER_SERVICE)
+#include "components/permissions/permission_result.h"
+#include "components/webrtc/media_stream_devices_controller.h"
+#include "neva/app_runtime/browser/permissions/permission_manager_factory.h"
+#endif  // defined(USE_NEVA_BROWSER_SERVICE)
+
 #if defined(USE_PLATFORM_LANGUAGE_LISTENER)
 #include "extensions/shell/neva/platform_language_listener.h"
 #endif
@@ -124,6 +130,8 @@ void ShellAppDelegate::RenderFrameCreated(
                                std::string("{}"));
     client->AddInjectionToLoad(std::string("v8/cookiemanager"),
                                std::string("{}"));
+    client->AddInjectionToLoad(std::string("v8/userpermission"),
+                               std::string("{}"));
 #endif
 #if defined(ENABLE_MEMORYMANAGER_WEBAPI)
     client->AddInjectionToLoad(std::string("v8/memorymanager"),
@@ -183,6 +191,16 @@ void ShellAppDelegate::RequestMediaAccessPermission(
     const content::MediaStreamRequest& request,
     content::MediaResponseCallback callback,
     const extensions::Extension* extension) {
+#if defined(USE_NEVA_BROWSER_SERVICE)
+  if (!request.security_origin.SchemeIs(kExtensionScheme)) {
+    webrtc::MediaStreamDevicesController::RequestPermissions(
+        request, nullptr,
+        base::BindOnce(&ShellAppDelegate::OnMediaAccessPermissionResult,
+                       base::Unretained(this), std::move(callback)));
+    return;
+  }
+#endif
+
   media_capture_util::GrantMediaStreamRequest(web_contents, request,
                                               std::move(callback), extension);
 }
@@ -192,20 +210,21 @@ bool ShellAppDelegate::CheckMediaAccessPermission(
     const GURL& security_origin,
     blink::mojom::MediaStreamType type,
     const Extension* extension) {
-#if defined(USE_NEVA_APPRUNTIME)
-  if (type == blink::mojom::MediaStreamType::DEVICE_AUDIO_CAPTURE ||
-      type == blink::mojom::MediaStreamType::DEVICE_VIDEO_CAPTURE) {
-    // VerifyMediaAccessPermission() will crash if there is
-    // no permission for audio capture / video capture.
-    // Let's make an error log and return false instead.
-    // TODO(alexander.trofimov@lge.com): Remove this patch
-    // right after corresponding features are supported
-    // and crash removed from VerifyMediaAccessPermission().
-    LOG(ERROR) << "Audio capture/video capture request but "
-               << "this feature is not supported yet.";
-    return false;
+#if defined(USE_NEVA_BROWSER_SERVICE)
+  if (!security_origin.SchemeIs(kExtensionScheme)) {
+    ContentSettingsType content_settings_type =
+        type == blink::mojom::MediaStreamType::DEVICE_AUDIO_CAPTURE
+            ? ContentSettingsType::MEDIASTREAM_MIC
+            : ContentSettingsType::MEDIASTREAM_CAMERA;
+    return PermissionManagerFactory::GetForBrowserContext(
+               content::WebContents::FromRenderFrameHost(render_frame_host)
+                   ->GetBrowserContext())
+               ->GetPermissionStatus(content_settings_type, security_origin,
+                                     security_origin)
+               .content_setting == CONTENT_SETTING_ALLOW;
   }
 #endif
+
   media_capture_util::VerifyMediaAccessPermission(type, extension);
   return true;
 }
@@ -246,5 +265,27 @@ content::PictureInPictureResult ShellAppDelegate::EnterPictureInPicture(
 void ShellAppDelegate::ExitPictureInPicture() {
   NOTREACHED();
 }
+
+#if defined(USE_NEVA_BROWSER_SERVICE)
+void ShellAppDelegate::OnMediaAccessPermissionResult(
+    content::MediaResponseCallback callback,
+    const blink::MediaStreamDevices& devices,
+    blink::mojom::MediaStreamRequestResult result,
+    bool blocked_by_permissions_policy,
+    ContentSetting audio_setting,
+    ContentSetting video_setting) {
+  if (result != blink::mojom::MediaStreamRequestResult::OK) {
+    std::move(callback).Run(devices, result, {});
+    return;
+  }
+
+  std::unique_ptr<content::MediaStreamUI> ui;
+  std::move(callback).Run(
+      devices,
+      devices.empty() ? blink::mojom::MediaStreamRequestResult::NO_HARDWARE
+                      : blink::mojom::MediaStreamRequestResult::OK,
+      std::move(ui));
+}
+#endif
 
 }  // namespace extensions
