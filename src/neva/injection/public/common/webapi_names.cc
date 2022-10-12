@@ -28,6 +28,7 @@ const char kNetworkErrorPage[] = "v8/networkerrorpage";
 const char kPopupBlocker[] = "v8/popupblocker";
 const char kSample[] = "v8/sample";
 const char kSiteFilter[] = "v8/sitefilter";
+const char kUserPermission[] = "v8/userpermission";
 const char kWebOSGAV[] = "v8/webosgavplugin";
 const char kWebOSServiceBridge[] = "v8/webosservicebridge";
 const char kWebOSServiceBridgeObsolete[] = "v8/palmservicebridge";

@@ -22,5 +22,6 @@ mojom("mojom") {
     "cookiemanager_service.mojom",
     "popupblocker_service.mojom",
     "sitefilter_service.mojom",
+    "userpermission_service.mojom",
   ]
 }

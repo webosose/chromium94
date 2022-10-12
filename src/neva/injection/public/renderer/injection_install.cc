@@ -24,6 +24,7 @@
 #include "neva/injection/public/renderer/cookiemanager_webapi.h"
 #include "neva/injection/public/renderer/popupblocker_webapi.h"
 #include "neva/injection/public/renderer/sitefilter_webapi.h"
+#include "neva/injection/public/renderer/userpermission_webapi.h"
 #if defined(USE_GAV)
 #include "neva/injection/public/renderer/webosgavplugin_webapi.h"
 #endif  // defined(USE_GAV)
@@ -81,6 +82,12 @@ bool GetInjectionInstallAPI(const std::string& name, InstallAPI* api) {
   if (name == webapi::kSiteFilter) {
     api->install_func = SiteFilterWebAPI::Install;
     api->uninstall_func = SiteFilterWebAPI::Uninstall;
+    return true;
+  }
+
+  if (name == webapi::kUserPermission) {
+    api->install_func = UserPermissionWebAPI::Install;
+    api->uninstall_func = UserPermissionWebAPI::Uninstall;
     return true;
   }
 

@@ -51,6 +51,8 @@ source_set("renderer") {
       "browser_control/popupblocker_injection.h",
       "browser_control/sitefilter_injection.cc",
       "browser_control/sitefilter_injection.h",
+      "browser_control/userpermission_injection.cc",
+      "browser_control/userpermission_injection.h",
     ]
   }
 

@@ -40,6 +40,8 @@ source_set("renderer") {
       "popupblocker_webapi.h",
       "sitefilter_webapi.cc",
       "sitefilter_webapi.h",
+      "userpermission_webapi.cc",
+      "userpermission_webapi.h",
     ]
   }
 

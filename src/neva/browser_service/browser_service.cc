@@ -38,4 +38,9 @@ void BrowserService::BindSiteFilterService(
   browser::SiteFilterServiceImpl::Get()->AddBinding(std::move(receiver));
 }
 
+void BrowserService::BindUserPermissionService(
+    mojo::PendingReceiver<mojom::UserPermissionService> receiver) {
+  browser::UserPermissionServiceImpl::Get()->AddBinding(std::move(receiver));
+}
+
 }  // namespace browser

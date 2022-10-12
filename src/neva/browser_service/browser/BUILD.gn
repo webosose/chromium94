@@ -33,6 +33,8 @@ source_set("browser_service_browser") {
     "sitefilter_service_impl.h",
     "url_database.cc",
     "url_database.h",
+    "userpermission_service_impl.cc",
+    "userpermission_service_impl.h",
   ]
 
   deps = [

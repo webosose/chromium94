@@ -31,6 +31,7 @@ COMPONENT_EXPORT(INJECTION) extern const char kNetworkErrorPage[];
 COMPONENT_EXPORT(INJECTION) extern const char kPopupBlocker[];
 COMPONENT_EXPORT(INJECTION) extern const char kSample[];
 COMPONENT_EXPORT(INJECTION) extern const char kSiteFilter[];
+COMPONENT_EXPORT(INJECTION) extern const char kUserPermission[];
 COMPONENT_EXPORT(INJECTION) extern const char kWebOSGAV[];
 COMPONENT_EXPORT(INJECTION) extern const char kWebOSServiceBridge[];
 COMPONENT_EXPORT(INJECTION) extern const char kWebOSServiceBridgeObsolete[];
