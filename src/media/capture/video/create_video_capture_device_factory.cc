@@ -11,6 +11,9 @@
 #include "media/capture/video/fake_video_capture_device_factory.h"
 #include "media/capture/video/file_video_capture_device_factory.h"
 
+#if defined(USE_WEBOS_CAMERA)
+#include "media/capture/video/webos/video_capture_device_factory_webos.h"
+#else
 #if defined(OS_LINUX) || BUILDFLAG(IS_CHROMEOS_LACROS)
 #include "media/capture/video/linux/video_capture_device_factory_linux.h"
 #elif BUILDFLAG(IS_CHROMEOS_ASH)
@@ -25,6 +28,7 @@
 #elif defined(OS_FUCHSIA)
 #include "media/capture/video/fuchsia/video_capture_device_factory_fuchsia.h"
 #endif
+#endif  // defined(USE_WEBOS_CAMERA)
 
 namespace media {
 
@@ -53,6 +57,9 @@ CreateFakeVideoCaptureDeviceFactory() {
 std::unique_ptr<VideoCaptureDeviceFactory>
 CreatePlatformSpecificVideoCaptureDeviceFactory(
     scoped_refptr<base::SingleThreadTaskRunner> ui_task_runner) {
+#if defined(USE_WEBOS_CAMERA)
+  return std::make_unique<VideoCaptureDeviceFactoryWebOS>();
+#else
 #if defined(OS_LINUX) || BUILDFLAG(IS_CHROMEOS_LACROS)
   return std::make_unique<VideoCaptureDeviceFactoryLinux>(ui_task_runner);
 #elif BUILDFLAG(IS_CHROMEOS_ASH)
@@ -69,6 +76,7 @@ CreatePlatformSpecificVideoCaptureDeviceFactory(
   NOTIMPLEMENTED();
   return nullptr;
 #endif
+#endif  // defined(USE_WEBOS_CAMERA)
 }
 
 }  // anonymous namespace

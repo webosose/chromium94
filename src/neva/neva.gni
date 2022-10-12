@@ -112,6 +112,9 @@ declare_args() {
 
   # Use webOS Video Codec
   use_webos_codec = false
+
+  # Use webOS camera service for capture
+  use_webos_camera = false
 }
 
 declare_args() {
