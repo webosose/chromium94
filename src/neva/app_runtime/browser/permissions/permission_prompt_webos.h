@@ -10,7 +10,7 @@
 
 #include "base/callback.h"
 #include "base/memory/raw_ptr.h"
-#include "components/permissions/permission_prompt.h"
+#include "neva/app_runtime/browser/permissions/permission_prompt.h"
 
 namespace content {
 class WebContents;
@@ -20,7 +20,19 @@ class WebContents;
 // requesting a permission.
 class PermissionPromptWebOS : public permissions::PermissionPrompt {
  public:
-  PermissionPromptWebOS(content::WebContents* web_contents, Delegate* delegate);
+  class PlatformDelegate {
+   public:
+    PlatformDelegate(permissions::PermissionPrompt::Delegate* delegate);
+    virtual ~PlatformDelegate() {}
+    virtual void ShowBubble(const GURL& origin_url, RequestTypes types) = 0;
+
+   protected:
+    const raw_ptr<permissions::PermissionPrompt::Delegate> delegate_;
+  };
+
+  PermissionPromptWebOS(content::WebContents* web_contents,
+                        permissions::PermissionPrompt::Delegate* delegate,
+                        std::unique_ptr<PlatformDelegate> platform_delegate);
 
   PermissionPromptWebOS(const PermissionPromptWebOS&) = delete;
   PermissionPromptWebOS& operator=(const PermissionPromptWebOS&) = delete;
@@ -40,9 +52,15 @@ class PermissionPromptWebOS : public permissions::PermissionPrompt {
   void DenyPermission();
   void ClosingPermission();
 
+  bool ShouldShowRequest(permissions::RequestType type) const;
+  std::vector<permissions::PermissionRequest*> GetVisibleRequests() const;
+  RequestTypes GetPermissionRequestTypes() const;
+
   std::string app_id_{};
   content::WebContents* web_contents_;
   const raw_ptr<permissions::PermissionPrompt::Delegate> delegate_;
+
+  std::unique_ptr<PlatformDelegate> platform_delegate_;
 };
 
 #endif  // NEVA_APP_RUNTIME_BROWSER_PERMISSIONS_PERMISSION_PROMPT_WEBOS_H_

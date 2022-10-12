@@ -673,12 +673,6 @@ void PermissionRequestManager::ShowBubble() {
   // If in testing mode, automatically respond to the bubble that was shown.
   if (auto_response_for_test_ != NONE)
     DoAutoResponseForTesting();
-#if defined(OS_WEBOS)
-  // This is a workaround to call addRequest() for the second time when using
-  // webpush.
-  if (view_)
-    DeleteBubble();
-#endif  // OS_WEBOS
 }
 
 void PermissionRequestManager::DeleteBubble() {

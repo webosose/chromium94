@@ -7,6 +7,7 @@
 #ifndef NEVA_APP_RUNTIME_BROWSER_PERMISSIONS_NEVA_PERMISSIONS_CLIENT_H_
 #define NEVA_APP_RUNTIME_BROWSER_PERMISSIONS_NEVA_PERMISSIONS_CLIENT_H_
 
+#include "base/memory/raw_ptr.h"
 #include "base/no_destructor.h"
 #include "build/build_config.h"
 #include "components/permissions/permissions_client.h"
@@ -15,6 +16,16 @@ namespace neva_app_runtime {
 
 class NevaPermissionsClient : public permissions::PermissionsClient {
  public:
+  class Delegate {
+   public:
+    Delegate() {}
+    virtual ~Delegate() {}
+
+    virtual std::unique_ptr<permissions::PermissionPrompt> CreatePrompt(
+        content::WebContents* web_contents,
+        permissions::PermissionPrompt::Delegate* delegate) = 0;
+  };
+
   NevaPermissionsClient(const NevaPermissionsClient&) = delete;
   NevaPermissionsClient& operator=(const NevaPermissionsClient&) = delete;
 
@@ -41,10 +52,14 @@ class NevaPermissionsClient : public permissions::PermissionsClient {
       content::WebContents* web_contents,
       permissions::PermissionPrompt::Delegate* delegate) override;
 
+  void SetDelegate(Delegate* delegate) { delegate_ = delegate; }
+
  private:
   friend base::NoDestructor<NevaPermissionsClient>;
 
   NevaPermissionsClient() = default;
+
+  Delegate* delegate_ = nullptr;
 };
 
 }  // namespace neva_app_runtime

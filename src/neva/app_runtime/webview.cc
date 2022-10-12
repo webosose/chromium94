@@ -26,6 +26,7 @@
 #include "cc/base/switches.h"
 #include "components/media_capture_util/devices_dispatcher.h"
 #include "components/media_control/browser/neva/media_suspender.h"
+#include "components/permissions/permission_request_manager.h"
 #include "content/browser/child_process_security_policy_impl.h"
 #include "content/browser/renderer_host/render_view_host_impl.h"
 #include "content/browser/renderer_host/render_widget_host_view_aura.h"
@@ -203,6 +204,9 @@ void WebView::CreateWebContents() {
   content::WebContents::CreateParams params(browser_context, nullptr);
   web_contents_ = content::WebContents::Create(params);
   injection_manager_ = std::make_unique<WebAppInjectionManager>();
+
+  permissions::PermissionRequestManager::CreateForWebContents(
+      web_contents_.get());
 }
 
 content::WebContents* WebView::GetWebContents() {

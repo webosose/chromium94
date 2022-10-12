@@ -63,10 +63,13 @@ bool NevaPermissionsClient::CanBypassEmbeddingOriginCheck(
     const GURL& embedding_origin) {
   return true;
 }
+
 std::unique_ptr<permissions::PermissionPrompt>
 NevaPermissionsClient::CreatePrompt(
     content::WebContents* web_contents,
     permissions::PermissionPrompt::Delegate* delegate) {
+  if (delegate_)
+    return delegate_->CreatePrompt(web_contents, delegate);
   return CreatePermissionPrompt(web_contents, delegate);
 }
 

@@ -8,10 +8,13 @@
 #define NEVA_APP_RUNTIME_BROWSER_PERMISSIONS_PERMISSION_PROMPT_H_
 
 #include "components/permissions/permission_prompt.h"
+#include "components/permissions/request_type.h"
 
 namespace content {
 class WebContents;
 }
+
+using RequestTypes = std::vector<permissions::RequestType>;
 
 // Factory function to create permission prompts for neva.
 std::unique_ptr<permissions::PermissionPrompt> CreatePermissionPrompt(

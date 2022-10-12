@@ -55,7 +55,8 @@ void NotificationPermissionContext::DecidePermission(
     const GURL& embedding_origin,
     bool user_gesture,
     permissions::BrowserPermissionCallback callback) {
-  permissions::PermissionRequestManager::CreateForWebContents(web_contents);
+  // PermissionRequestManager::CreateForWebContents must have been called
+  // during web contents  initialization.
   permissions::PermissionContextBase::DecidePermission(
       web_contents, id, requesting_origin, embedding_origin, user_gesture,
       std::move(callback));

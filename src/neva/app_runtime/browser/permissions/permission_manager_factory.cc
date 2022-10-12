@@ -8,6 +8,7 @@
 
 #include "components/keyed_service/content/browser_context_dependency_manager.h"
 #include "content/public/browser/browser_context.h"
+#include "neva/app_runtime/browser/media/media_stream_device_permission_context.h"
 #include "neva/app_runtime/browser/notifications/notification_permission_context.h"
 #include "third_party/blink/public/mojom/permissions_policy/permissions_policy_feature.mojom-shared.h"
 
@@ -17,6 +18,9 @@ namespace {
 class DeniedPermissionContext : public permissions::PermissionContextBase {
  public:
   using PermissionContextBase::PermissionContextBase;
+
+  DeniedPermissionContext(const DeniedPermissionContext&) = delete;
+  DeniedPermissionContext& operator=(const DeniedPermissionContext&) = delete;
 
  protected:
   ContentSetting GetPermissionStatusInternal(
@@ -36,6 +40,14 @@ permissions::PermissionManager::PermissionContextMap CreatePermissionContexts(
 
   permission_contexts[ContentSettingsType::NOTIFICATIONS] =
       std::make_unique<NotificationPermissionContext>(context);
+
+  permission_contexts[ContentSettingsType::MEDIASTREAM_MIC] =
+      std::make_unique<neva_app_runtime::MediaStreamDevicePermissionContext>(
+          context, ContentSettingsType::MEDIASTREAM_MIC);
+
+  permission_contexts[ContentSettingsType::MEDIASTREAM_CAMERA] =
+      std::make_unique<neva_app_runtime::MediaStreamDevicePermissionContext>(
+          context, ContentSettingsType::MEDIASTREAM_CAMERA);
 
   // For now, all requests are denied. As features are added, their permission
   // contexts can be added here instead of DeniedPermissionContext.
