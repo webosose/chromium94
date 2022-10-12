@@ -19,7 +19,7 @@
             "service": "com.webos.chromium.memory.*",
             "outbound": [
                 "com.palm.bus",
-                "com.webos.memorymanager"
+                "com.webos.service.memorymanager"
             ]
         },
         {

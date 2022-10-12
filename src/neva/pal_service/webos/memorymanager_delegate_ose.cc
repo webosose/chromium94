@@ -55,7 +55,7 @@ void MemoryManagerDelegateOSE::SubscribeToLevelChanged(
   subscription_callback_ = std::move(callback);
   if (!subscribed_ && luna_client_->IsInitialized()) {
     subscription_token_ = luna_client_->Subscribe(
-        luna::GetServiceURI(luna::service_uri::kPalmBus, kSignalAddMatch),
+        luna::GetServiceURI(luna::service_uri::kServiceBus, kSignalAddMatch),
         std::string(kSubscribeToLevelChanged),
         base::BindRepeating(&MemoryManagerDelegateOSE::OnLevelChanged,
                             weak_ptr_this_));

@@ -43,9 +43,9 @@
         },
         {
            "service":"com.webos.chromium.memory.*",
-           "inbound":["com.webos.memorymanager",
+           "inbound":["com.webos.service.memorymanager",
                       "com.palm.bus"],
-           "outbound":["com.webos.memorymanager",
+           "outbound":["com.webos.service.memorymanager",
                        "com.palm.bus"]
         }
     ]

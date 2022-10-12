@@ -40,6 +40,7 @@ const char kMemoryManager[] = "com.webos.memorymanager";
 const char kPalmBus[] = "com.palm.bus";
 const char kApplicationManager[] = "com.webos.applicationManager";
 const char kServiceMemoryManager[] = "com.webos.service.memorymanager";
+const char kServiceBus[] = "com.webos.service.bus";
 
 }  // namespace service_uri
 

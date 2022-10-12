@@ -30,6 +30,7 @@ extern const char kMemoryManager[];
 extern const char kPalmBus[];
 extern const char kApplicationManager[];
 extern const char kServiceMemoryManager[];
+extern const char kServiceBus[];
 
 }  // namespace service_uri
 
