@@ -4,6 +4,10 @@
         "settings.read",
         "signals.all"
     ],
+    "com.webos.chromium.camera-*": [
+        "camera.query",
+        "camera.operation"
+    ],
     "com.webos.chromium.memory.*": [
         "system",
         "signals.all"

@@ -3,6 +3,7 @@
     "type": "privileged",
     "allowedNames": [
         "com.webos.app.enactbrowser",
+        "com.webos.chromium.camera-*",
         "com.webos.chromium.memory.*",
         "com.webos.rm.client.*"
     ],
@@ -13,6 +14,12 @@
                 "com.palm.bus",
                 "com.webos.applicationManager",
                 "com.webos.settingsservice"
+            ]
+        },
+        {
+            "service":"com.webos.chromium.camera-*",
+            "outbound":[
+                "com.webos.service.camera2"
             ]
         },
         {
