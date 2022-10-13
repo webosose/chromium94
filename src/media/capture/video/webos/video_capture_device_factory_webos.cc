@@ -22,6 +22,23 @@
 
 namespace media {
 
+namespace {
+
+bool IsControlSupported(base::Value* property) {
+  if (!property)
+    return false;
+
+  absl::optional<double> max, min, current, step;
+  max = property->FindDoublePath(kMax);
+  min = property->FindDoublePath(kMin);
+  current = property->FindDoublePath(kValue);
+  step = property->FindDoublePath(kStep);
+
+  return (max && min && current && step);
+}
+
+}  // namespace
+
 VideoCaptureDeviceFactoryWebOS::VideoCaptureDeviceFactoryWebOS()
     : camera_service_(base::MakeRefCounted<WebOSCameraService>()) {
   VLOG(1) << __func__ << " this[" << this << "]";
@@ -131,33 +148,24 @@ void VideoCaptureDeviceFactoryWebOS::GetSupportedFormats(
     return;
   }
 
-  base::Value property_params;
-  if (!camera_service_->GetProperties(camera_handle, &property_params) ||
-      !property_params.is_dict()) {
+  base::Value properties;
+  if (!camera_service_->GetProperties(camera_handle, &properties) ||
+      !properties.is_dict()) {
     LOG(ERROR) << __func__ << " Failed getting properties for: " << device_id;
     return;
   }
 
   if (supported_control) {
     VideoCaptureControlSupport control_support;
-    absl::optional<int> pan_value = property_params.FindIntPath(kPan);
-    if (pan_value)
-      control_support.pan = true;
-
-    absl::optional<int> tile_value = property_params.FindIntPath(kTilt);
-    if (tile_value)
-      control_support.tilt = true;
-
-    absl::optional<int> zoom_value = property_params.FindIntPath(kZoom);
-    if (zoom_value)
-      control_support.zoom = true;
-
+    control_support.pan = IsControlSupported(properties.FindDictPath(kPan));
+    control_support.tilt = IsControlSupported(properties.FindDictPath(kTilt));
+    control_support.zoom = IsControlSupported(properties.FindDictPath(kZoom));
     controls_cache_.emplace(device_id, control_support);
     *supported_control = control_support;
   }
 
   if (supported_formats) {
-    base::Value* formats = property_params.FindDictPath(kResolution);
+    base::Value* formats = properties.FindDictPath(kResolution);
     if (formats) {
       VideoCaptureFormats capture_formats;
       SetSupportedFormat(capture_formats, PIXEL_FORMAT_YUY2,
