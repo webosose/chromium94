@@ -1623,6 +1623,10 @@ void WebViewGuest::WebContentsCreated(WebContents* source_contents,
                                       const std::string& frame_name,
                                       const GURL& target_url,
                                       WebContents* new_contents) {
+#if defined(USE_NEVA_BROWSER_SERVICE)
+  permissions::PermissionRequestManager::CreateForWebContents(new_contents);
+#endif
+
   auto* guest = WebViewGuest::FromWebContents(new_contents);
   CHECK(guest);
   guest->SetOpener(this);
