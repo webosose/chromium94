@@ -22,7 +22,7 @@
 #include "base/memory/weak_ptr.h"
 #include "base/neva/webos/luna_service_client.h"
 #include "base/synchronization/waitable_event.h"
-#include "base/threading/platform_thread.h"
+#include "base/threading/thread.h"
 #include "base/values.h"
 #include "media/capture/capture_export.h"
 #include "media/capture/video/webos/webos_camera_constants.h"
@@ -48,7 +48,7 @@ class CAPTURE_EXPORT WebOSCameraService
   int Open(base::PlatformThreadId pid,
            const std::string& device_id,
            const std::string& mode);
-  bool Close(base::PlatformThreadId pid, int handle);
+  void Close(base::PlatformThreadId pid, int handle);
 
   bool GetDeviceIds(std::vector<std::string>* device_ids);
   std::string GetDeviceName(const std::string& device_id);
@@ -62,7 +62,7 @@ class CAPTURE_EXPORT WebOSCameraService
                  const std::string& format,
                  int fps);
   int StartPreview(int handle);
-  bool StopPreview(int handle);
+  void StopPreview(int handle);
 
   void SubscribeCameraChange(ResponseCB cb);
   void SubscribeFaultEvent(ResponseCB cb);
@@ -74,11 +74,21 @@ class CAPTURE_EXPORT WebOSCameraService
   bool GetRootDictionary(const std::string& payload,
                          std::unique_ptr<base::DictionaryValue>* root);
 
+  base::PlatformThreadId GetThreadId() const {
+    return luna_call_thread_.GetThreadId();
+  }
+
+  scoped_refptr<base::SingleThreadTaskRunner> GetTaskRunner() const {
+    return luna_call_thread_.task_runner();
+  }
+
  private:
   struct LunaCbHandle {
-    std::string uri;
-    std::string* response = nullptr;
-    base::WaitableEvent sync_done;
+    LunaCbHandle(std::string uri, std::string* response)
+        : uri_(uri), response_(response) {}
+    std::string uri_;
+    std::string* response_ = nullptr;
+    base::WaitableEvent sync_done_;
   };
 
   friend class base::RefCountedThreadSafe<WebOSCameraService>;
@@ -88,8 +98,7 @@ class CAPTURE_EXPORT WebOSCameraService
 
   bool LunaCallInternal(const std::string& uri,
                         const std::string& param,
-                        std::string* response,
-                        int64_t timeout = 2000);
+                        std::string* response);
 
   void OnLunaCallResponse(LunaCbHandle* handle, const std::string& response);
 
@@ -98,7 +107,8 @@ class CAPTURE_EXPORT WebOSCameraService
   LSMessageToken fault_event_subscribe_key_ = 0;
   LSMessageToken camera_list_subscribe_key_ = 0;
 
-  scoped_refptr<base::SingleThreadTaskRunner> luna_task_runner_ = nullptr;
+  base::Thread luna_call_thread_;
+  scoped_refptr<base::SingleThreadTaskRunner> luna_response_runner_ = nullptr;
 
   base::Lock camera_service_lock_;
 

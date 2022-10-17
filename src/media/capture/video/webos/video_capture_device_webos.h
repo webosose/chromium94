@@ -17,7 +17,6 @@
 #ifndef MEDIA_CAPTURE_VIDEO_WEBOS_VIDEO_CAPTURE_DEVICE_WEBOS_H_
 #define MEDIA_CAPTURE_VIDEO_WEBOS_VIDEO_CAPTURE_DEVICE_WEBOS_H_
 
-#include "base/threading/thread.h"
 #include "media/capture/video/video_capture_device.h"
 
 namespace media {
@@ -54,7 +53,6 @@ class VideoCaptureDeviceWebOS : public VideoCaptureDevice {
 
   int rotation_ = 0;
 
-  base::Thread camera_capture_thread_;
   std::unique_ptr<WebOSCaptureDelegate> capture_impl_;
 
   std::vector<base::OnceClosure> photo_requests_queue_;

@@ -29,7 +29,6 @@ namespace media {
 
 namespace {
 
-const int kStartPriviewTimeout = 3000;  // ms
 const char kWebOSChromiumCamera[] = "com.webos.chromium.camera";
 
 void SigHandlerForCameraService(int signum) {
@@ -39,19 +38,21 @@ void SigHandlerForCameraService(int signum) {
 }  // namespace
 
 #define BIND_TO_LUNA_THREAD(function, data)                           \
-  base::BindPostTask(luna_task_runner_,                               \
+  base::BindPostTask(luna_response_runner_,                           \
                      base::BindRepeating(function, weak_this_, data), \
                      FROM_HERE)
 
 WebOSCameraService::WebOSCameraService()
     : weak_factory_(this),
-      luna_task_runner_(base::ThreadPool::CreateSingleThreadTaskRunner(
+      luna_call_thread_("WebOSCameraLunaCallThread"),
+      luna_response_runner_(base::ThreadPool::CreateSingleThreadTaskRunner(
           {base::MayBlock(), base::TaskShutdownBehavior::BLOCK_SHUTDOWN})) {
   VLOG(1) << __func__ << " this[" << this << "]";
 
+  luna_call_thread_.Start();
+
   weak_this_ = weak_factory_.GetWeakPtr();
-  luna_service_client_.reset(
-      new base::LunaServiceClient(kWebOSChromiumCamera, true));
+  luna_service_client_.reset(new base::LunaServiceClient(kWebOSChromiumCamera));
 
   camera_buffer_.reset(
       new camera::CameraBuffer(camera::CameraBuffer::SHMEM_SYSTEMV));
@@ -65,11 +66,16 @@ WebOSCameraService::~WebOSCameraService() {
 
   if (camera_list_subscribe_key_)
     luna_service_client_->Unsubscribe(camera_list_subscribe_key_);
+
+  if (luna_call_thread_.IsRunning())
+    luna_call_thread_.Stop();
 }
 
 int WebOSCameraService::Open(base::PlatformThreadId pid,
                              const std::string& device_id,
                              const std::string& mode) {
+  DCHECK(luna_call_thread_.task_runner()->BelongsToCurrentThread());
+
   VLOG(1) << __func__ << " pid=" << pid << ", device_id=" << device_id
           << ", mode=" << mode;
 
@@ -107,7 +113,9 @@ int WebOSCameraService::Open(base::PlatformThreadId pid,
   return *device_handle;
 }
 
-bool WebOSCameraService::Close(base::PlatformThreadId pid, int handle) {
+void WebOSCameraService::Close(base::PlatformThreadId pid, int handle) {
+  DCHECK(luna_call_thread_.task_runner()->BelongsToCurrentThread());
+
   VLOG(1) << __func__ << " pid=" << pid << ", handle=" << handle;
 
   base::DictionaryValue register_root;
@@ -117,21 +125,19 @@ bool WebOSCameraService::Close(base::PlatformThreadId pid, int handle) {
   std::string close_payload;
   if (!base::JSONWriter::Write(register_root, &close_payload)) {
     LOG(ERROR) << __func__ << " Failed to write close payload";
-    return false;
+    return;
   }
 
-  std::string response;
   if (!LunaCallInternal(base::LunaServiceClient::GetServiceURI(
                             base::LunaServiceClient::URIType::CAMERA, kClose),
-                        close_payload, &response)) {
+                        close_payload, nullptr)) {
     LOG(ERROR) << __func__ << " Failed luna service call";
-    return false;
   }
-
-  return GetRootDictionary(response, nullptr);
 }
 
 bool WebOSCameraService::GetDeviceIds(std::vector<std::string>* device_ids) {
+  DCHECK(luna_call_thread_.task_runner()->BelongsToCurrentThread());
+
   VLOG(1) << __func__;
 
   base::DictionaryValue register_root;
@@ -176,6 +182,8 @@ bool WebOSCameraService::GetDeviceIds(std::vector<std::string>* device_ids) {
 }
 
 std::string WebOSCameraService::GetDeviceName(const std::string& camera_id) {
+  DCHECK(luna_call_thread_.task_runner()->BelongsToCurrentThread());
+
   VLOG(1) << __func__;
 
   std::string device_name;
@@ -213,6 +221,8 @@ std::string WebOSCameraService::GetDeviceName(const std::string& camera_id) {
 }
 
 bool WebOSCameraService::GetProperties(int handle, base::Value* properties) {
+  DCHECK(luna_call_thread_.task_runner()->BelongsToCurrentThread());
+
   VLOG(1) << __func__;
 
   if (handle < 0) {
@@ -250,6 +260,8 @@ bool WebOSCameraService::GetProperties(int handle, base::Value* properties) {
 }
 
 bool WebOSCameraService::SetProperties(int handle, base::Value* properties) {
+  DCHECK(luna_call_thread_.task_runner()->BelongsToCurrentThread());
+
   VLOG(1) << __func__;
 
   if (handle < 0) {
@@ -289,6 +301,8 @@ bool WebOSCameraService::SetFormat(int handle,
                                    int height,
                                    const std::string& format,
                                    int fps) {
+  DCHECK(luna_call_thread_.task_runner()->BelongsToCurrentThread());
+
   VLOG(1) << __func__ << " handle=" << handle << ", width=" << width
           << ", height=" << height << " fps=" << fps;
 
@@ -326,6 +340,8 @@ bool WebOSCameraService::SetFormat(int handle,
 }
 
 int WebOSCameraService::StartPreview(int handle) {
+  DCHECK(luna_call_thread_.task_runner()->BelongsToCurrentThread());
+
   VLOG(1) << __func__ << " handle=" << handle;
 
   if (handle < 0) {
@@ -351,7 +367,7 @@ int WebOSCameraService::StartPreview(int handle) {
   if (!LunaCallInternal(
           base::LunaServiceClient::GetServiceURI(
               base::LunaServiceClient::URIType::CAMERA, kStartPreview),
-          preview_payload, &response, kStartPriviewTimeout)) {
+          preview_payload, &response)) {
     LOG(ERROR) << __func__ << " Failed luna service call";
     return false;
   }
@@ -370,12 +386,14 @@ int WebOSCameraService::StartPreview(int handle) {
   return *shmem_key;
 }
 
-bool WebOSCameraService::StopPreview(int handle) {
+void WebOSCameraService::StopPreview(int handle) {
+  DCHECK(luna_call_thread_.task_runner()->BelongsToCurrentThread());
+
   VLOG(1) << __func__ << " handle=" << handle;
 
   if (handle < 0) {
     LOG(ERROR) << __func__ << " Invalid camera handle";
-    return false;
+    return;
   }
 
   base::DictionaryValue preview_root;
@@ -384,19 +402,15 @@ bool WebOSCameraService::StopPreview(int handle) {
   std::string preview_payload;
   if (!base::JSONWriter::Write(preview_root, &preview_payload)) {
     LOG(ERROR) << __func__ << " Failed to write stopPreview payload";
-    return false;
+    return;
   }
 
-  std::string response;
   if (!LunaCallInternal(
           base::LunaServiceClient::GetServiceURI(
               base::LunaServiceClient::URIType::CAMERA, kStopPreview),
-          preview_payload, &response)) {
+          preview_payload, nullptr)) {
     LOG(ERROR) << __func__ << " Failed luna service call";
-    return false;
   }
-
-  return GetRootDictionary(response, nullptr);
 }
 
 void WebOSCameraService::SubscribeCameraChange(ResponseCB camera_cb) {
@@ -482,39 +496,35 @@ bool WebOSCameraService::GetRootDictionary(
 
 bool WebOSCameraService::LunaCallInternal(const std::string& uri,
                                           const std::string& param,
-                                          std::string* response,
-                                          int64_t timeout) {
-  VLOG(1) << __func__ << " uri=" << uri;
-
-  LunaCbHandle* handle = new LunaCbHandle();
-  if (!handle) {
-    LOG(ERROR) << __func__ << " Failed to allocate handle";
-    return false;
-  }
+                                          std::string* response) {
+  VLOG(1) << __func__ << " " << uri << " " << param;
 
   base::AutoLock auto_lock(camera_service_lock_);
 
-  handle->uri = uri;
-  handle->response = response;
+  if (!response) {
+    luna_service_client_->CallAsync(uri, param);
+    return true;
+  }
 
+  LunaCbHandle* handle = new LunaCbHandle(uri, response);
   luna_service_client_->CallAsync(
       uri, param,
       BIND_TO_LUNA_THREAD(&WebOSCameraService::OnLunaCallResponse, handle));
 
-  bool result =
-      handle->sync_done.TimedWait(base::TimeDelta::FromMilliseconds(timeout));
+  handle->sync_done_.Wait();
+
   delete handle;
-  return result;
+  return true;
 }
 
 void WebOSCameraService::OnLunaCallResponse(LunaCbHandle* handle,
                                             const std::string& response) {
   VLOG(1) << __func__ << " response=[" << response << "]";
 
-  if (handle && handle->response)
-    handle->response->assign(response);
+  if (handle && handle->response_)
+    handle->response_->assign(response);
 
-  handle->sync_done.Signal();
+  handle->sync_done_.Signal();
 }
 
 }  // namespace media

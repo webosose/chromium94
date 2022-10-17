@@ -17,6 +17,7 @@
 #include "media/capture/video/webos/video_capture_device_factory_webos.h"
 
 #include "base/logging.h"
+#include "media/base/bind_to_current_loop.h"
 #include "media/capture/video/webos/video_capture_device_webos.h"
 #include "media/capture/video/webos/webos_camera_service.h"
 
@@ -60,6 +61,16 @@ VideoCaptureDeviceFactoryWebOS::CreateDevice(
 void VideoCaptureDeviceFactoryWebOS::GetDevicesInfo(
     GetDevicesInfoCallback callback) {
   DCHECK(thread_checker_.CalledOnValidThread());
+
+  camera_service_->GetTaskRunner()->PostTask(
+      FROM_HERE,
+      base::BindOnce(&VideoCaptureDeviceFactoryWebOS::GetDevicesInfoAsync,
+                     base::Unretained(this),
+                     media::BindToCurrentLoop(std::move(callback))));
+}
+
+void VideoCaptureDeviceFactoryWebOS::GetDevicesInfoAsync(
+    GetDevicesInfoCallback callback) {
   std::vector<VideoCaptureDeviceInfo> devices_info;
 
   std::vector<std::string> device_ids;
@@ -141,7 +152,7 @@ void VideoCaptureDeviceFactoryWebOS::GetSupportedFormats(
   if (!supported_control && !supported_formats)
     return;
 
-  base::ProcessId pid = base::GetCurrentProcId();
+  base::PlatformThreadId pid = camera_service_->GetThreadId();
   int camera_handle = camera_service_->Open(pid, device_id, "secondary");
   if (camera_handle <= 0) {
     LOG(ERROR) << __func__ << " Failed opening device: " << device_id;
