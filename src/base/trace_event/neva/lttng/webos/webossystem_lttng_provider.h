@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2019 LG Electronics, Inc.
+ * Copyright 2015-2022 LG Electronics, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,9 @@
 #undef TRACEPOINT_PROVIDER
 #define TRACEPOINT_PROVIDER webossystem_lttng_provider
 
-#undef TRACEPOINT_INCLUDE_FILE
-#define TRACEPOINT_INCLUDE_FILE \
-    base/trace_event/neva/lttng/webos/webossystem_lttng_provider.h
+#undef TRACEPOINT_INCLUDE
+#define TRACEPOINT_INCLUDE \
+    "base/trace_event/neva/lttng/webos/webossystem_lttng_provider.h"
 
 #if !defined(BASE_TRACE_EVENT_NEVA_LTTNG_WEBOS_WEBOSSYSTEM_LTTNG_PROVIDER_H_) || \
     defined(TRACEPOINT_HEADER_MULTI_READ)
