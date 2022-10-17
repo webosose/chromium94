@@ -27,8 +27,6 @@
 
 namespace base {
 
-class SingleThreadTaskRunner;
-
 class LunaServiceClient {
  public:
   enum URIType {
@@ -58,14 +56,12 @@ class LunaServiceClient {
     ResponseCB callback;
     std::string uri;
     std::string param;
-    std::atomic<bool> async_done{false};
   };
 
   static std::string GetServiceURI(URIType type, const std::string& action);
 
   explicit LunaServiceClient(ClientType type);
   explicit LunaServiceClient(const std::string& identifier,
-                             bool run_gmain_context = false,
                              bool application_service = false);
   ~LunaServiceClient();
 
@@ -84,11 +80,6 @@ class LunaServiceClient {
   bool RegisterService(const std::string& name);
   bool RegisterApplicationService(const std::string& appid);
   bool UnregisterService();
-
-  void RunGMainContextLoop(ResponseHandlerWrapper* wrapper);
-
-  std::atomic<bool> run_gmain_context_{false};
-  scoped_refptr<SingleThreadTaskRunner> gmain_task_runner_ = nullptr;
 
   LSHandle* handle_ = nullptr;
   GMainContext* context_ = nullptr;

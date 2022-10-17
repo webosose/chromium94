@@ -88,27 +88,17 @@ LunaServiceClient::LunaServiceClient(ClientType type) {
 }
 
 LunaServiceClient::LunaServiceClient(const std::string& identifier,
-                                     bool run_gmain_context,
-                                     bool application_service)
-    : run_gmain_context_(run_gmain_context) {
+                                     bool application_service) {
   Initialize(identifier, application_service);
-
-  if (run_gmain_context_) {
-    gmain_task_runner_ = ThreadPool::CreateSingleThreadTaskRunner(
-        {base::MayBlock(), TaskShutdownBehavior::BLOCK_SHUTDOWN});
-  }
 }
 
 LunaServiceClient::~LunaServiceClient() {
-  run_gmain_context_ = false;
   UnregisterService();
 }
 
 bool HandleAsync(LSHandle* sh, LSMessage* reply, void* ctx) {
   LunaServiceClient::ResponseHandlerWrapper* wrapper =
       static_cast<LunaServiceClient::ResponseHandlerWrapper*>(ctx);
-
-  wrapper->async_done = true;
 
   LSMessageRef(reply);
   std::string dump = LSMessageGetPayload(reply);
@@ -176,12 +166,6 @@ bool LunaServiceClient::CallAsync(const std::string& uri,
     return false;
   }
 
-  if (gmain_task_runner_) {
-    gmain_task_runner_->PostTask(
-        FROM_HERE, base::BindOnce(&LunaServiceClient::RunGMainContextLoop,
-                                  base::Unretained(this), wrapper));
-  }
-
   return true;
 }
 
@@ -245,7 +229,7 @@ void LunaServiceClient::Initialize(const std::string& identifier,
   } else
     success = RegisterService(identifier);
 
-  if (success) {
+  if (success && handle_) {
     AutoLSError error;
     context_ = g_main_context_ref(g_main_context_default());
     if (!LSGmainContextAttach(handle_, context_, &error)) {
@@ -293,21 +277,15 @@ bool LunaServiceClient::UnregisterService() {
   if (!handle_)
     return false;
   if (!LSUnregister(handle_, &error)) {
+    g_main_context_unref(context_);
+    context_ = nullptr;
     LogError("Fail to unregister service", error);
     return false;
   }
   handle_ = nullptr;
   g_main_context_unref(context_);
+  context_ = nullptr;
   return true;
-}
-
-void LunaServiceClient::RunGMainContextLoop(
-    LunaServiceClient::ResponseHandlerWrapper* wrapper) {
-  if (!wrapper)
-    return;
-
-  while (run_gmain_context_ && !wrapper->async_done)
-    g_main_context_iteration(context_, FALSE);
 }
 
 }  // namespace base
