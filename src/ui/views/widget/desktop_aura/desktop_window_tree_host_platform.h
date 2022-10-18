@@ -119,6 +119,7 @@ class VIEWS_EXPORT DesktopWindowTreeHostPlatform
   ///@name USE_NEVA_APPRUNTIME
   ///@{
   void SetFirstActivateTimeout(base::TimeDelta timeout) override;
+  void SetLocationHint(gfx::LocationHint value) override;
   ///@}
 
   // PlatformWindowDelegate:

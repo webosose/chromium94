@@ -794,6 +794,12 @@ void DesktopWindowTreeHostPlatform::SetFirstActivateTimeout(
     compositor()->SetDisplayFirstActivateTimeout(timeout);
 #endif  // defined(USE_NEVA_APPRUNTIME)
 }
+
+void DesktopWindowTreeHostPlatform::SetLocationHint(gfx::LocationHint value) {
+#if defined(USE_NEVA_APPRUNTIME)
+  platform_window()->SetLocationHint(value);
+#endif  // defined(USE_NEVA_APPRUNTIME)
+}
 ///@}
 
 void DesktopWindowTreeHostPlatform::OnClosed() {

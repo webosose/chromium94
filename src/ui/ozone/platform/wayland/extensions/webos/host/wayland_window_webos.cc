@@ -262,6 +262,16 @@ void WaylandWindowWebos::SetWindowProperty(const std::string& name,
   }
 }
 
+void WaylandWindowWebos::SetLocationHint(gfx::LocationHint value) {
+  auto webos_shell_surface =
+      static_cast<WebosShellSurfaceWrapper*>(shell_toplevel());
+
+  if (webos_shell_surface) {
+    webos_shell_surface->SetLocationHint(value);
+    connection()->ScheduleFlush();
+  }
+}
+
 void WaylandWindowWebos::SetContentsBounds() {
   if (HasValidContentsSize()) {
     SetBounds(gfx::Rect(GetContentsSize()));

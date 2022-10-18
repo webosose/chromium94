@@ -73,6 +73,7 @@ class WaylandWindowWebos : public WaylandToplevelWindow {
   void SetInputArea(const std::vector<gfx::Rect>& region) override;
   void SetWindowProperty(const std::string& name,
                          const std::string& value) override;
+  void SetLocationHint(gfx::LocationHint value) override;
   void SetContentsBounds();
   void HandleWindowClose(SurfaceGroupWrapper* surface_group) override;
 

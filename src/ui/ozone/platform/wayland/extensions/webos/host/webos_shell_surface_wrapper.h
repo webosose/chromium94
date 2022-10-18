@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <vector>
 
+#include "ui/gfx/location_hint.h"
 #include "ui/ozone/platform/wayland/extensions/webos/common/wayland_webos_object.h"
 #include "ui/ozone/platform/wayland/extensions/webos/host/wayland_shell_surface_wrapper.h"
 
@@ -54,6 +55,7 @@ class WebosShellSurfaceWrapper : public WaylandShellSurfaceWrapper {
   void SetKeyMask(KeyMask key_mask, bool set);
   void SetWindowProperty(const std::string& name,
                          const std::string& value);
+  void SetLocationHint(gfx::LocationHint value);
 
   // wl_webos_shell_surface listener
   // Called to notify a client that the surface state is changed.
@@ -82,6 +84,7 @@ class WebosShellSurfaceWrapper : public WaylandShellSurfaceWrapper {
   std::uint32_t group_key_masks_;
   std::uint32_t applied_key_masks_;
   wl::Object<wl_webos_shell_surface> webos_shell_surface_;
+  gfx::LocationHint location_hint_ = gfx::LocationHint::kUnknown;
 };
 
 }  // namespace ui

@@ -41,6 +41,38 @@ const char* StateToString(uint32_t state) {
   }
 }
 
+static uint32_t ToWLLocationHint(gfx::LocationHint location_hint) {
+  switch (location_hint) {
+    case gfx::LocationHint::kUnknown:
+      return 0;
+    case gfx::LocationHint::kNorth:
+      return WL_WEBOS_SHELL_SURFACE_LOCATION_HINT_NORTH;
+    case gfx::LocationHint::kWest:
+      return WL_WEBOS_SHELL_SURFACE_LOCATION_HINT_WEST;
+    case gfx::LocationHint::kSouth:
+      return WL_WEBOS_SHELL_SURFACE_LOCATION_HINT_SOUTH;
+    case gfx::LocationHint::kEast:
+      return WL_WEBOS_SHELL_SURFACE_LOCATION_HINT_EAST;
+    case gfx::LocationHint::kCenter:
+      return WL_WEBOS_SHELL_SURFACE_LOCATION_HINT_CENTER;
+    case gfx::LocationHint::kNorthWest:
+      return WL_WEBOS_SHELL_SURFACE_LOCATION_HINT_NORTH |
+             WL_WEBOS_SHELL_SURFACE_LOCATION_HINT_WEST;
+    case gfx::LocationHint::kNorthEast:
+      return WL_WEBOS_SHELL_SURFACE_LOCATION_HINT_NORTH |
+             WL_WEBOS_SHELL_SURFACE_LOCATION_HINT_EAST;
+    case gfx::LocationHint::kSouthWest:
+      return WL_WEBOS_SHELL_SURFACE_LOCATION_HINT_SOUTH |
+             WL_WEBOS_SHELL_SURFACE_LOCATION_HINT_WEST;
+    case gfx::LocationHint::kSouthEast:
+      return WL_WEBOS_SHELL_SURFACE_LOCATION_HINT_SOUTH |
+             WL_WEBOS_SHELL_SURFACE_LOCATION_HINT_EAST;
+    default:
+      NOTREACHED();
+      return 0;
+  }
+}
+
 }  // namespace
 
 namespace ui {
@@ -181,6 +213,17 @@ void WebosShellSurfaceWrapper::SetWindowProperty(const std::string& name,
                                                  const std::string& value) {
   wl_webos_shell_surface_set_property(webos_shell_surface_.get(), name.c_str(),
                                       value.c_str());
+}
+
+void WebosShellSurfaceWrapper::SetLocationHint(gfx::LocationHint value) {
+  if (value != location_hint_) {
+    location_hint_ = value;
+    VLOG(1) << "WebosShellSurface::SetLocationHint value = "
+            << ToWLLocationHint(value);
+
+    wl_webos_shell_surface_set_location_hint(webos_shell_surface_.get(),
+                                             ToWLLocationHint(value));
+  }
 }
 
 // static
