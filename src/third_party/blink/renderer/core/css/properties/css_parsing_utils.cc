@@ -5013,7 +5013,8 @@ CSSValue* ConsumeNavigationDirection(CSSParserTokenRange& range) {
 
   CSSValue* parsed_value1 = MakeGarbageCollected<CSSCustomIdentValue>(
       range.ConsumeIncludingWhitespace().Value().ToAtomicString());
-  if (range.Peek().GetType() != kIdentToken)
+  if (range.Peek().GetType() != kIdentToken &&
+      range.Peek().GetType() != kStringToken)
     return parsed_value1;
 
   CSSValue* parsed_value2 =
