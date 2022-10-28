@@ -324,9 +324,22 @@ bool MediaPositionNeedsUpdate(
   // media position. We choose an arbitrary tolerance that is high enough to
   // eliminate a lot of MediaPosition updates and low enough not to make a
   // perceptible difference.
+#if defined(OS_WEBOS)
+  // old_position.GetPosition() always returns the position at the current
+  // time and the new position is updated every 20~50 ms. As a result the
+  // drift tolerance is always less than 100 ms. So we consider the postion
+  // that was updated last time.
+  const auto drift =
+      (old_position.GetPositionAtTime(old_position.last_updated_time()) -
+       new_position.GetPosition())
+          .magnitude();
+  // In webOS we use 1000 ms update interval to reduce the load of time update
+  return drift > base::TimeDelta::FromMilliseconds(1000);
+#else
   const auto drift =
       (old_position.GetPosition() - new_position.GetPosition()).magnitude();
   return drift > base::TimeDelta::FromMilliseconds(100);
+#endif
 }
 
 // Returns whether the player uses AudioService. This is needed to enable
