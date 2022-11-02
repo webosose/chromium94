@@ -85,6 +85,12 @@ def GetPkgConfigPrefixToStrip(options, args):
   # from pkg-config's |prefix| variable.
   prefix = subprocess.check_output([options.pkg_config,
       "--variable=prefix"] + args, env=os.environ).decode('utf-8')
+
+  # Some .pc files may not contain the prefix field, in that case we need to
+  # prevent the string index out of range error.
+  if len(prefix) < 4:
+    return prefix
+
   if prefix[-4] == '/usr':
     return prefix[4:]
   return prefix
