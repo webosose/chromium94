@@ -10,7 +10,7 @@
 #include "components/permissions/contexts/camera_pan_tilt_zoom_permission_context.h"
 #include "components/webrtc/media_stream_device_enumerator_impl.h"
 #include "content/public/browser/browser_context.h"
-#include "neva/app_runtime/browser/media/media_stream_device_permission_context.h"
+#include "neva/app_runtime/browser/media/webrtc/media_stream_device_permission_context.h"
 #include "neva/app_runtime/browser/notifications/notification_permission_context.h"
 #include "third_party/blink/public/mojom/permissions_policy/permissions_policy_feature.mojom-shared.h"
 

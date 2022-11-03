@@ -17,6 +17,7 @@
 #include "components/permissions/permission_uma_util.h"
 #include "content/browser/web_contents/web_contents_impl.h"
 #include "content/public/browser/web_contents.h"
+#include "content/public/browser/web_contents_delegate.h"
 #include "url/gurl.h"
 
 std::unique_ptr<permissions::PermissionPrompt> CreatePermissionPrompt(
@@ -61,14 +62,39 @@ PermissionPromptWebOS::GetTabSwitchingBehavior() {
 }
 
 void PermissionPromptWebOS::ShowBubble() {
+  RequestTypes types = GetPermissionRequestTypes();
+  GURL requesting_origin = delegate_->GetRequestingOrigin();
   if (platform_delegate_) {
-    GURL requesting_origin = delegate_->GetRequestingOrigin();
-    platform_delegate_->ShowBubble(requesting_origin,
-                                   GetPermissionRequestTypes());
+    platform_delegate_->ShowBubble(requesting_origin, types);
     return;
   }
 
-  AcceptPermission();
+  bool permission_granted = false;
+  content::WebContentsDelegate* web_contents_delegate =
+      web_contents_->GetDelegate();
+  for (permissions::RequestType type : types) {
+    switch (type) {
+      case permissions::RequestType::kCameraPanTiltZoom:
+      case permissions::RequestType::kCameraStream:
+        if (web_contents_delegate)
+          permission_granted = web_contents_delegate->VideoCaptureAllowed();
+        break;
+      case permissions::RequestType::kMicStream:
+        if (web_contents_->GetDelegate())
+          permission_granted = web_contents_delegate->AudioCaptureAllowed();
+        break;
+      default:
+        permission_granted = true;
+        break;
+    }
+  }
+
+  VLOG(1) << __func__ << " origin_url=" << requesting_origin
+          << " permission_granted=" << permission_granted;
+  if (permission_granted)
+    AcceptPermission();
+  else
+    ClosingPermission();
 }
 
 void PermissionPromptWebOS::AcceptPermission() {

@@ -44,6 +44,8 @@
 #include "net/proxy_resolution/proxy_info.h"
 #include "net/proxy_resolution/proxy_resolution_service.h"
 #include "neva/app_runtime/browser/app_runtime_browser_switches.h"
+#include "neva/app_runtime/browser/media/webrtc/device_media_stream_access_handler.h"
+#include "neva/app_runtime/browser/media/webrtc/media_capture_devices_dispatcher.h"
 #include "neva/app_runtime/browser/notifications/platform_notification_service_impl.h"
 #include "neva/app_runtime/browser/permissions/permission_manager_factory.h"
 #include "neva/app_runtime/browser/push_messaging/push_messaging_app_identifier.h"
@@ -78,6 +80,9 @@ AppRuntimeBrowserContext::AppRuntimeBrowserContext(
   PlatformNotificationServiceImpl::RegisterProfilePrefs(pref_registry);
   PushMessagingAppIdentifier::RegisterProfilePrefs(pref_registry);
   HostContentSettingsMap::RegisterProfilePrefs(pref_registry);
+
+  MediaCaptureDevicesDispatcher::RegisterProfilePrefs(pref_registry);
+  DeviceMediaStreamAccessHandler::RegisterProfilePrefs(pref_registry);
 
   pref_service_ = factory.Create(pref_registry);
   user_prefs::UserPrefs::Set(this, pref_service_.get());

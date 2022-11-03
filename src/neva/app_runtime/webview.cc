@@ -24,7 +24,6 @@
 #include "base/strings/utf_string_conversions.h"
 #include "browser/app_runtime_browser_context_adapter.h"
 #include "cc/base/switches.h"
-#include "components/media_capture_util/devices_dispatcher.h"
 #include "components/media_control/browser/neva/media_suspender.h"
 #include "components/permissions/permission_request_manager.h"
 #include "content/browser/child_process_security_policy_impl.h"
@@ -54,6 +53,7 @@
 #include "neva/app_runtime/browser/app_runtime_browser_switches.h"
 #include "neva/app_runtime/browser/app_runtime_webview_controller_impl.h"
 #include "neva/app_runtime/browser/app_runtime_webview_host_impl.h"
+#include "neva/app_runtime/browser/media/webrtc/media_capture_devices_dispatcher.h"
 #include "neva/app_runtime/public/app_runtime_event.h"
 #include "neva/app_runtime/public/webview_delegate.h"
 #include "neva/app_runtime/webapp_injection_manager.h"
@@ -1291,32 +1291,32 @@ void WebView::UpdateViewportScaleFactor() {
   }
 }
 
+bool WebView::AudioCaptureAllowed() {
+  if (webview_delegate_)
+    return webview_delegate_->AcceptsAudioCapture();
+  return false;
+}
+
+bool WebView::VideoCaptureAllowed() {
+  if (webview_delegate_)
+    return webview_delegate_->AcceptsVideoCapture();
+  return false;
+}
+
 bool WebView::CheckMediaAccessPermission(
     content::RenderFrameHost* render_frame_host,
     const GURL& security_origin,
     blink::mojom::MediaStreamType type) {
-  if (!webview_delegate_)
-    return false;
-
-  switch (type) {
-    case blink::mojom::MediaStreamType::DEVICE_AUDIO_CAPTURE:
-      return webview_delegate_->AcceptsAudioCapture();
-    case blink::mojom::MediaStreamType::DEVICE_VIDEO_CAPTURE:
-      return webview_delegate_->AcceptsVideoCapture();
-    default:
-      break;
-  }
-  return false;
+  return MediaCaptureDevicesDispatcher::GetInstance()
+      ->CheckMediaAccessPermission(render_frame_host, security_origin, type);
 }
 
 void WebView::RequestMediaAccessPermission(
     content::WebContents* web_contents,
     const content::MediaStreamRequest& request,
     content::MediaResponseCallback callback) {
-  media_capture_util::DevicesDispatcher::GetInstance()
-      ->ProcessMediaAccessRequest(
-          web_contents, request, webview_delegate_->AcceptsVideoCapture(),
-          webview_delegate_->AcceptsAudioCapture(), std::move(callback));
+  MediaCaptureDevicesDispatcher::GetInstance()->ProcessMediaAccessRequest(
+      web_contents, request, std::move(callback));
 }
 
 WebViewProfile* WebView::GetProfile() const {

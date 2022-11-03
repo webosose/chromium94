@@ -7,7 +7,6 @@
 #ifndef NEVA_APP_RUNTIME_BROWSER_PERMISSIONS_PERMISSION_MANAGER_FACTORY_H_
 #define NEVA_APP_RUNTIME_BROWSER_PERMISSIONS_PERMISSION_MANAGER_FACTORY_H_
 
-#include "base/macros.h"
 #include "base/memory/singleton.h"
 #include "components/keyed_service/content/browser_context_keyed_service_factory.h"
 #include "components/permissions/permission_manager.h"
@@ -32,11 +31,12 @@ class PermissionManagerFactory : public BrowserContextKeyedServiceFactory {
   PermissionManagerFactory();
   ~PermissionManagerFactory() override;
 
+  PermissionManagerFactory(const PermissionManagerFactory&) = delete;
+  PermissionManagerFactory& operator=(const PermissionManagerFactory&) = delete;
+
   // BrowserContextKeyedServiceFactory methods:
   KeyedService* BuildServiceInstanceFor(
       content::BrowserContext* context) const override;
-
-  DISALLOW_COPY_AND_ASSIGN(PermissionManagerFactory);
 };
 
 #endif  // NEVA_APP_RUNTIME_BROWSER_PERMISSIONS_PERMISSION_MANAGER_FACTORY_H_

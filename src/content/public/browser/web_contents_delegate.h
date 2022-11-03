@@ -629,6 +629,8 @@ class CONTENT_EXPORT WebContentsDelegate {
   virtual bool DecidePolicyForResponse(bool is_main_frame, int status_code,
                                        const std::string& url,
                                        const std::string& status_text);
+  virtual bool AudioCaptureAllowed() { return false; }
+  virtual bool VideoCaptureAllowed() { return false; }
 #endif
 
   virtual void SetTopControlsShownRatio(WebContents* web_contents,

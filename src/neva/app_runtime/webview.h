@@ -220,6 +220,9 @@ class WebView : public content::WebContentsDelegate,
   bool IsFullscreenForTabOrPending(
       const content::WebContents* web_contents) override;
 
+  bool AudioCaptureAllowed() override;
+  bool VideoCaptureAllowed() override;
+
   bool CheckMediaAccessPermission(content::RenderFrameHost* render_frame_host,
                                   const GURL& security_origin,
                                   blink::mojom::MediaStreamType type) override;

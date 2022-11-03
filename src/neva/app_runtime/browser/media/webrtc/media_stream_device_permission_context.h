@@ -5,8 +5,8 @@
 // Copied from
 // chrome/browser/media/webrtc/media_stream_device_permission_context.h
 
-#ifndef NEVA_APP_RUNTIME_BROWSER_MEDIA_MEDIA_STREAM_DEVICE_PERMISSION_CONTEXT_H_
-#define NEVA_APP_RUNTIME_BROWSER_MEDIA_MEDIA_STREAM_DEVICE_PERMISSION_CONTEXT_H_
+#ifndef NEVA_APP_RUNTIME_BROWSER_MEDIA_WEBRTC_MEDIA_STREAM_DEVICE_PERMISSION_CONTEXT_H_
+#define NEVA_APP_RUNTIME_BROWSER_MEDIA_WEBRTC_MEDIA_STREAM_DEVICE_PERMISSION_CONTEXT_H_
 
 #include "base/macros.h"
 #include "components/content_settings/core/common/content_settings_types.h"
@@ -61,4 +61,4 @@ class MediaStreamDevicePermissionContext
 
 }  // namespace neva_app_runtime
 
-#endif  // NEVA_APP_RUNTIME_BROWSER_MEDIA_MEDIA_STREAM_DEVICE_PERMISSION_CONTEXT_H_
+#endif  // NEVA_APP_RUNTIME_BROWSER_MEDIA_WEBRTC_MEDIA_STREAM_DEVICE_PERMISSION_CONTEXT_H_
