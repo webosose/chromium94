@@ -26,6 +26,8 @@
 
 #if defined(USE_NEVA_BROWSER_SERVICE)
 #include "components/content_settings/core/browser/host_content_settings_map.h"
+#include "neva/app_runtime/browser/media/webrtc/device_media_stream_access_handler.h"
+#include "neva/app_runtime/browser/media/webrtc/media_capture_devices_dispatcher.h"
 #endif
 
 using base::FilePath;
@@ -90,6 +92,10 @@ std::unique_ptr<PrefService> CreateUserPrefService(
 
 #if defined(USE_NEVA_BROWSER_SERVICE)
   HostContentSettingsMap::RegisterProfilePrefs(pref_registry);
+  neva_app_runtime::DeviceMediaStreamAccessHandler::RegisterProfilePrefs(
+      pref_registry);
+  neva_app_runtime::MediaCaptureDevicesDispatcher::RegisterProfilePrefs(
+      pref_registry);
 #endif
 
   std::unique_ptr<PrefService> pref_service = factory.Create(pref_registry);

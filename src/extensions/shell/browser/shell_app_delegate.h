@@ -9,10 +9,6 @@
 #include "content/public/browser/web_contents_observer.h"
 #include "extensions/browser/app_window/app_delegate.h"
 
-#if defined(USE_NEVA_BROWSER_SERVICE)
-#include "components/content_settings/core/common/content_settings.h"
-#endif
-
 #if defined(USE_NEVA_APPRUNTIME) && defined(OS_WEBOS)
 namespace neva_app_runtime {
 class AppRuntimeWebViewControllerImpl;
@@ -70,16 +66,6 @@ class ShellAppDelegate : public AppDelegate {
   void ExitPictureInPicture() override;
 
  private:
-#if defined(USE_NEVA_BROWSER_SERVICE)
-  void OnMediaAccessPermissionResult(
-      content::MediaResponseCallback callback,
-      const blink::MediaStreamDevices& devices,
-      blink::mojom::MediaStreamRequestResult result,
-      bool blocked_by_permissions_policy,
-      ContentSetting audio_setting,
-      ContentSetting video_setting);
-#endif
-
 #if defined(USE_NEVA_APPRUNTIME) && defined(OS_WEBOS)
   std::unique_ptr<neva_app_runtime::AppRuntimeWebViewControllerImpl>
       shell_app_webview_controller_impl_;
