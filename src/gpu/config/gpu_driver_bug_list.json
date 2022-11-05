@@ -3778,6 +3778,16 @@
       ]
     },
     {
+      "id": 9998,
+      "description": "Disable EXT_draw_buffers on webOS emulator due to driver bugs",
+      "gl_vendor": "VMware.*",
+      "driver_vendor": "Mesa",
+      "gl_type": "gles",
+      "features": [
+        "disable_ext_draw_buffers"
+      ]
+    },
+    {
       "id": 9999,
       "description": "The Mali-Gxx driver fails with glCopyTexSubImage2D using GL_R8",
       "gl_vendor": "ARM.*",
