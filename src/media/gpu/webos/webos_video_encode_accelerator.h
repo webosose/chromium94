@@ -107,7 +107,7 @@ class MEDIA_GPU_EXPORT WebOSVideoEncodeAccelerator
                       base::WaitableEvent* done);
   void EncodeTask(scoped_refptr<VideoFrame> frame, bool force_keyframe);
   void UseOutputBitstreamBufferTask(BitstreamBuffer buffer);
-  void RequestEncodingParametersChangeTask(uint32_t bitrate,
+  void RequestEncodingParametersChangeTask(const Bitrate& bitrate,
                                            uint32_t framerate);
   void DestroyTask();
   void FlushTask(FlushCallback flush_callback);
@@ -124,7 +124,6 @@ class MEDIA_GPU_EXPORT WebOSVideoEncodeAccelerator
                               size_t bitstream_size,
                               std::unique_ptr<BitstreamBufferRef> buffer_ref);
   void FeedBufferOnEncoderThread();
-  bool IsBitrateTooHigh(uint32_t bitrate);
 
   bool CreateImageProcessor(const VideoFrameLayout& input_layout,
                             const VideoPixelFormat output_format,
@@ -192,6 +191,9 @@ class MEDIA_GPU_EXPORT WebOSVideoEncodeAccelerator
 
   base::WeakPtr<Client> client_;
   std::unique_ptr<base::WeakPtrFactory<Client>> client_ptr_factory_;
+
+  base::TimeTicks old_time_ = base::TimeTicks::Now();
+  int32_t frames_per_sec_ = 0;
 
   base::WeakPtr<WebOSVideoEncodeAccelerator> weak_this_;
   base::WeakPtrFactory<WebOSVideoEncodeAccelerator> weak_this_factory_{this};

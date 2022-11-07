@@ -35,10 +35,9 @@
 #include "ui/gl/gl_context.h"
 #include "ui/gl/scoped_binders.h"
 
-#define NOTIFY_ERROR(x)                      \
-  do {                                       \
-    LOG(ERROR) << __func__ << " Setting error state:" << x; \
-    SetErrorState(x);                        \
+#define NOTIFY_ERROR(x) \
+  do {                  \
+    SetErrorState(x);   \
   } while (0)
 
 namespace media {
@@ -252,7 +251,7 @@ void WebOSVideoEncodeAccelerator::RequestEncodingParametersChange(
       FROM_HERE,
       base::BindOnce(
           &WebOSVideoEncodeAccelerator::RequestEncodingParametersChangeTask,
-          weak_this_, bitrate.target(), framerate));
+          weak_this_, bitrate, framerate));
 }
 
 void WebOSVideoEncodeAccelerator::Destroy() {
@@ -366,6 +365,19 @@ void WebOSVideoEncodeAccelerator::PumpBitstreamBuffers() {
   while (!output_buffer_queue_.empty()) {
     auto output_buf = std::move(output_buffer_queue_.front());
     output_buffer_queue_.pop_front();
+
+    if (VLOG_IS_ON(1)) {
+      frames_per_sec_++;
+      base::TimeTicks curr_time = base::TimeTicks::Now();
+      base::TimeDelta time_past = curr_time - old_time_;
+      if (time_past >= base::TimeDelta::FromSeconds(1)) {
+        VLOG(1) << "--------------------------------------------------";
+        VLOG(1) << __func__ << " encoded frames_per_sec: " << frames_per_sec_;
+        VLOG(1) << "--------------------------------------------------";
+        old_time_ = curr_time;
+        frames_per_sec_ = 0;
+      }
+    }
 
     size_t bitstream_size = base::checked_cast<size_t>(
         output_buf->GetBytesUsed(0) - output_buf->GetDataOffset(0));
@@ -485,7 +497,7 @@ void WebOSVideoEncodeAccelerator::NotifyEncodeBufferTask() {
 
 void WebOSVideoEncodeAccelerator::NotifyEncoderError(
     mcil::EncoderError error_code) {
-  LOG(ERROR) << __func__ << " error_code: " << error_code;
+  LOG(ERROR) << __func__ << " platform error_code: " << error_code;
   DCHECK_CALLED_ON_VALID_SEQUENCE(encoder_sequence_checker_);
   NOTIFY_ERROR(static_cast<Error>(error_code));
 }
@@ -506,13 +518,6 @@ void WebOSVideoEncodeAccelerator::InitializeTask(const Config& config,
   base::ScopedClosureRunner signal_event(
       base::BindOnce(&base::WaitableEvent::Signal, base::Unretained(done)));
   *result = false;
-
-  // Check for overflow converting bitrate (kilobits/sec) to bits/sec.
-  if (IsBitrateTooHigh(config.bitrate.target())) {
-    LOG(ERROR) << __func__ << " Bitrate is too high";
-    NOTIFY_ERROR(kInvalidArgumentError);
-    return;
-  }
 
   input_frame_size_ = VideoFrame::DetermineAlignedSize(
         config.input_format, encoder_input_visible_rect_.size());
@@ -536,7 +541,6 @@ void WebOSVideoEncodeAccelerator::InitializeTask(const Config& config,
 
   mcil::EncoderClientConfig client_config;
   client_config.output_buffer_byte_size = output_buffer_byte_size_;
-  size_t output_buffer_byte_size = output_buffer_byte_size_;
   if (!video_encoder_api_->Initialize(&encoder_config, &client_config)) {
     LOG(ERROR) << __func__ << " Error initializing encoder.";
     NOTIFY_ERROR(kPlatformFailureError);
@@ -546,6 +550,8 @@ void WebOSVideoEncodeAccelerator::InitializeTask(const Config& config,
   output_buffer_byte_size_ = client_config.output_buffer_byte_size;
   should_control_buffer_feed_ = client_config.should_control_buffer_feed;
   inject_sps_and_pps_ = client_config.should_inject_sps_and_pps;
+  input_frame_size_ = gfx::Size(client_config.input_frame_size.width,
+                                client_config.input_frame_size.height);
 
   device_input_layout_ = VideoFrameLayoutFrom(
       video_encoder_api_->GetDeviceInputFrame());
@@ -611,8 +617,8 @@ void WebOSVideoEncodeAccelerator::InitializeTask(const Config& config,
   child_task_runner_->PostTask(
       FROM_HERE,
       base::BindOnce(&Client::NotifyEncoderInfoChange, client_, encoder_info));
-  LOG(INFO) << __func__ << " : " << (result ? " SUCCESS" : "FAILED");
   *result = true;
+  LOG(INFO) << __func__ << " : " << (*result ? " SUCCESS" : "FAILED");
 }
 
 void WebOSVideoEncodeAccelerator::EncodeTask(
@@ -655,6 +661,7 @@ void WebOSVideoEncodeAccelerator::UseOutputBitstreamBufferTask(
   DCHECK_CALLED_ON_VALID_SEQUENCE(encoder_sequence_checker_);
 
   if (buffer.size() < output_buffer_byte_size_) {
+    LOG(ERROR) << __func__ << " Invalid buffer size.";
     NOTIFY_ERROR(kInvalidArgumentError);
     return;
   }
@@ -662,6 +669,7 @@ void WebOSVideoEncodeAccelerator::UseOutputBitstreamBufferTask(
   auto shm = std::make_unique<UnalignedSharedMemory>(buffer.TakeRegion(),
                                                      buffer.size(), false);
   if (!shm->MapAt(buffer.offset(), buffer.size())) {
+    LOG(ERROR) << __func__ << " Failind mapping SHM buffer.";
     NOTIFY_ERROR(kPlatformFailureError);
     return;
   }
@@ -678,9 +686,10 @@ void WebOSVideoEncodeAccelerator::UseOutputBitstreamBufferTask(
 }
 
 void WebOSVideoEncodeAccelerator::RequestEncodingParametersChangeTask(
-    uint32_t bitrate,
+    const Bitrate& bitrate,
     uint32_t framerate) {
-  VLOG(2) << __func__ << " bitrate=" << bitrate << ", framerate=" << framerate;
+  VLOG(2) << __func__ << " bitrate=" << bitrate.target()
+          << ", framerate=" << framerate;
   DCHECK_CALLED_ON_VALID_SEQUENCE(encoder_sequence_checker_);
 
   if (!video_encoder_api_) {
@@ -688,15 +697,20 @@ void WebOSVideoEncodeAccelerator::RequestEncodingParametersChangeTask(
     return;
   }
 
-  if (current_bitrate_ == bitrate && current_framerate_ == framerate)
+  // If this is changed to use variable bitrate encoding, change this to check
+  // that the mode matches the current mode.
+  if (bitrate.mode() != Bitrate::Mode::kConstant)
     return;
 
-  if (bitrate == 0 || framerate == 0)
+  if (current_bitrate_ == bitrate.target() && current_framerate_ == framerate)
+    return;
+  if (bitrate.target() == 0 || framerate == 0)
     return;
 
-  VLOG(2) << __func__ << " bitrate=" << bitrate << ", framerate=" << framerate;
-  if (video_encoder_api_->UpdateEncodingParams(bitrate, framerate)) {
-    current_bitrate_ = bitrate;
+  VLOG(2) << __func__ << " bitrate=" << bitrate.ToString()
+          << ", framerate=" << framerate;
+  if (video_encoder_api_->UpdateEncodingParams(bitrate.target(), framerate)) {
+    current_bitrate_ = bitrate.target();
     current_framerate_ = framerate;
   }
 }
@@ -890,7 +904,7 @@ void WebOSVideoEncodeAccelerator::FeedBufferOnEncoderThread() {
     InputFrameInfo frame_info = encoder_input_queue_.front();
     scoped_refptr<VideoFrame> frame = frame_info.frame;
 
-    uint64_t buffer_timestamp = frame->timestamp().InMicroseconds();
+    uint64_t buffer_ts = frame->timestamp().InMicroseconds();
     size_t y_size =
         frame->visible_rect().width() * frame->visible_rect().height();
     size_t uv_size = ((frame->visible_rect().width() + 1) >> 1) *
@@ -898,20 +912,13 @@ void WebOSVideoEncodeAccelerator::FeedBufferOnEncoderThread() {
     if (!video_encoder_api_->EncodeBuffer(
             frame->visible_data(media::VideoFrame::kYPlane), y_size,
             frame->visible_data(media::VideoFrame::kUPlane), uv_size,
-            frame->visible_data(media::VideoFrame::kVPlane), uv_size,
-            buffer_timestamp, frame_info.force_keyframe)) {
+            frame->visible_data(media::VideoFrame::kVPlane), uv_size, buffer_ts,
+            frame_info.force_keyframe)) {
       LOG(ERROR) << __func__ << " Error feeding buffer.";
       return;
     }
     encoder_input_queue_.pop();
   }
-}
-
-bool WebOSVideoEncodeAccelerator::IsBitrateTooHigh(uint32_t bitrate) {
-  VLOG(2) << __func__;
-  if (base::IsValueInRangeForNumericType<uint32_t>(bitrate * UINT64_C(1000)))
-    return false;
-  return true;
 }
 
 bool WebOSVideoEncodeAccelerator::CreateImageProcessor(
@@ -1068,6 +1075,7 @@ void WebOSVideoEncodeAccelerator::InputImageProcessorTask() {
             base::BindOnce(&WebOSVideoEncodeAccelerator::FrameProcessed,
                            weak_this_, force_keyframe, timestamp,
                            output_buffer_index))) {
+      LOG(ERROR) << __func__ << " Image processor Process error";
       NOTIFY_ERROR(kPlatformFailureError);
     }
   } else {
@@ -1075,6 +1083,7 @@ void WebOSVideoEncodeAccelerator::InputImageProcessorTask() {
             std::move(frame),
             base::BindOnce(&WebOSVideoEncodeAccelerator::FrameProcessed,
                            weak_this_, force_keyframe, timestamp))) {
+      LOG(ERROR) << __func__ << " Image processor Process error";
       NOTIFY_ERROR(kPlatformFailureError);
     }
   }
@@ -1135,7 +1144,7 @@ void WebOSVideoEncodeAccelerator::FrameProcessed(
 
 void WebOSVideoEncodeAccelerator::ImageProcessorError() {
   DCHECK_CALLED_ON_VALID_SEQUENCE(encoder_sequence_checker_);
-  VLOG(1) << __func__ << " Image processor error";
+  LOG(ERROR) << __func__ << " Image processor error";
   NOTIFY_ERROR(kPlatformFailureError);
 }
 
@@ -1149,16 +1158,14 @@ WebOSVideoEncodeAccelerator::ToMcilFrame(
 
   mcil::Size coded_size(video_frame->coded_size().width(),
                         video_frame->coded_size().height());
-  struct timeval timestamp = {
-    .tv_sec = static_cast<time_t>(video_frame->timestamp().InSeconds()),
-    .tv_usec = video_frame->timestamp().InMicroseconds() -
-                    (video_frame->timestamp().InSeconds() *
-                    base::Time::kMicrosecondsPerSecond)
-  };
 
   mcil::scoped_refptr<mcil::VideoFrame> mcil_frame =
       mcil::VideoFrame::Create(coded_size);
-  mcil_frame->timestamp = timestamp;
+  mcil_frame->timestamp.tv_sec =
+      static_cast<time_t>(video_frame->timestamp().InSeconds());
+  mcil_frame->timestamp.tv_usec =
+      video_frame->timestamp().InMicroseconds() -
+      video_frame->timestamp().InSeconds() * base::Time::kMicrosecondsPerSecond;
   mcil_frame->format =
       static_cast<mcil::VideoPixelFormat>(video_frame->format());
   for (size_t i = 0; i < mcil::VideoFrame::kMaxPlanes; ++i)
