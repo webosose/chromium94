@@ -1208,7 +1208,7 @@ void RTCVideoEncoder::Impl::EncodeOneFrame() {
     // supporting STORAGE_GPU_MEMORY_BUFFER or NV12? When this is fixed, remove
     // the special casing on platform and the legacy code path.
     bool optimized_scaling =
-#if !defined(OS_ANDROID) && !defined(OS_CHROMEOS) && !defined(OS_WEBOS)
+#if !defined(OS_ANDROID) && !defined(OS_CHROMEOS)
         buffer->type() == webrtc::VideoFrameBuffer::Type::kNative;
 #else
         false;
