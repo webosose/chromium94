@@ -185,7 +185,13 @@ void WaylandScreen::AddOrUpdateDisplay(uint32_t output_id,
   } else {
     auto nearest_origin = GetDisplayNearestPoint({0, 0}).bounds().origin();
     auto changed_origin = changed_display.bounds().origin();
+#if defined(OS_WEBOS)
+    // Changed display make primary, if it is nearest the origin than the
+    // previous primary
+    if (changed_origin < nearest_origin)
+#else
     if (changed_origin < nearest_origin || changed_origin == nearest_origin)
+#endif  // defined(OS_WEBOS)
       type = display::DisplayList::Type::PRIMARY;
   }
 
