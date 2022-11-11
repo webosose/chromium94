@@ -47,9 +47,18 @@ void WaylandPointer::Enter(void* data,
   pointer->connection_->set_pointer_enter_serial(serial);
 
   WaylandWindow* window = wl::RootWindowFromWlSurface(surface);
+#if defined(OS_WEBOS)
+  if (auto* window_manager = pointer->connection_->wayland_window_manager())
+    window_manager->GrabPointerEvents(pointer->id(), window);
+#endif  // defined(OS_WEBOS)
   gfx::PointF location{static_cast<float>(wl_fixed_to_double(surface_x)),
                        static_cast<float>(wl_fixed_to_double(surface_y))};
-  pointer->delegate_->OnPointerFocusChanged(window, location);
+  pointer->delegate_->OnPointerFocusChanged(window, location
+#if defined(OS_WEBOS)
+                                            ,
+                                            pointer->id()
+#endif  // defined(OS_WEBOS)
+  );
 }
 
 // static
@@ -59,8 +68,19 @@ void WaylandPointer::Leave(void* data,
                            wl_surface* surface) {
   DCHECK(data);
   WaylandPointer* pointer = static_cast<WaylandPointer*>(data);
+#if defined(OS_WEBOS)
+  WaylandWindow* window = wl::RootWindowFromWlSurface(surface);
+
+  if (auto* window_manager = pointer->connection_->wayland_window_manager())
+    window_manager->UngrabPointerEvents(pointer->id(), window);
+#endif  // defined(OS_WEBOS)
   pointer->delegate_->OnPointerFocusChanged(
-      nullptr, pointer->delegate_->GetPointerLocation());
+      nullptr, pointer->delegate_->GetPointerLocation()
+#if defined(OS_WEBOS)
+                   ,
+      pointer->id()
+#endif  // defined(OS_WEBOS)
+  );
 }
 
 // static
@@ -72,7 +92,12 @@ void WaylandPointer::Motion(void* data,
   WaylandPointer* pointer = static_cast<WaylandPointer*>(data);
   gfx::PointF location(wl_fixed_to_double(surface_x),
                        wl_fixed_to_double(surface_y));
-  pointer->delegate_->OnPointerMotionEvent(location);
+  pointer->delegate_->OnPointerMotionEvent(location
+#if defined(OS_WEBOS)
+                                           ,
+                                           pointer->id()
+#endif  // defined(OS_WEBOS)
+  );
 }
 
 // static
@@ -110,7 +135,12 @@ void WaylandPointer::Button(void* data,
                                                             : ET_MOUSE_RELEASED;
   if (type == ET_MOUSE_PRESSED)
     pointer->connection_->set_serial(serial, type);
-  pointer->delegate_->OnPointerButtonEvent(type, changed_button);
+  pointer->delegate_->OnPointerButtonEvent(type, changed_button
+#if defined(OS_WEBOS)
+                                           ,
+                                           nullptr, pointer->id()
+#endif  // defined(OS_WEBOS)
+  );
 }
 
 // static

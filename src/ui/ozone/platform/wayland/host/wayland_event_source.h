@@ -102,11 +102,26 @@ class WaylandEventSource : public PlatformEventSource,
 
   // WaylandPointer::Delegate
   void OnPointerFocusChanged(WaylandWindow* window,
-                             const gfx::PointF& location) override;
+                             const gfx::PointF& location
+#if defined(OS_WEBOS)
+                             ,
+                             int device_id = -1
+#endif  // defined(OS_WEBOS)
+                             ) override;
   void OnPointerButtonEvent(EventType evtype,
                             int changed_button,
-                            WaylandWindow* window = nullptr) override;
-  void OnPointerMotionEvent(const gfx::PointF& location) override;
+                            WaylandWindow* window = nullptr
+#if defined(OS_WEBOS)
+                            ,
+                            int device_id = -1
+#endif  // defined(OS_WEBOS)
+                            ) override;
+  void OnPointerMotionEvent(const gfx::PointF& location
+#if defined(OS_WEBOS)
+                            ,
+                            int device_id = -1
+#endif  // defined(OS_WEBOS)
+                            ) override;
   void OnPointerAxisEvent(const gfx::Vector2dF& offset) override;
   void OnPointerFrameEvent() override;
   void OnPointerAxisSourceEvent(uint32_t axis_source) override;

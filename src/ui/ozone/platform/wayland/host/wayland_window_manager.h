@@ -63,6 +63,15 @@ class WaylandWindowManager {
 
   // Returns current touch events grabber by |device_id|.
   WaylandWindow* touch_events_grabber(int device_id) const;
+
+  // Stores the |device_id| and |grabber| that should grab the pointer events.
+  void GrabPointerEvents(int device_id, WaylandWindow* grabber);
+
+  // Removes the |device_id| and |grabber| that should grab the pointer events.
+  void UngrabPointerEvents(int device_id, WaylandWindow* grabber);
+
+  // Returns current pointer events grabber by |device_id|.
+  WaylandWindow* pointer_events_grabber(int device_id) const;
 #endif  // defined(OS_WEBOS)
 
   // Returns a window found by |widget|.
@@ -133,6 +142,10 @@ class WaylandWindowManager {
   // Stores touch device (e.g., touchscreen) identifiers and related events
   // grabbers (windows).
   base::flat_map<int, WaylandWindow*> touch_events_grabber_map_;
+
+  // Stores pointer device (e.g., mouse HID) identifiers and related
+  // events grabbers (windows).
+  base::flat_map<int, WaylandWindow*> pointer_events_grabber_map_;
 #endif  // defined(OS_WEBOS)
 
   // Stores strictly monotonically increasing counter for allocating unique

@@ -85,11 +85,26 @@ class WaylandPointer {
 class WaylandPointer::Delegate {
  public:
   virtual void OnPointerFocusChanged(WaylandWindow* window,
-                                     const gfx::PointF& location) = 0;
+                                     const gfx::PointF& location
+#if defined(OS_WEBOS)
+                                     ,
+                                     int device_id = -1
+#endif  // defined(OS_WEBOS)
+                                     ) = 0;
   virtual void OnPointerButtonEvent(EventType evtype,
                                     int changed_button,
-                                    WaylandWindow* window = nullptr) = 0;
-  virtual void OnPointerMotionEvent(const gfx::PointF& location) = 0;
+                                    WaylandWindow* window = nullptr
+#if defined(OS_WEBOS)
+                                    ,
+                                    int device_id = -1
+#endif  // defined(OS_WEBOS)
+                                    ) = 0;
+  virtual void OnPointerMotionEvent(const gfx::PointF& location
+#if defined(OS_WEBOS)
+                                    ,
+                                    int device_id = -1
+#endif  // defined(OS_WEBOS)
+                                    ) = 0;
   virtual void OnPointerAxisEvent(const gfx::Vector2dF& offset) = 0;
   virtual void OnPointerFrameEvent() = 0;
   virtual void OnPointerAxisSourceEvent(uint32_t axis_source) = 0;

@@ -42,6 +42,38 @@ WaylandWindowWebos::~WaylandWindowWebos() {
   HideInputPanel(ImeHiddenType::kDeactivate);
 };
 
+bool WaylandWindowWebos::CanDispatchEvent(const PlatformEvent& event) {
+  if (event->IsMouseEvent())
+    // if there is a grabber window corresponding to the source device by
+    // which the pointer event has been initially emitted, then the event
+    // should be routed to that grabber
+    if (auto* mouse_events_grabber =
+            connection()->wayland_window_manager()->pointer_events_grabber(
+                event->source_device_id()))
+      return mouse_events_grabber == this;
+
+  if (event->IsKeyEvent())
+    // if there is a grabber window corresponding to the source device by which
+    // the keyboard event has been initially emitted, then the event should be
+    // routed to that grabber
+    if (auto* key_events_grabber =
+            connection()->wayland_window_manager()->keyboard_events_grabber(
+                event->source_device_id()))
+      return key_events_grabber == this;
+
+  if (event->IsTouchEvent())
+    // if there is a grabber window corresponding to the source device by which
+    // the touch event has been initially emitted, then the event should be
+    // routed to that grabber
+    if (auto* touch_events_grabber =
+            connection()->wayland_window_manager()->touch_events_grabber(
+                event->source_device_id()))
+      return touch_events_grabber == this;
+
+  // otherwise, return by default
+  return WaylandWindow::CanDispatchEvent(event);
+}
+
 WaylandInputMethodContext* WaylandWindowWebos::GetInputMethodContext() {
   return static_cast<WaylandInputMethodContext*>(
       delegate()->GetInputMethodContext());

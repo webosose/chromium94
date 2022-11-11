@@ -36,6 +36,9 @@ class WaylandWindowWebos : public WaylandToplevelWindow {
   WaylandWindowWebos& operator=(const WaylandWindowWebos&) = delete;
   ~WaylandWindowWebos() override;
 
+  // PlatformEventDispatcher
+  bool CanDispatchEvent(const PlatformEvent& event) override;
+
   WaylandInputMethodContext* GetInputMethodContext();
   WaylandExtensionsWebos* GetWebosExtensions();
 

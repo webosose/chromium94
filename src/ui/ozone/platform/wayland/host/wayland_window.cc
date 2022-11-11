@@ -426,30 +426,10 @@ bool WaylandWindow::ShouldUpdateWindowShape() const {
 bool WaylandWindow::CanDispatchEvent(const PlatformEvent& event) {
   if (event->IsMouseEvent() || event->IsPinchEvent())
     return has_pointer_focus_;
-  if (event->IsKeyEvent()) {
-#if defined(OS_WEBOS)
-    // if there is a grabber window corresponding to the source device by which
-    // the keyboard event has been initially emitted, then the event should be
-    // routed to that grabber
-    if (auto* events_grabber =
-            connection_->wayland_window_manager()->keyboard_events_grabber(
-                event->source_device_id()))
-      return events_grabber == this;
-#endif  // defined(OS_WEBOS)
+  if (event->IsKeyEvent())
     return has_keyboard_focus_;
-  }
-  if (event->IsTouchEvent()) {
-#if defined(OS_WEBOS)
-    // if there is a grabber window corresponding to the source device by which
-    // the touch event has been initially emitted, then the event should be
-    // routed to that grabber
-    if (auto* touch_events_grabber =
-            connection_->wayland_window_manager()->touch_events_grabber(
-                event->source_device_id()))
-      return touch_events_grabber == this;
-#endif  // defined(OS_WEBOS)
+  if (event->IsTouchEvent())
     return has_touch_focus_;
-  }
   if (event->IsScrollEvent())
     return has_pointer_focus_;
   return false;

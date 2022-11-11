@@ -176,7 +176,12 @@ uint32_t WaylandEventSource::OnKeyboardKeyEvent(
 }
 
 void WaylandEventSource::OnPointerFocusChanged(WaylandWindow* window,
-                                               const gfx::PointF& location) {
+                                               const gfx::PointF& location
+#if defined(OS_WEBOS)
+                                               ,
+                                               int device_id
+#endif  // defined(OS_WEBOS)
+) {
   // Save new pointer location.
   pointer_location_ = location;
 
@@ -187,6 +192,9 @@ void WaylandEventSource::OnPointerFocusChanged(WaylandWindow* window,
   EventType type = focused ? ET_MOUSE_ENTERED : ET_MOUSE_EXITED;
   MouseEvent event(type, location, location, EventTimeForNow(), pointer_flags_,
                    0);
+#if defined(OS_WEBOS)
+  event.set_source_device_id(device_id);
+#endif  // defined(OS_WEBOS)
   DispatchEvent(&event);
 
   if (!focused)
@@ -195,7 +203,12 @@ void WaylandEventSource::OnPointerFocusChanged(WaylandWindow* window,
 
 void WaylandEventSource::OnPointerButtonEvent(EventType type,
                                               int changed_button,
-                                              WaylandWindow* window) {
+                                              WaylandWindow* window
+#if defined(OS_WEBOS)
+                                              ,
+                                              int device_id
+#endif  // defined(OS_WEBOS)
+) {
   DCHECK(type == ET_MOUSE_PRESSED || type == ET_MOUSE_RELEASED);
   DCHECK(HasAnyPointerButtonFlag(changed_button));
 
@@ -212,17 +225,28 @@ void WaylandEventSource::OnPointerButtonEvent(EventType type,
   int flags = pointer_flags_ | keyboard_modifiers_ | changed_button;
   MouseEvent event(type, pointer_location_, pointer_location_,
                    EventTimeForNow(), flags, changed_button);
+#if defined(OS_WEBOS)
+  event.set_source_device_id(device_id);
+#endif  // defined(OS_WEBOS)
   DispatchEvent(&event);
 
   if (window)
     window_manager_->SetPointerFocusedWindow(prev_focused_window);
 }
 
-void WaylandEventSource::OnPointerMotionEvent(const gfx::PointF& location) {
+void WaylandEventSource::OnPointerMotionEvent(const gfx::PointF& location
+#if defined(OS_WEBOS)
+                                              ,
+                                              int device_id
+#endif  // defined(OS_WEBOS)
+) {
   pointer_location_ = location;
   int flags = pointer_flags_ | keyboard_modifiers_;
   MouseEvent event(ET_MOUSE_MOVED, pointer_location_, pointer_location_,
                    EventTimeForNow(), flags, 0);
+#if defined(OS_WEBOS)
+  event.set_source_device_id(device_id);
+#endif  // defined(OS_WEBOS)
   DispatchEvent(&event);
 }
 
