@@ -118,6 +118,12 @@ declare_args() {
 
   # Use webOS AudioD service for audio input/output
   use_webos_audio = false
+
+  # host prefix for webos toolchains
+  webos_toolprefix = ""
+
+  # rpath for linking with non-system libraries
+  webos_rpath = ""
 }
 
 declare_args() {

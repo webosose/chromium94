@@ -795,7 +795,7 @@ group("gn_all") {
         if (current_cpu == "arm") {
           deps -= [ "//third_party/libjpeg_turbo:simd" ]
           deps += [
-            "//third_party/libjpeg_turbo:simd(//build/toolchain/linux:clang_webos_arm)",
+            "//third_party/libjpeg_turbo:simd(//build/toolchain/linux:clang_webos_$target_cpu)",
           ]
         }
       }

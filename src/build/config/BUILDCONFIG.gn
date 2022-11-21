@@ -242,7 +242,7 @@ if (target_os == "android") {
   # See comments in build/toolchain/cros/BUILD.gn about board compiles.
   if (is_clang) {
     if (is_webos) {
-      _default_toolchain = "//build/toolchain/linux:clang_webos_arm"
+      _default_toolchain = "//build/toolchain/linux:clang_webos_$target_cpu"
     } else {
       _default_toolchain = "//build/toolchain/linux:clang_$target_cpu"
     }

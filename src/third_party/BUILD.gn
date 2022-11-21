@@ -33,7 +33,7 @@ group("jpeg") {
     # TODO(neva): Compile libjpeg_turbo with clang for webOS
     if (is_webos && current_cpu == "arm") {
       public_deps -= [ "//third_party/libjpeg_turbo:libjpeg" ]
-      public_deps += [ "//third_party/libjpeg_turbo:libjpeg(//build/toolchain/linux:clang_webos_arm)" ]
+      public_deps += [ "//third_party/libjpeg_turbo:libjpeg(//build/toolchain/linux:clang_webos_$target_cpu)" ]
     }
     public_configs = [ ":libjpeg_turbo_config" ]
   } else {
