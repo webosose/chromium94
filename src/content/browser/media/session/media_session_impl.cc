@@ -561,8 +561,24 @@ void MediaSessionImpl::RebuildAndNotifyMediaPositionChanged() {
     position = first.observer->GetPosition(first.player_id);
   }
 
+#if defined(OS_WEBOS)
+  // In (position == position_) comparison GetPositionAtTime() is used which
+  // always returns the position at the current time. So we consider the
+  // postion that was updated at last time.
+  if (position.has_value() && position_.has_value()) {
+    const auto drift = (position_.value().GetPositionAtTime(
+                            position_.value().last_updated_time()) -
+                        position.value().GetPosition())
+                           .magnitude();
+    // Also in webOS we wish to use 1000 ms update interval to reduce the
+    // load of time update
+    if (drift < base::TimeDelta::FromMilliseconds(1000))
+      return;
+  }
+#else
   if (position == position_)
     return;
+#endif
 
   position_ = position;
 
