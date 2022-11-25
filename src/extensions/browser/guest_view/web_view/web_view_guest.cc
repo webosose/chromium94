@@ -87,8 +87,13 @@
 #endif
 
 #if defined(USE_NEVA_APPRUNTIME)
+#include "base/strings/string_util.h"
 #include "extensions/common/switches.h"
+#include "neva/app_runtime/app/app_runtime_main_delegate.h"
+#include "neva/app_runtime/public/mojom/app_runtime_webview.mojom.h"
 #include "neva/user_agent/common/user_agent.h"
+#include "services/network/public/cpp/neva/cors_corb_exception.h"
+#include "third_party/blink/public/common/web_preferences/web_preferences.h"
 #if defined(OS_WEBOS)
 #include "neva/app_runtime/browser/app_runtime_webview_controller_impl.h"
 #include "neva/app_runtime/public/mojom/app_runtime_webview.mojom.h"
@@ -1686,6 +1691,45 @@ void WebViewGuest::LoadURLWithParams(
     NavigateGuest(url::kAboutBlankURL, false /* force_navigation */);
     return;
   }
+
+#if defined(USE_NEVA_APPRUNTIME)
+  int proccess_id = web_contents()->GetMainFrame()->GetProcess()->GetID();
+  bool allow_exception_for_process =
+      network::neva::CorsCorbException::ShouldAllowExceptionForProcess(
+          proccess_id);
+  const std::string pdf_js =
+      "com.webos.app.enactbrowser/pdf.js/web/viewer.html";
+  const std::string pdf_ext = ".pdf";
+
+  if ((url.scheme() == url::kFileScheme) &&
+      (base::ToLowerASCII(url.spec()).find(pdf_js) != std::string::npos) &&
+      (url.spec().compare(url.spec().length() - pdf_ext.length(),
+                          pdf_ext.length(), pdf_ext) == 0)) {
+    if (auto* frame_host = web_contents()->GetMainFrame()) {
+      mojo::AssociatedRemote<neva_app_runtime::mojom::AppRuntimeWebViewClient>
+          client;
+      frame_host->GetRemoteAssociatedInterfaces()->GetInterface(&client);
+      if (client)
+        client->GrantLoadLocalResources();
+    }
+    content::ChildProcessSecurityPolicy::GetInstance()->RegisterWebSafeScheme(
+        url::kFileScheme);
+    blink::web_pref::WebPreferences prefs =
+        web_contents()->GetOrCreateWebPreferences();
+    prefs.web_security_enabled = false;
+    web_contents()->SetWebPreferences(prefs);
+    allow_exception_for_process = true;
+  } else {
+    allow_exception_for_process = false;
+  }
+
+  if (allow_exception_for_process !=
+      network::neva::CorsCorbException::ShouldAllowExceptionForProcess(
+          proccess_id)) {
+    neva_app_runtime::GetAppRuntimeContentBrowserClient()->SetCorsCorbDisabled(
+        proccess_id, allow_exception_for_process);
+  }
+#endif  // USE_NEVA_APPRUNTIME
 
   bool scheme_is_blocked =
       (!content::ChildProcessSecurityPolicy::GetInstance()->IsWebSafeScheme(
