@@ -795,6 +795,10 @@ config("compiler") {
     asmflags += cflags
     asmflags += cflags_c
   }
+
+  if (is_clang && is_webos && !use_custom_libcxx) {
+    ldflags += [ "-lc++"]
+  }
 }
 
 # The BUILDCONFIG file sets this config on targets by default, which means when

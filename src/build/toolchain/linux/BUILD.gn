@@ -34,6 +34,7 @@ clang_toolchain("clang_webos_arm") {
 
 clang_toolchain("clang_webos_arm64") {
   toolprefix = webos_toolprefix
+  extra_cxxflags = clang_extra_cxxflags
   toolchain_args = {
     current_cpu = "arm64"
     current_os = "linux"

@@ -124,6 +124,9 @@ declare_args() {
 
   # rpath for linking with non-system libraries
   webos_rpath = ""
+
+  # extra cxx flags for clang build
+  clang_extra_cxxflags = ""
 }
 
 declare_args() {
