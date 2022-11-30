@@ -43,6 +43,17 @@ clang_toolchain("clang_webos_arm64") {
   }
 }
 
+clang_toolchain("clang_webos_x64") {
+  toolprefix = webos_toolprefix
+  extra_cxxflags = clang_extra_cxxflags
+  toolchain_args = {
+    current_cpu = "arm"
+    current_os = "linux"
+    is_clang = true
+    use_custom_libcxx = true
+  }
+}
+
 clang_toolchain("clang_arm64") {
   toolprefix = "aarch64-linux-gnu-"
   toolchain_args = {
