@@ -43,4 +43,9 @@ void BrowserService::BindUserPermissionService(
   browser::UserPermissionServiceImpl::Get()->AddBinding(std::move(receiver));
 }
 
+void BrowserService::BindMediaCaptureService(
+    mojo::PendingReceiver<mojom::MediaCaptureService> receiver) {
+  browser::MediaCaptureServiceImpl::Get()->AddBinding(std::move(receiver));
+}
+
 }  // namespace browser

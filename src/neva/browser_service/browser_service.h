@@ -20,6 +20,7 @@
 #include "base/component_export.h"
 #include "mojo/public/cpp/bindings/receiver.h"
 #include "neva/browser_service/browser/cookiemanager_service_impl.h"
+#include "neva/browser_service/browser/mediacapture_service_impl.h"
 #include "neva/browser_service/browser/popupblocker_service_impl.h"
 #include "neva/browser_service/browser/sitefilter_service_impl.h"
 #include "neva/browser_service/browser/userpermission_service_impl.h"
@@ -38,6 +39,8 @@ void BindCookieManagerService(
     mojo::PendingReceiver<mojom::CookieManagerService> receiver);
 void BindUserPermissionService(
     mojo::PendingReceiver<mojom::UserPermissionService> receiver);
+void BindMediaCaptureService(
+    mojo::PendingReceiver<mojom::MediaCaptureService> receiver);
 
 private:
   friend struct base::DefaultSingletonTraits<BrowserService>;

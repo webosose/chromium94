@@ -102,6 +102,8 @@
 #if defined(USE_NEVA_APPRUNTIME)
 #include "components/web_cache/browser/web_cache_manager.h"
 #include "neva/app_runtime/browser/app_runtime_shared_memory_manager.h"
+#include "neva/app_runtime/browser/media/webrtc/media_capture_devices_dispatcher.h"
+#include "neva/app_runtime/browser/media/webrtc/media_stream_capture_indicator.h"
 #endif
 
 #if defined(USE_NEVA_BROWSER_SERVICE)
@@ -300,6 +302,13 @@ int ShellBrowserMainParts::PreCreateThreads() {
 
   neva_app_runtime::NevaPermissionsClient::GetInstance()->SetDelegate(
       neva_permission_client_delegate_.get());
+
+  if (!shell_media_capture_observer_)
+    shell_media_capture_observer_.reset(new ShellMediaCaptureObserver());
+
+  neva_app_runtime::MediaCaptureDevicesDispatcher::GetInstance()
+      ->GetMediaStreamCaptureIndicator()
+      ->AddObserver(shell_media_capture_observer_.get());
 #endif
 
   // Return no error.

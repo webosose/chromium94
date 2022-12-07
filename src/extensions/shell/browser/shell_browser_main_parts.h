@@ -17,6 +17,7 @@
 #include "content/public/common/main_function_params.h"
 
 #if defined(USE_NEVA_BROWSER_SERVICE)
+#include "extensions/shell/neva/shell_media_capture_observer.h"
 #include "extensions/shell/neva/shell_permission_prompt.h"
 #endif
 
@@ -35,7 +36,8 @@ class AppRuntimeSharedMemoryManager;
 #if defined(USE_NEVA_BROWSER_SERVICE)
 namespace neva {
 class MalwareDetectionService;
-}
+class ShellMediaCaptureObserver;
+}  // namespace neva
 #endif
 
 namespace extensions {
@@ -117,6 +119,8 @@ class ShellBrowserMainParts : public content::BrowserMainParts {
 
   std::unique_ptr<NevaPermissionsClientDelegate>
       neva_permission_client_delegate_;
+
+  std::unique_ptr<ShellMediaCaptureObserver> shell_media_capture_observer_;
 #endif
 
   // The DesktopController outlives ExtensionSystem and context-keyed services.

@@ -126,6 +126,8 @@ void ShellAppDelegate::RenderFrameCreated(
                                std::string("{}"));
     client->AddInjectionToLoad(std::string("v8/userpermission"),
                                std::string("{}"));
+    client->AddInjectionToLoad(std::string("v8/mediacapture"),
+                               std::string("{}"));
 #endif
 #if defined(ENABLE_MEMORYMANAGER_WEBAPI)
     client->AddInjectionToLoad(std::string("v8/memorymanager"),

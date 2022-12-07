@@ -371,6 +371,13 @@ void ShellContentBrowserClient::ExposeInterfacesToRenderer(
       };
   registry->AddInterface(base::BindRepeating(userpermission_service),
                          content::GetUIThreadTaskRunner({}));
+  auto mediacapture_service =
+      [](mojo::PendingReceiver<browser::mojom::MediaCaptureService> receiver) {
+        browser::BrowserService::GetBrowserService()->BindMediaCaptureService(
+            std::move(receiver));
+      };
+  registry->AddInterface(base::BindRepeating(mediacapture_service),
+                         content::GetUIThreadTaskRunner({}));
 #endif
 }
 

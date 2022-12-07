@@ -23,6 +23,7 @@ namespace webapi {
 const char kBrowserControl[] = "v8/browser_control";
 const char kCookieManager[] = "v8/cookiemanager";
 const char kBrowserShell[] = "v8/browser_shell";
+const char kMediaCapture[] = "v8/mediacapture";
 const char kMemoryManager[] = "v8/memorymanager";
 const char kNetworkErrorPage[] = "v8/networkerrorpage";
 const char kPopupBlocker[] = "v8/popupblocker";

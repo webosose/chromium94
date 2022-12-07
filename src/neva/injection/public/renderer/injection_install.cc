@@ -22,6 +22,7 @@
 
 #if defined(OS_WEBOS)
 #include "neva/injection/public/renderer/cookiemanager_webapi.h"
+#include "neva/injection/public/renderer/mediacapture_webapi.h"
 #include "neva/injection/public/renderer/popupblocker_webapi.h"
 #include "neva/injection/public/renderer/sitefilter_webapi.h"
 #include "neva/injection/public/renderer/userpermission_webapi.h"
@@ -70,6 +71,12 @@ bool GetInjectionInstallAPI(const std::string& name, InstallAPI* api) {
   if (name == webapi::kCookieManager) {
     api->install_func = CookieManagerWebAPI::Install;
     api->uninstall_func = CookieManagerWebAPI::Uninstall;
+    return true;
+  }
+
+  if (name == webapi::kMediaCapture) {
+    api->install_func = MediaCaptureWebAPI::Install;
+    api->uninstall_func = MediaCaptureWebAPI::Uninstall;
     return true;
   }
 
