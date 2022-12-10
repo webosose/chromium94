@@ -171,8 +171,17 @@ RootWindowController::RootWindowController(
   DCHECK(desktop_delegate_);
   DCHECK(browser_context_);
 
-  host_ =
-      aura::WindowTreeHost::Create(ui::PlatformWindowInitProperties{bounds});
+  auto props = ui::PlatformWindowInitProperties{bounds};
+#if defined(OS_WEBOS)
+  // The opacity is used to hint the Wayland-compositor whether a created
+  // surface region should be considered as opaque. Thus, that may optimize
+  // rendering performance (e.g., if a surface is opaque and it occludes
+  // more surfaces beneath it, then the compositor could avoid forcing to
+  // redraw anything beneath the surface). So, setting the opacity as
+  // translucent makes it least efficient but the most correct.
+  props.opacity = ui::PlatformWindowOpacity::kTranslucentWindow;
+#endif  // defined(OS_WEBOS)
+  host_ = aura::WindowTreeHost::Create(std::move(props));
   host_->InitHost();
   host_->window()->Show();
 
