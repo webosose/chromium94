@@ -127,6 +127,9 @@ declare_args() {
 
   # extra cxx flags for clang build
   clang_extra_cxxflags = ""
+
+  # flag for using libstdc++ instead of libc++ for clang
+  clang_use_stdlib = false
 }
 
 declare_args() {

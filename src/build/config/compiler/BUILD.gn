@@ -797,7 +797,12 @@ config("compiler") {
   }
 
   if (is_clang && is_webos && !use_custom_libcxx) {
-    ldflags += [ "-lc++"]
+    if (!clang_use_stdlib) {
+      ldflags += [ "-lc++"]
+    } else {
+      ldflags += [ "-stdlib=libstdc++" ]
+    }
+
     if (target_cpu == "x64") {
       ldflags += [ "-Wl,-dynamic-linker,/lib/ld-linux-x86-64.so.2"]
     }
