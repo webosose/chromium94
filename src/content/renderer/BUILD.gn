@@ -391,8 +391,8 @@ target(link_target_type, "renderer") {
     ]
   }
 
-  if (is_webos && use_pulseaudio) {
-    defines += [ "USE_PULSEAUDIO" ]
+  if (use_webos_audio) {
+    defines += [ "USE_WEBOS_AUDIO=1" ]
   }
 
   if (enable_media_remoting || is_chromecast) {

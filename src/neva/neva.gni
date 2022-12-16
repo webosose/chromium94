@@ -115,6 +115,9 @@ declare_args() {
 
   # Use webOS camera service for capture
   use_webos_camera = false
+
+  # Use webOS AudioD service for audio input/output
+  use_webos_audio = false
 }
 
 declare_args() {

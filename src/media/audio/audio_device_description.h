@@ -64,7 +64,7 @@ struct MEDIA_EXPORT AudioDeviceDescription {
   // includes the given |real_device_name|.
   static std::string GetDefaultDeviceName(const std::string& real_device_name);
 
-#if defined(OS_WEBOS) && defined(USE_PULSEAUDIO)
+#if defined(USE_WEBOS_AUDIO)
   static std::string GetDefaultDeviceId(const std::string& display_id);
 #endif
 

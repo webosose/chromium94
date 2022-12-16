@@ -139,7 +139,7 @@
 #include "media/mojo/clients/win/media_foundation_renderer_client_factory.h"
 #endif  // BUILDFLAG(IS_WIN)
 
-#if defined(OS_WEBOS) && defined(USE_PULSEAUDIO)
+#if defined(USE_WEBOS_AUDIO)
 #include "media/audio/audio_device_description.h"
 #endif
 
@@ -450,7 +450,7 @@ blink::WebMediaPlayer* MediaFactory::CreateMediaPlayer(
     blink::MediaInspectorContext* inspector_context,
     blink::WebMediaPlayerEncryptedMediaClient* encrypted_client,
     blink::WebContentDecryptionModule* initial_cdm,
-#if defined(OS_WEBOS) && defined(USE_PULSEAUDIO)
+#if defined(USE_WEBOS_AUDIO)
     const blink::WebString& input_sink_id,
 #else
     const blink::WebString& sink_id,
@@ -459,7 +459,7 @@ blink::WebMediaPlayer* MediaFactory::CreateMediaPlayer(
     const cc::LayerTreeSettings& settings,
     scoped_refptr<base::SingleThreadTaskRunner>
         main_thread_compositor_task_runner) {
-#if defined(OS_WEBOS) && defined(USE_PULSEAUDIO)
+#if defined(USE_WEBOS_AUDIO)
   blink::WebString sink_id = input_sink_id;
   if (sink_id.IsNull() || sink_id.IsEmpty()) {
     std::string device_id = media::AudioDeviceDescription::GetDefaultDeviceId(

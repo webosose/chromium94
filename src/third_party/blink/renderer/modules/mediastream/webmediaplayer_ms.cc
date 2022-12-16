@@ -51,7 +51,7 @@
 #include "third_party/blink/renderer/platform/timer.h"
 #include "third_party/blink/renderer/platform/wtf/cross_thread_functional.h"
 
-#if defined(OS_WEBOS) && defined(USE_PULSEAUDIO)
+#if defined(USE_WEBOS_AUDIO)
 #include "media/audio/audio_device_description.h"
 #endif
 
@@ -886,7 +886,7 @@ bool WebMediaPlayerMS::SetSinkId(
   }
 
   auto sink_id_utf8 = sink_id.Utf8();
-#if defined(OS_WEBOS) && defined(USE_PULSEAUDIO)
+#if defined(USE_WEBOS_AUDIO)
   if (!initial_audio_output_device_id_.IsEmpty() &&
       sink_id_utf8 == media::AudioDeviceDescription::kDefaultDeviceId) {
     return true;

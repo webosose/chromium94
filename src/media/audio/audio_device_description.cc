@@ -20,7 +20,7 @@ const char AudioDeviceDescription::kLoopbackWithMuteDeviceId[] =
 
 // static
 bool AudioDeviceDescription::IsDefaultDevice(const std::string& device_id) {
-#if defined(OS_WEBOS) && defined(USE_PULSEAUDIO)
+#if defined(USE_WEBOS_AUDIO)
   if (!device_id.empty() &&
       device_id.compare(AudioDeviceDescription::kDefaultDeviceId)) {
     if ((device_id.size() - 1) > 0) {
@@ -85,7 +85,7 @@ std::string AudioDeviceDescription::GetDefaultDeviceName(
   return GetDefaultDeviceName() + " - " + real_device_name;
 }
 
-#if defined(OS_WEBOS) && defined(USE_PULSEAUDIO)
+#if defined(USE_WEBOS_AUDIO)
 std::string AudioDeviceDescription::GetDefaultDeviceId(
     const std::string& display_id) {
   if (display_id.empty())

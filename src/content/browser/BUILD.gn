@@ -2086,8 +2086,12 @@ source_set("browser") {
     deps += [ "//neva/neva_media_service" ]
   }
 
-  if (is_webos && use_pulseaudio) {
+  if (use_pulseaudio) {
     defines += [ "USE_PULSEAUDIO" ]
+  }
+
+  if (use_webos_audio) {
+    defines += [ "USE_WEBOS_AUDIO=1" ]
   }
 
   if (is_mac) {

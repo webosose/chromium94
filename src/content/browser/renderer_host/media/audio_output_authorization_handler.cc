@@ -187,7 +187,7 @@ void AudioOutputAuthorizationHandler::RequestDeviceAuthorization(
     // The default device doesn't need authorization.
     GetDeviceParameters(
         std::move(trace_scope), std::move(cb),
-#if defined(OS_WEBOS) && defined(USE_PULSEAUDIO)
+#if defined(USE_WEBOS_AUDIO)
         !device_id.empty() ? device_id :
 #endif
                            media::AudioDeviceDescription::kDefaultDeviceId);

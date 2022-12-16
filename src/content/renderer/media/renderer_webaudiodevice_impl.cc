@@ -28,7 +28,7 @@
 #include "third_party/blink/public/web/web_local_frame.h"
 #include "third_party/blink/public/web/web_view.h"
 
-#if defined(OS_WEBOS) && defined(USE_PULSEAUDIO)
+#if defined(USE_WEBOS_AUDIO)
 #include "media/audio/audio_device_description.h"
 #endif
 
@@ -192,7 +192,7 @@ void RendererWebAudioDeviceImpl::Start() {
   if (sink_)
     return;  // Already started.
 
-#if defined(OS_WEBOS) && defined(USE_PULSEAUDIO)
+#if defined(USE_WEBOS_AUDIO)
   std::string device_id;
   WebLocalFrame* web_frame = blink::WebLocalFrame::FrameForCurrentContext();
   if (web_frame) {
