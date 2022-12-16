@@ -26,6 +26,10 @@
 #include "media/audio/pulse/pulse_util.h"
 #endif
 
+#if defined(USE_WEBOS_AUDIO)
+#include "media/audio/webos/audio_manager_webos.h"
+#endif
+
 namespace media {
 
 enum LinuxAudioIO {
@@ -63,6 +67,10 @@ std::unique_ptr<media::AudioManager> CreateAudioManager(
   pa_context* pa_context = nullptr;
   if (pulse::InitPulse(&pa_mainloop, &pa_context)) {
     UMA_HISTOGRAM_ENUMERATION("Media.LinuxAudioIO", kPulse, kAudioIOMax + 1);
+#if defined(USE_WEBOS_AUDIO)
+    return std::make_unique<AudioManagerWebOS>(
+        std::move(audio_thread), audio_log_factory, pa_mainloop, pa_context);
+#endif
     return std::make_unique<AudioManagerPulse>(
         std::move(audio_thread), audio_log_factory, pa_mainloop, pa_context);
   }

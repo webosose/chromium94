@@ -84,6 +84,14 @@ class InputStream final : public media::mojom::AudioInputStream,
   void CallDeleter();
   void SendLogMessage(const char* format, ...) PRINTF_FORMAT(2, 3);
 
+#if defined(USE_WEBOS_AUDIO)
+  void CreateStreamAsync(media::AudioManager* audio_manager,
+                         InputStreamActivityMonitor* activity_monitor,
+                         const media::AudioParameters& params,
+                         const std::string& device_id,
+                         bool enable_agc);
+#endif
+
   const base::UnguessableToken id_;
 
   mojo::Receiver<media::mojom::AudioInputStream> receiver_;

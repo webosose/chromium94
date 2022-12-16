@@ -56,7 +56,11 @@ class PulseAudioOutputStream : public AudioOutputStream {
   void SetVolume(double volume) override;
   void GetVolume(double* volume) override;
 
+#if defined(USE_WEBOS_AUDIO)
+ protected:
+#else
  private:
+#endif
   // Helper method used for sending native logs to the registered client.
   void SendLogMessage(const char* format, ...) PRINTF_FORMAT(2, 3);
 

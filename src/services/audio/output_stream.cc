@@ -73,6 +73,16 @@ OutputStream::OutputStream(
   SendLogMessage(
       "%s", GetCtorLogString(audio_manager, output_device_id, params).c_str());
 
+#if defined(USE_WEBOS_AUDIO)
+  // Output stream need to be created in task runner provided by Audio
+  // Manager WebOS in order to be able to communicate with Luna async
+  audio_manager->GetTaskRunner()->PostTask(
+      FROM_HERE,
+      base::BindOnce(&OutputStream::CreateStreamAsync, base::Unretained(this),
+                     params, output_device_id, std::move(created_callback)));
+  return;
+#endif
+
   // |this| owns these objects, so unretained is safe.
   base::RepeatingClosure error_handler =
       base::BindRepeating(&OutputStream::OnError, base::Unretained(this));
@@ -312,5 +322,31 @@ void OutputStream::SendLogMessage(const char* format, ...) {
                          reinterpret_cast<uintptr_t>(&controller_)));
   va_end(args);
 }
+
+#if defined(USE_WEBOS_AUDIO)
+void OutputStream::CreateStreamAsync(const media::AudioParameters& params,
+                                     const std::string& output_device_id,
+                                     CreatedCallback created_callback) {
+  VLOG(1) << __func__ << " device_id=" << output_device_id;
+
+  base::RepeatingClosure error_handler =
+      base::BindRepeating(&OutputStream::OnError, base::Unretained(this));
+  receiver_.set_disconnect_handler(error_handler);
+
+  if (observer_)
+    observer_.set_disconnect_handler(std::move(error_handler));
+
+  if (log_)
+    log_->OnCreated(params, output_device_id);
+
+  coordinator_->RegisterMember(loopback_group_id_, &controller_);
+  if (!reader_.IsValid() || !controller_.CreateStream()) {
+    std::move(created_callback).Run(nullptr);
+    return;
+  }
+
+  CreateAudioPipe(std::move(created_callback));
+}
+#endif
 
 }  // namespace audio
