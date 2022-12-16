@@ -44,6 +44,7 @@ class WebOSAudioInputStream : public PulseAudioInputStream {
   double GetVolume() override;
 
  private:
+  std::string preferred_device_;
   AudioManagerWebOS* audio_manager_webos_;
 };
 

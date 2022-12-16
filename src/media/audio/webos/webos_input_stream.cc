@@ -22,6 +22,10 @@
 
 namespace media {
 
+namespace {
+const char kDefaultWebCall[] = "webcall";
+}
+
 WebOSAudioInputStream::WebOSAudioInputStream(
     AudioManagerWebOS* audio_manager_webos,
     const std::string& device_name,
@@ -37,6 +41,20 @@ WebOSAudioInputStream::WebOSAudioInputStream(
                             std::move(log_callback)),
       audio_manager_webos_(audio_manager_webos) {
   VLOG(1) << __func__ << " this[" << this << "]";
+
+  device_name_ = kDefaultWebCall;
+  if (AudioDeviceDescription::IsDefaultDevice(device_name)) {
+    std::string display_id = device_name.substr(
+        std::string(AudioDeviceDescription::kDefaultDeviceId).size(), 1);
+    if (!display_id.empty()) {
+      int device_number = std::stoi(display_id);
+      if (device_number >= 1) {
+        device_name_ = std::string(kDefaultWebCall) + display_id;
+      }
+    }
+  } else {
+    preferred_device_ = device_name;
+  }
 }
 
 WebOSAudioInputStream::~WebOSAudioInputStream() {
@@ -48,7 +66,8 @@ AudioInputStream::OpenOutcome WebOSAudioInputStream::Open() {
 
   pulse::AutoPulseLock auto_lock(pa_mainloop_);
   if (!pulse::CreateInputStream(pa_mainloop_, pa_context_, &handle_, params_,
-                                device_name_, &StreamNotifyCallback, this)) {
+                                device_name_, &StreamNotifyCallback, this,
+                                preferred_device_)) {
     return OpenOutcome::kFailed;
   }
 

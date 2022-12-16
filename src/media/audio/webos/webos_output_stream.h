@@ -43,6 +43,7 @@ class WebOSAudioOutputStream : public PulseAudioOutputStream {
 
  private:
   std::string track_id_;
+  std::string preferred_device_;
 
   double track_volume_ = 1.0;
   AudioManagerWebOS* audio_manager_webos_;

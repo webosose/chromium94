@@ -187,6 +187,10 @@ void AudioManagerBase::GetAudioDeviceDescriptions(
     device_descriptions->emplace_back(std::move(name.device_name),
                                       std::move(name.unique_id),
                                       std::move(group_id));
+
+#if defined(USE_WEBOS_AUDIO)
+    device_descriptions->back().display_id = name.display_id;
+#endif
   }
 }
 

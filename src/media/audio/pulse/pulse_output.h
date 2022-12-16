@@ -83,7 +83,11 @@ class PulseAudioOutputStream : public AudioOutputStream {
   const AudioParameters params_;
 
   // The device ID for the device to open.
+#if defined(USE_WEBOS_AUDIO)
+  std::string device_id_;
+#else
   const std::string device_id_;
+#endif
 
   // Audio manager that created us.  Used to report that we've closed.
   AudioManagerBase* manager_;

@@ -93,6 +93,11 @@ struct MEDIA_EXPORT AudioDeviceDescription {
   std::string device_name;  // Friendly name of the device.
   std::string unique_id;    // Unique identifier for the device.
   std::string group_id;     // Group identifier.
+
+  ///@name USE_WEBOS_AUDIO
+  ///@{
+  std::string display_id;  // Display Id (0 or 1) associated with the device
+  ///@}
 };
 
 typedef std::vector<AudioDeviceDescription> AudioDeviceDescriptions;

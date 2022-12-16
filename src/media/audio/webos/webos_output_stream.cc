@@ -22,6 +22,12 @@
 
 namespace media {
 
+namespace {
+
+const char kDefaultVoipCall[] = "voipcall";
+
+}
+
 WebOSAudioOutputStream::WebOSAudioOutputStream(
     const AudioParameters& params,
     const std::string& device_id,
@@ -35,6 +41,24 @@ WebOSAudioOutputStream::WebOSAudioOutputStream(
   DCHECK(!track_id_.empty());
   VLOG(1) << __func__ << " this[" << this << "]";
 
+  if (params.latency_tag() == AudioLatency::LATENCY_RTC) {
+    if (AudioDeviceDescription::IsDefaultDevice(device_id)) {
+      if (device_id.size() > 1) {
+        std::string display_id = device_id.substr(
+            std::string(AudioDeviceDescription::kDefaultDeviceId).size(), 1);
+        if (!display_id.empty()) {
+          int device_number = std::stoi(display_id);
+          if (device_number >= 1) {
+            device_id_ = std::string(kDefaultVoipCall) + display_id;
+          }
+        }
+      }
+    } else {
+      device_id_ = kDefaultVoipCall;
+      preferred_device_ = device_id;
+    }
+  }
+
   track_id_ = audio_manager_webos_->RegisterTrack(device_id_);
 }
 
@@ -47,7 +71,7 @@ bool WebOSAudioOutputStream::Open() {
   DCHECK(thread_checker_.CalledOnValidThread());
   return pulse::CreateOutputStream(
       &pa_mainloop_, &pa_context_, &pa_stream_, params_, device_id_, track_id_,
-      &StreamNotifyCallback, &StreamRequestCallback, this);
+      &StreamNotifyCallback, &StreamRequestCallback, this, preferred_device_);
 }
 
 void WebOSAudioOutputStream::Close() {

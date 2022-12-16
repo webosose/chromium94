@@ -201,6 +201,7 @@ void AudioManagerWebOS::GetAudioDeviceNames(bool input_device,
   for (auto device : device_list) {
     device_names->push_back(
         AudioDeviceName(device.device_details, device.device_name));
+    device_names->back().display_id = device.display_id;
   }
 
   // Prepend the default device if the list is not empty.
