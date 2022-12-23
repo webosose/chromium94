@@ -465,7 +465,6 @@ class AppWindow : public content::WebContentsDelegate,
                          content::RenderFrameHost* render_frame_host) override;
   void RenderFrameCreated(content::RenderFrameHost* frame_host) override;
 #if defined(OS_WEBOS)
-  void DidFirstVisuallyNonEmptyPaint();
   void ReadMediaCapabilityFromPath(const base::FilePath& path);
 #endif
 
