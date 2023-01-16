@@ -806,6 +806,9 @@ config("compiler") {
     if (target_cpu == "x64") {
       ldflags += [ "-Wl,-dynamic-linker,/lib/ld-linux-x86-64.so.2"]
     }
+    if (target_cpu == "arm") {
+      ldflags += [ "-Wl,-dynamic-linker,/lib/ld-linux-armhf.so.3"]
+    }
   }
 }
 
