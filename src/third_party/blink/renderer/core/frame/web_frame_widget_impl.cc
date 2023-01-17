@@ -2711,10 +2711,23 @@ void WebFrameWidgetImpl::AutoscrollEnd() {
 
 void WebFrameWidgetImpl::DidMeaningfulLayout(WebMeaningfulLayout layout_type) {
   if (layout_type == blink::WebMeaningfulLayout::kVisuallyNonEmpty) {
+#if defined(OS_WEBOS)
+    // Splash screen detection in webOS depends on FMP, but FMP is
+    // now happening after first presentation has happened (so it
+    // will not actually dismiss splash as expected). As we are
+    // not using the histograms, this change just makes
+    // the swap events (and FMP) be emitted immediately,
+    // unbreaking splash.
+    NotifySwapAndPresentationTime(
+        WTF::Bind(&WebFrameWidgetImpl::PresentationCallbackForMeaningfulLayout,
+                  WrapWeakPersistent(this)),
+        base::NullCallback());
+#else
     NotifySwapAndPresentationTime(
         base::NullCallback(),
         WTF::Bind(&WebFrameWidgetImpl::PresentationCallbackForMeaningfulLayout,
                   WrapWeakPersistent(this)));
+#endif
   }
 
   ForEachLocalFrameControlledByWidget(

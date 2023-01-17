@@ -71,6 +71,9 @@
 #include "base/neva/neva_paths.h"
 #include "base/path_service.h"
 #include "extensions/common/switches.h"
+#include "ui/aura/window.h"
+#include "ui/aura/window_tree_host.h"
+#include "ui/compositor/compositor.h"
 #endif
 
 using blink::mojom::ConsoleMessageLevel;
@@ -322,6 +325,11 @@ void AppWindow::Init(const GURL& url,
   AppWindowClient* app_window_client = AppWindowClient::Get();
   native_app_window_.reset(
       app_window_client->CreateNativeAppWindow(this, &new_params));
+#if defined(OS_WEBOS)
+  ui::Compositor* compositor = GetNativeWindow()->GetHost()->compositor();
+  if (compositor)
+    compositor->SetVisible(false);
+#endif
 
   helper_ = std::make_unique<AppWebContentsHelper>(
       browser_context_, extension_id_, web_contents(), app_delegate_.get());
@@ -495,6 +503,12 @@ void AppWindow::RenderFrameCreated(content::RenderFrameHost* frame_host) {
 }
 
 #if defined(OS_WEBOS)
+void AppWindow::DidFirstVisuallyNonEmptyPaint() {
+  ui::Compositor* compositor = GetNativeWindow()->GetHost()->compositor();
+  if (compositor && !compositor->IsVisible())
+    compositor->SetVisible(true);
+}
+
 void AppWindow::ReadMediaCapabilityFromPath(const base::FilePath& path) {
   VLOG(1) << __func__ << " path: " << path.MaybeAsASCII();
 
