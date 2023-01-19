@@ -4019,6 +4019,10 @@ VMA_CALL_PRE void VMA_CALL_POST vmaDestroyImage(
     #endif
 #endif
 
+#if VMA_STATS_STRING_ENABLED
+    #include <cstdio> // For snprintf
+#endif
+
 /*******************************************************************************
 CONFIGURATION SECTION
 
