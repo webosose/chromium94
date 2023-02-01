@@ -5,6 +5,7 @@
 #ifndef COMPONENTS_PAYMENTS_CORE_AUTOFILL_CARD_VALIDATION_H_
 #define COMPONENTS_PAYMENTS_CORE_AUTOFILL_CARD_VALIDATION_H_
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
