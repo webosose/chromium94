@@ -15,6 +15,7 @@
 #ifndef SRC_READER_WGSL_TOKEN_H_
 #define SRC_READER_WGSL_TOKEN_H_
 
+#include <cstdint>
 #include <string>
 
 #include "src/source.h"

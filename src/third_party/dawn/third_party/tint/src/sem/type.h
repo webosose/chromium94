@@ -15,6 +15,7 @@
 #ifndef SRC_SEM_TYPE_H_
 #define SRC_SEM_TYPE_H_
 
+#include <cstdint>
 #include <string>
 
 #include "src/sem/node.h"
