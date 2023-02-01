@@ -23,6 +23,7 @@
 #ifndef QUICHE_QUIC_CORE_QUIC_VERSIONS_H_
 #define QUICHE_QUIC_CORE_QUIC_VERSIONS_H_
 
+#include <cstdint>
 #include <string>
 #include <vector>
 
