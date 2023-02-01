@@ -8,6 +8,7 @@
 #include "base/component_export.h"
 #include "base/macros.h"
 #include "ui/gfx/geometry/matrix3_f.h"
+#include <cstdint>
 
 namespace ui {
 
