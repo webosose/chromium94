@@ -63,7 +63,7 @@ class ThreadSafeThreadTraits {
     }
 
    private:
-    Lock lock_;
+    pp::Lock lock_;
     int32_t ref_;
   };
 
