@@ -5,6 +5,7 @@
 #ifndef COMPONENTS_FEATURE_ENGAGEMENT_INTERNAL_FEATURE_CONFIG_EVENT_STORAGE_VALIDATOR_H_
 #define COMPONENTS_FEATURE_ENGAGEMENT_INTERNAL_FEATURE_CONFIG_EVENT_STORAGE_VALIDATOR_H_
 
+#include <cstdint>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
