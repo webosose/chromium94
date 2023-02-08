@@ -146,6 +146,10 @@
 #include "url/origin.h"
 #include "url/url_constants.h"
 
+#if defined(USE_NEVA_APPRUNTIME)
+#include "base/files/file_util.h"
+#endif
+
 namespace content {
 
 namespace {
@@ -1766,12 +1770,26 @@ void NavigationRequest::BeginNavigationImpl() {
     if (!GetContentClient()->browser()->IsFileSchemeNavigationAllowed(
             GetURL(), frame_tree_node_->frame_tree_node_id(),
             commit_params_->is_browser_initiated)) {
-      StartNavigation();
-      OnRequestFailedInternal(
-          network::URLLoaderCompletionStatus(net::ERR_ACCESS_DENIED),
-          false /*skip_throttles*/, absl::nullopt /*error_page_content*/,
-          false /*collapse_frame*/);
-      return;
+      // Some applications use wrong paths when manipulating history with
+      // history.pushState() or history.replaceState() APIs. Such navigation
+      // does not lead to loading of the actual resource, because it is done
+      // in the context of same document navigation and we do not block it.
+      base::FilePath path;
+      base::File::Info file_info;
+      bool allow_for_history =
+          net::FileURLToFilePath(GetURL(), &path) &&
+          (!base::GetFileInfo(path, &file_info) || file_info.is_directory);
+
+      if (!allow_for_history ||
+          common_params_->navigation_type !=
+              blink::mojom::NavigationType::HISTORY_SAME_DOCUMENT) {
+        StartNavigation();
+        OnRequestFailedInternal(
+            network::URLLoaderCompletionStatus(net::ERR_ACCESS_DENIED),
+            false /*skip_throttles*/, absl::nullopt /*error_page_content*/,
+            false /*collapse_frame*/);
+        return;
+      }
     }
   }
 #endif
