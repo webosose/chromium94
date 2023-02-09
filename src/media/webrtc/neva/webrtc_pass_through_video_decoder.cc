@@ -158,6 +158,11 @@ int32_t WebRtcPassThroughVideoDecoder::Decode(
     return WEBRTC_VIDEO_CODEC_ERROR;
   }
 
+  if (!input_image.data()) {
+    LOG(ERROR) << __func__ << " Invalid Encoded Image";
+    return WEBRTC_VIDEO_CODEC_ERROR;
+  }
+
   if (key_frame_required_) {
     // We discarded previous frame because we have too many pending frames
     // (see logic) below. Now we need to wait for the key frame and discard
