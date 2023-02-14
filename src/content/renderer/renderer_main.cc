@@ -80,6 +80,11 @@
 #include "mojo/public/cpp/bindings/lib/test_random_mojo_delays.h"
 #endif
 
+#if defined(USE_LTTNG)
+#include "base/native_library.h"
+#include "content/common/neva/lttng/lttng_init.h"
+#endif
+
 namespace content {
 namespace {
 
@@ -120,6 +125,9 @@ int RendererMain(const MainFunctionParams& parameters) {
   TRACE_EVENT_NESTABLE_ASYNC_BEGIN1("startup", "RendererMain",
                                     TRACE_ID_WITH_SCOPE("RendererMain", 0),
                                     "zygote_child", false);
+#if defined(USE_LTTNG)
+  base::NativeLibrary lttng_native_library = neva::LttngInit();
+#endif
 
   base::trace_event::TraceLog::GetInstance()->set_process_name("Renderer");
   base::trace_event::TraceLog::GetInstance()->SetProcessSortIndex(
@@ -290,6 +298,10 @@ int RendererMain(const MainFunctionParams& parameters) {
 #endif
   }
   platform.PlatformUninitialize();
+#if defined(USE_LTTNG)
+  if (lttng_native_library)
+    base::UnloadNativeLibrary(lttng_native_library);
+#endif
   TRACE_EVENT_NESTABLE_ASYNC_END0("startup", "RendererMain",
                                   TRACE_ID_WITH_SCOPE("RendererMain", 0));
   return 0;

@@ -20,13 +20,12 @@
 #include "base/files/file_util.h"
 #include "base/logging.h"
 #include "base/macros.h"
-#include "base/native_library.h"
 #include "base/path_service.h"
 
 namespace content {
 namespace neva {
 
-void LttngInit() {
+base::NativeLibrary LttngInit() {
   base::FilePath module_dir;
 #if defined(USE_CBE)
   CHECK(base::PathService::Get(base::DIR_MODULE, &module_dir));
@@ -39,7 +38,7 @@ void LttngInit() {
 
   if (!base::PathExists(provider_path)) {
     VLOG(1) << "LTTng provider library does not exist at " << provider_path;
-    return;
+    return nullptr;
   }
 
   base::NativeLibraryLoadError error;
@@ -47,7 +46,7 @@ void LttngInit() {
   VLOG_IF(1, !library) << "Unable to load LTTng provider from " << provider_path
                        << ": " << error.ToString();
 
-  ignore_result(library);  // Prevent release-mode warning.
+  return library;
 }
 
 }  // namespace neva

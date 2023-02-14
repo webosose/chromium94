@@ -17,10 +17,12 @@
 #ifndef CONTENT_COMMON_NEVA_LTTNG_LTTNG_INIT_H_
 #define CONTENT_COMMON_NEVA_LTTNG_LTTNG_INIT_H_
 
+#include "base/native_library.h"
+
 namespace content {
 namespace neva {
 
-void LttngInit();
+base::NativeLibrary LttngInit();
 
 }  // namespace neva
 }  // namespace content

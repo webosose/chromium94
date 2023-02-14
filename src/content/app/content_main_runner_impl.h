@@ -25,6 +25,10 @@
 #include "base/mac/scoped_nsautorelease_pool.h"
 #endif  // OS_WIN
 
+#if defined(USE_LTTNG)
+#include "base/native_library.h"
+#endif
+
 namespace base {
 class AtExitManager;
 }  // namespace base
@@ -90,6 +94,9 @@ class ContentMainRunnerImpl : public ContentMainRunner {
   sandbox::SandboxInterfaceInfo sandbox_info_;
 #elif defined(OS_MAC)
   base::mac::ScopedNSAutoreleasePool* autorelease_pool_ = nullptr;
+#endif
+#if defined(USE_LTTNG)
+  base::NativeLibrary lttng_native_library_ = nullptr;
 #endif
 
   base::OnceClosure* ui_task_ = nullptr;

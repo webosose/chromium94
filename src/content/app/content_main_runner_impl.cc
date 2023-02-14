@@ -814,7 +814,7 @@ int ContentMainRunnerImpl::Initialize(const ContentMainParams& params) {
 
 #if defined(USE_LTTNG)
     if (process_type.empty())
-      neva::LttngInit();
+      lttng_native_library_ = neva::LttngInit();
 #endif
 
 #if defined(OS_ANDROID) && (ICU_UTIL_DATA_IMPL == ICU_UTIL_DATA_FILE)
@@ -1141,6 +1141,11 @@ void ContentMainRunnerImpl::Shutdown() {
 
   delegate_ = nullptr;
   is_shutdown_ = true;
+
+#if defined(USE_LTTNG)
+  if (lttng_native_library_)
+    base::UnloadNativeLibrary(lttng_native_library_);
+#endif
 }
 
 // static
