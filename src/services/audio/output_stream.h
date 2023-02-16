@@ -91,12 +91,6 @@ class OutputStream final : public media::mojom::AudioOutputStream,
   // prepended with "AOC::" where AOC corresponds to AudioOutputController.
   void SendLogMessage(const char* format, ...) PRINTF_FORMAT(2, 3);
 
-#if defined(USE_WEBOS_AUDIO)
-  void CreateStreamAsync(const media::AudioParameters& params,
-                         const std::string& output_device_id,
-                         CreatedCallback created_callback);
-#endif
-
   SEQUENCE_CHECKER(owning_sequence_);
 
   base::CancelableSyncSocket foreign_socket_;

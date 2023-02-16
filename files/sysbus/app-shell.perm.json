@@ -4,6 +4,10 @@
         "settings.read",
         "signals.all"
     ],
+    "com.webos.chromium.audio-*": [
+        "audio.query",
+        "audio.operation"
+    ],
     "com.webos.chromium.camera-*": [
         "camera.query",
         "camera.operation"
