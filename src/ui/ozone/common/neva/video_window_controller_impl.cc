@@ -163,7 +163,7 @@ void VideoWindowControllerImpl::EndOverlayProcessor(
     return;
 
   std::set<base::UnguessableToken>& hidden = hidden_candidate_[widget];
-  for (auto id : hidden)
+  for (auto& id : hidden)
     SetVideoWindowVisibility(id, false);
   hidden_candidate_.erase(widget);
 }

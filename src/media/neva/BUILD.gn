@@ -20,7 +20,7 @@ if (is_webos) {
   import ("//media/neva/webos/build.gni")
 }
 
-source_set("media_player_neva") {
+component("media_player_neva") {
   public_configs = []
   public_deps = [
     "//base",
