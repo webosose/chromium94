@@ -95,7 +95,8 @@ class MediaStreamCaptureIndicator::WebContentsDeviceUsage
 
   // content::WebContentsObserver overrides.
   void WebContentsDestroyed() override {
-    indicator_->UnregisterWebContents(web_contents());
+    if (web_contents())
+      indicator_->UnregisterWebContents(web_contents());
   }
 
   scoped_refptr<MediaStreamCaptureIndicator> indicator_;
@@ -125,7 +126,7 @@ class MediaStreamCaptureIndicator::UIDelegate : public content::MediaStreamUI {
   }
 
   ~UIDelegate() override {
-    if (started_ && device_usage_)
+    if (started_ && device_usage_.get())
       device_usage_->RemoveDevices(devices_);
   }
 
@@ -141,7 +142,7 @@ class MediaStreamCaptureIndicator::UIDelegate : public content::MediaStreamUI {
       return 0;
 
     started_ = true;
-    if (device_usage_) {
+    if (device_usage_.get()) {
       device_usage_->AddDevices(
           devices_, ui_ ? base::OnceClosure() : std::move(stop_callback));
     }
@@ -184,9 +185,10 @@ void MediaStreamCaptureIndicator::WebContentsDeviceUsage::AddDevices(
 
     if (web_contents() && stream_count == 1) {
       ObserverMethod obs_func = GetObserverMethodToCall(device);
-      DCHECK(obs_func);
-      for (Observer& obs : indicator_->observers_)
-        (obs.*obs_func)(web_contents(), true);
+      if (obs_func) {
+        for (Observer& obs : indicator_->observers_)
+          (obs.*obs_func)(web_contents(), true);
+      }
     }
   }
 
@@ -205,9 +207,10 @@ void MediaStreamCaptureIndicator::WebContentsDeviceUsage::RemoveDevices(
 
     if (web_contents() && stream_count == 0) {
       ObserverMethod obs_func = GetObserverMethodToCall(device);
-      DCHECK(obs_func);
-      for (Observer& obs : indicator_->observers_)
-        (obs.*obs_func)(web_contents(), false);
+      if (obs_func) {
+        for (Observer& obs : indicator_->observers_)
+          (obs.*obs_func)(web_contents(), false);
+      }
     }
   }
 
