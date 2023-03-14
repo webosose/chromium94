@@ -306,6 +306,12 @@ class WebViewGuest : public guest_view::GuestView<WebViewGuest> {
       int32_t line_no,
       const std::u16string& source_id,
       const absl::optional<std::u16string>& untrusted_stack_trace) final;
+#if defined(USE_NEVA_APPRUNTIME)
+  void ResourceLoadComplete(
+      content::RenderFrameHost* render_frame_host,
+      const content::GlobalRequestID& request_id,
+      const blink::mojom::ResourceLoadInfo& resource_load_info) final;
+#endif
 
   // Informs the embedder of a frame name change.
   void ReportFrameNameChange(const std::string& name);
@@ -423,6 +429,9 @@ class WebViewGuest : public guest_view::GuestView<WebViewGuest> {
   // destroyed.
   base::WeakPtrFactory<WebViewGuest> weak_ptr_factory_{this};
 
+#if defined(USE_NEVA_APPRUNTIME)
+  GURL cors_exception_pdf_url_;
+#endif
 #if defined(USE_NEVA_APPRUNTIME) && defined(OS_WEBOS)
   std::unique_ptr<neva_app_runtime::AppRuntimeWebViewControllerImpl>
       webview_controller_impl_;

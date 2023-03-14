@@ -88,7 +88,9 @@
 
 #if defined(USE_NEVA_APPRUNTIME)
 #include "extensions/common/switches.h"
+#include "neva/app_runtime/app/app_runtime_main_delegate.h"
 #include "neva/user_agent/common/user_agent.h"
+#include "third_party/blink/public/mojom/loader/resource_load_info.mojom.h"
 #if defined(OS_WEBOS)
 #include "neva/app_runtime/browser/app_runtime_webview_controller_impl.h"
 #include "neva/app_runtime/public/mojom/app_runtime_webview.mojom.h"
@@ -171,6 +173,28 @@ namespace {
 constexpr char kNoFallback[] = "nofallback";
 constexpr char kInMemoryFallback[] = "inmemoryfallback";
 constexpr char kOnDiskFallback[] = "ondiskfallback";
+
+#if defined(USE_NEVA_APPRUNTIME)
+const char kPdfJsViewerHtmlURL[] = "pdf.js/web/viewer.html?pdf_url=";
+
+GURL GetPdfUrlFromExtensionURL(const GURL& url) {
+  if (!url.SchemeIs(extensions::kExtensionScheme))
+    return GURL();
+
+  const std::string delimiter = "pdf_url=";
+  std::string lower_url = base::ToLowerASCII(url.spec());
+  int url_start = lower_url.find(delimiter) + delimiter.length();
+  GURL pdf_url =
+      GURL(lower_url.substr(url_start, lower_url.length() - url_start));
+  base::FilePath pdf_file_name(pdf_url.ExtractFileName());
+  if (pdf_url.SchemeIsHTTPOrHTTPS() &&
+      pdf_file_name.MatchesExtension(std::string(".pdf"))) {
+    return pdf_url;
+  }
+
+  return GURL();
+}
+#endif
 
 // Returns storage partition removal mask from web_view clearData mask. Note
 // that storage partition mask is a subset of webview's data removal mask.
@@ -1033,6 +1057,13 @@ WebViewGuest::WebViewGuest(WebContents* owner_web_contents)
 }
 
 WebViewGuest::~WebViewGuest() {
+#if defined(USE_NEVA_APPRUNTIME)
+  if (!cors_exception_pdf_url_.is_empty()) {
+    // Remove exception for pdf URL, if not removed yet.
+    neva_app_runtime::GetAppRuntimeContentBrowserClient()
+        ->SetCorsCorbDisabledForURL(cors_exception_pdf_url_, false);
+  }
+#endif
 }
 
 void WebViewGuest::DidFinishNavigation(
@@ -1068,7 +1099,27 @@ void WebViewGuest::DidFinishNavigation(
   }
 
   auto args = std::make_unique<base::DictionaryValue>();
+#if defined(USE_NEVA_APPRUNTIME)
+  if (navigation_handle->GetURL().SchemeIs(extensions::kExtensionScheme)) {
+    if (!cors_exception_pdf_url_.is_empty()) {
+      // We pass the PDF url to be stored in history instead of extension
+      args->SetString(guest_view::kUrl, cors_exception_pdf_url_.spec());
+
+      // When we click a PDF link in Google search page then below URL getting
+      // added to history. Which leads to load the same PDF when we go back.
+      GURL prev_main_frame_url = navigation_handle->GetPreviousMainFrameURL();
+      if (!prev_main_frame_url.SchemeIs(extensions::kExtensionScheme))
+        args->SetString(webview::kOldURL, prev_main_frame_url.spec());
+    } else {
+      // Do not allow "chrome-extension" schema URLs to be added to history
+      return;
+    }
+  } else {
+    args->SetString(guest_view::kUrl, navigation_handle->GetURL().spec());
+  }
+#else
   args->SetString(guest_view::kUrl, navigation_handle->GetURL().spec());
+#endif
   args->SetString(webview::kInternalVisibleUrl,
                   web_contents()->GetVisibleURL().spec());
   args->SetBoolean(guest_view::kIsTopLevel, navigation_handle->IsInMainFrame());
@@ -1105,6 +1156,21 @@ void WebViewGuest::DocumentOnLoadCompletedInMainFrame(
       webview::kEventContentLoad, std::move(args)));
 }
 
+#if defined(USE_NEVA_APPRUNTIME)
+void WebViewGuest::ResourceLoadComplete(
+    content::RenderFrameHost* render_frame_host,
+    const content::GlobalRequestID& request_id,
+    const blink::mojom::ResourceLoadInfo& resource_load_info) {
+  if (!cors_exception_pdf_url_.is_empty() &&
+      cors_exception_pdf_url_ == resource_load_info.original_url) {
+    // PDF URL load completed. Remove PDF url from exception list
+    neva_app_runtime::GetAppRuntimeContentBrowserClient()
+        ->SetCorsCorbDisabledForURL(cors_exception_pdf_url_, false);
+    cors_exception_pdf_url_ = GURL::EmptyGURL();
+  }
+}
+#endif
+
 void WebViewGuest::DidStartNavigation(
     content::NavigationHandle* navigation_handle) {
   WebViewGuest* opener = GetOpener();
@@ -1119,12 +1185,30 @@ void WebViewGuest::DidStartNavigation(
     }
   }
 
+#if defined(USE_NEVA_APPRUNTIME)
+  if (cors_exception_pdf_url_.is_empty()) {
+    cors_exception_pdf_url_ =
+        GetPdfUrlFromExtensionURL(navigation_handle->GetURL());
+    if (!cors_exception_pdf_url_.is_empty()) {
+      neva_app_runtime::GetAppRuntimeContentBrowserClient()
+          ->SetCorsCorbDisabledForURL(cors_exception_pdf_url_, true);
+    }
+  }
+#endif
+
   // loadStart shouldn't be sent for same document navigations.
   if (navigation_handle->IsSameDocument())
     return;
 
   auto args = std::make_unique<base::DictionaryValue>();
+#if defined(USE_NEVA_APPRUNTIME)
+  // Take care of PDF urls with extension schema for 'loadstart' event
+  args->SetString(guest_view::kUrl, cors_exception_pdf_url_.is_empty()
+                                        ? navigation_handle->GetURL().spec()
+                                        : cors_exception_pdf_url_.spec());
+#else
   args->SetString(guest_view::kUrl, navigation_handle->GetURL().spec());
+#endif
   args->SetBoolean(guest_view::kIsTopLevel, navigation_handle->IsInMainFrame());
   DispatchEventToView(std::make_unique<GuestViewEvent>(webview::kEventLoadStart,
                                                        std::move(args)));
@@ -1263,6 +1347,17 @@ bool WebViewGuest::CheckMediaAccessPermission(
 void WebViewGuest::CanDownload(const GURL& url,
                                const std::string& request_method,
                                base::OnceCallback<void(bool)> callback) {
+#if defined(USE_NEVA_APPRUNTIME)
+  base::FilePath pdf_file_name(url.ExtractFileName());
+  if (url.SchemeIsHTTPOrHTTPS() &&
+      pdf_file_name.MatchesExtension(std::string(".pdf"))) {
+    NavigateGuest(std::string(kPdfJsViewerHtmlURL) + url.spec(), true);
+
+    if (!callback.is_null())
+      std::move(callback).Run(true);
+    return;
+  }
+#endif  // USE_NEVA_APPRUNTIME
   web_view_permission_helper_->CanDownload(url, request_method,
                                            std::move(callback));
 }
@@ -1725,6 +1820,10 @@ void WebViewGuest::LoadURLWithParams(
     load_url_params.override_user_agent =
         content::NavigationController::UA_OVERRIDE_TRUE;
   }
+#if defined(USE_NEVA_APPRUNTIME)
+  if (!GetPdfUrlFromExtensionURL(validated_url).is_empty())
+    load_url_params.should_replace_current_entry = true;
+#endif
   web_contents()->GetController().LoadURLWithParams(load_url_params);
 }
 

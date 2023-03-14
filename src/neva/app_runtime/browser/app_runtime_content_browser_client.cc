@@ -606,4 +606,18 @@ void AppRuntimeContentBrowserClient::SetCorsCorbDisabled(int process_id,
   }
 }
 
+void AppRuntimeContentBrowserClient::SetCorsCorbDisabledForURL(const GURL& url,
+                                                               bool disabled) {
+  DCHECK_CURRENTLY_ON(BrowserThread::UI);
+  if (!GetNetworkService()) {
+    return;
+  }
+
+  if (disabled) {
+    GetNetworkService()->AddCorsCorbExceptionForURL(url);
+  } else {
+    GetNetworkService()->RemoveCorsCorbExceptionForURL(url);
+  }
+}
+
 }  // namespace neva_app_runtime

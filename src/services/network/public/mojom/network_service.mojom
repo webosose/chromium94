@@ -311,6 +311,12 @@ interface NetworkService {
   [EnableIf=is_webos]
   RemoveCorsCorbExceptionForProcess(uint32 process_id);
 
+  [EnableIf=is_webos]
+  AddCorsCorbExceptionForURL(url.mojom.Url url);
+
+  [EnableIf=is_webos]
+  RemoveCorsCorbExceptionForURL(url.mojom.Url url);
+
   // Called when the system is low on memory.
   OnMemoryPressure(mojo_base.mojom.MemoryPressureLevel memory_pressure_level);
 

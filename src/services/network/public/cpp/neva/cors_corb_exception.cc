@@ -29,6 +29,12 @@ std::set<int>& GetExceptionProcesses() {
   static base::NoDestructor<std::set<int>> processes;
   return *processes;
 }
+
+std::set<GURL>& GetExceptionUrlsSet() {
+  static base::NoDestructor<std::set<GURL>> urls;
+  return *urls;
+}
+
 }  // namespace
 
 namespace network {
@@ -68,6 +74,25 @@ void CorsCorbException::ApplyException(
     default:
       break;
   }
+}
+
+// static
+void CorsCorbException::AddForURL(const GURL& url) {
+  std::set<GURL>& urls = GetExceptionUrlsSet();
+  urls.insert(url);
+}
+
+// static
+void CorsCorbException::RemoveForURL(const GURL& url) {
+  std::set<GURL>& urls = GetExceptionUrlsSet();
+  size_t number_of_elements_removed = urls.erase(url);
+  DCHECK_EQ(1u, number_of_elements_removed);
+}
+
+// static
+bool CorsCorbException::ShouldAllowExceptionForURL(const GURL& url) {
+  std::set<GURL>& urls = GetExceptionUrlsSet();
+  return base::Contains(urls, url);
 }
 
 }  // namespace neva

@@ -284,7 +284,8 @@ void CorsURLLoader::OnReceiveResponse(mojom::URLResponseHeadPtr response_head) {
                         header_names::kAccessControlAllowCredentials),
         request_.credentials_mode,
         tainted_ ? url::Origin() : *request_.request_initiator,
-        neva::CorsCorbException::ShouldAllowExceptionForProcess(process_id_));
+        neva::CorsCorbException::ShouldAllowExceptionForProcess(process_id_) ||
+            neva::CorsCorbException::ShouldAllowExceptionForURL(request_.url));
     if (error_status) {
       HandleComplete(URLLoaderCompletionStatus(*error_status));
       return;
@@ -324,7 +325,8 @@ void CorsURLLoader::OnReceiveRedirect(const net::RedirectInfo& redirect_info,
                         header_names::kAccessControlAllowCredentials),
         request_.credentials_mode,
         tainted_ ? url::Origin() : *request_.request_initiator,
-        neva::CorsCorbException::ShouldAllowExceptionForProcess(process_id_));
+        neva::CorsCorbException::ShouldAllowExceptionForProcess(process_id_) ||
+            neva::CorsCorbException::ShouldAllowExceptionForURL(request_.url));
     if (error_status) {
       HandleComplete(URLLoaderCompletionStatus(*error_status));
       return;

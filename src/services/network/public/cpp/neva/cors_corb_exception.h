@@ -18,6 +18,7 @@
 
 #include "services/network/public/cpp/cors/cors_error_status.h"
 #include "third_party/abseil-cpp/absl/types/optional.h"
+#include "url/gurl.h"
 
 namespace network {
 namespace neva {
@@ -28,6 +29,10 @@ class CorsCorbException {
   static void RemoveForProcess(int process_id);
   static bool ShouldAllowExceptionForProcess(int process_id);
   static void ApplyException(absl::optional<CorsErrorStatus>& error_status);
+
+  static void AddForURL(const GURL& url);
+  static void RemoveForURL(const GURL& url);
+  static bool ShouldAllowExceptionForURL(const GURL& url);
 
  private:
   CorsCorbException() = delete;

@@ -152,6 +152,7 @@ class AppRuntimeContentBrowserClient : public content::ContentBrowserClient {
                                   const std::string& value);
 
   void SetCorsCorbDisabled(int process_id, bool disabled);
+  void SetCorsCorbDisabledForURL(const GURL& url, bool disabled);
 
  private:
   AppRuntimeBrowserMainExtraParts* browser_extra_parts_ = nullptr;

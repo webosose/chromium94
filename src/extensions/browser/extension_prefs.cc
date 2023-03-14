@@ -2282,6 +2282,10 @@ void ExtensionPrefs::RegisterProfilePrefs(
 #endif
 
   registry->RegisterBooleanPref(pref_names::kBlockExternalExtensions, false);
+
+#if defined(USE_NEVA_APPRUNTIME)
+  registry->RegisterBooleanPref(pref_names::kPrefPdfJsEnableScripting, false);
+#endif
 }
 
 template <class ExtensionIdContainer>
