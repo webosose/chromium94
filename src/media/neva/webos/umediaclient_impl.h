@@ -50,7 +50,7 @@ class UMediaClientImpl : public WebOSMediaClient,
   UMediaClientImpl(const UMediaClientImpl&) = delete;
   UMediaClientImpl& operator=(const UMediaClientImpl&) = delete;
 
-  ~UMediaClientImpl();
+  ~UMediaClientImpl() noexcept;
 
   // WebOSMediaClient implementations
   void Load(bool video,
