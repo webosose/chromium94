@@ -18,7 +18,7 @@
 #define NEVA_PAL_SERVICE_LUNA_LUNA_CLIENT_IMPL_H_
 
 #include "neva/pal_service/luna/luna_client.h"
-#include <lunaservice.h>
+#include <luna-service2/lunaservice.h>
 #include <map>
 
 namespace pal {

@@ -17,7 +17,7 @@
 #ifndef BASE_NEVA_WEBOS_LUNA_SERVICE_CLIENT_H_
 #define BASE_NEVA_WEBOS_LUNA_SERVICE_CLIENT_H_
 
-#include <lunaservice.h>
+#include <luna-service2/lunaservice.h>
 
 #include <map>
 #include <string>
