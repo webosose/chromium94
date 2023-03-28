@@ -22,26 +22,11 @@
 
 namespace ui {
 
-class VideoWindowControllerImpl::VideoWindowInfo {
- public:
-  explicit VideoWindowInfo(gfx::AcceleratedWidget w,
-                           const base::UnguessableToken& id,
-                           const VideoWindowParams& params)
-      : owner_widget_(w), id_(id), params_(params) {}
-  VideoWindowInfo(const VideoWindowInfo&) = delete;
-  VideoWindowInfo& operator=(const VideoWindowInfo&) = delete;
-
-  ~VideoWindowInfo() = default;
-
-  gfx::AcceleratedWidget owner_widget_;
-  base::UnguessableToken id_;
-  absl::optional<bool> visibility_ = absl::nullopt;
-  VideoWindowParams params_;
-};
-
-VideoWindowControllerImpl::VideoWindowControllerImpl() = default;
-
-VideoWindowControllerImpl::~VideoWindowControllerImpl() = default;
+VideoWindowControllerImpl::VideoWindowInfo::VideoWindowInfo(
+    gfx::AcceleratedWidget w,
+    const base::UnguessableToken& id,
+    const VideoWindowParams& params)
+    : owner_widget_(w), id_(id), params_(params) {}
 
 void VideoWindowControllerImpl::Initialize(
     const scoped_refptr<base::SingleThreadTaskRunner>& task_runner) {

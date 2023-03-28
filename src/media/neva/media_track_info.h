@@ -27,8 +27,8 @@ enum class MediaTrackType { kAudio, kVideo, kMaxValue = kVideo };
 
 struct MEDIA_EXPORT MediaTrackInfo {
  public:
-  MediaTrackInfo();
-  ~MediaTrackInfo();
+  MediaTrackInfo() = default;
+  ~MediaTrackInfo() = default;
 
   MediaTrackType type;
   std::string id;

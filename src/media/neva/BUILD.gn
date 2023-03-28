@@ -32,7 +32,6 @@ component("media_player_neva") {
     "media_player_neva_interface.cc",
     "media_player_neva_interface.h",
     "media_player_neva_types.h",
-    "media_track_info.cc",
     "media_track_info.h",
   ]
   defines = []

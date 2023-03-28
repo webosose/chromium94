@@ -38,11 +38,11 @@ class VideoWindowControllerImpl : public mojom::VideoWindowConnector,
                                   public VideoWindowController,
                                   public VideoWindowGeometryManager {
  public:
-  VideoWindowControllerImpl();
+  VideoWindowControllerImpl() = default;
   VideoWindowControllerImpl(const VideoWindowControllerImpl&) = delete;
   VideoWindowControllerImpl& operator=(const VideoWindowControllerImpl&) =
       delete;
-  ~VideoWindowControllerImpl() override;
+  ~VideoWindowControllerImpl() override = default;
 
   void Initialize(
       const scoped_refptr<base::SingleThreadTaskRunner>& task_runner);
@@ -73,7 +73,22 @@ class VideoWindowControllerImpl : public mojom::VideoWindowConnector,
   void EndOverlayProcessor(gfx::AcceleratedWidget widget) override;
 
  private:
-  class VideoWindowInfo;
+  class VideoWindowInfo {
+   public:
+    explicit VideoWindowInfo(gfx::AcceleratedWidget w,
+                             const base::UnguessableToken& id,
+                             const VideoWindowParams& params);
+    VideoWindowInfo(const VideoWindowInfo&) = delete;
+    VideoWindowInfo& operator=(const VideoWindowInfo&) = delete;
+
+    ~VideoWindowInfo() = default;
+
+    gfx::AcceleratedWidget owner_widget_;
+    base::UnguessableToken id_;
+    absl::optional<bool> visibility_ = absl::nullopt;
+    VideoWindowParams params_;
+  };
+
   VideoWindowInfo* FindVideoWindowInfo(const base::UnguessableToken& window_id);
   void RemoveVideoWindowInfo(const base::UnguessableToken& window_id);
   void SetVideoWindowVisibility(const base::UnguessableToken& window_id,
