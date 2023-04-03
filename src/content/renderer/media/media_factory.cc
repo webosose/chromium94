@@ -548,6 +548,9 @@ blink::WebMediaPlayer* MediaFactory::CreateMediaPlayer(
 
   if (client->ContentTypeDecoder() == "sw")
     use_neva_media = false;
+
+  if (content::RenderThreadImpl::current()->UseVideoDecodeAccelerator())
+    use_neva_media = false;
 #endif
 
   auto factory_selector = CreateRendererFactorySelector(
@@ -951,7 +954,8 @@ blink::WebMediaPlayer* MediaFactory::CreateWebMediaPlayerForMediaStream(
 #if defined(USE_NEVA_WEBRTC)
   const base::CommandLine* cmd_line = base::CommandLine::ForCurrentProcess();
   if (!cmd_line->HasSwitch(switches::kDisableWebMediaPlayerNeva) &&
-      cmd_line->HasSwitch(switches::kEnableWebRTCPlatformVideoDecoder)) {
+      cmd_line->HasSwitch(switches::kEnableWebRTCPlatformVideoDecoder) &&
+      !content::RenderThreadImpl::current()->UseVideoDecodeAccelerator()) {
     const blink::RendererPreferences& renderer_prefs =
         render_frame_->GetRendererPreferences();
 

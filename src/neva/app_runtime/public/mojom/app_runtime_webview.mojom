@@ -40,6 +40,7 @@ interface AppRuntimeWebViewClient {
 
   AddInjectionToLoad(string injection, string arguments_json);
   UnloadInjections();
+  SetUseVideoDecodeAccelerator(bool enable);
 };
 
 interface AppRuntimeWebViewHost {

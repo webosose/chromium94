@@ -262,6 +262,10 @@ void WebViewBase::SetEnableBackgroundRun(bool enabled) {
   webview_->SetEnableBackgroundRun(enabled);
 }
 
+void WebViewBase::SetUseVideoDecodeAccelerator(bool enable) {
+  webview_->SetUseVideoDecodeAccelerator(enable);
+}
+
 void WebViewBase::SetActiveOnNonBlankPaint(bool active) {
   webview_->SetActiveOnNonBlankPaint(active);
 }

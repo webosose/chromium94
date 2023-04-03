@@ -637,6 +637,17 @@ void WebView::SetSearchKeywordForCustomPlayer(bool enabled) {
   // TODO(jose.dapena): patch not ported
 }
 
+void WebView::SetUseVideoDecodeAccelerator(bool enable) {
+#if defined(USE_NEVA_MEDIA)
+  if (auto* frame_host = web_contents_->GetMainFrame()) {
+    mojo::AssociatedRemote<neva_app_runtime::mojom::AppRuntimeWebViewClient>
+        client;
+    frame_host->GetRemoteAssociatedInterfaces()->GetInterface(&client);
+    client->SetUseVideoDecodeAccelerator(enable);
+  }
+#endif
+}
+
 void WebView::SetUseUnlimitedMediaPolicy(bool enabled) {
   blink::RendererPreferences* renderer_prefs =
       web_contents_->GetMutableRendererPrefs();

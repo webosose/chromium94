@@ -155,6 +155,7 @@ class WebView : public content::WebContentsDelegate,
   void SetMediaPreferences(const std::string& preferences);
   void SetSearchKeywordForCustomPlayer(bool enabled);
   void SetUseUnlimitedMediaPolicy(bool enabled);
+  void SetUseVideoDecodeAccelerator(bool enable);
   void SetEnableBackgroundRun(bool enabled);
   void UpdatePreferencesAttribute(WebView::Attribute attribute, bool enable);
   void SetNetworkQuietTimeout(double timeout);

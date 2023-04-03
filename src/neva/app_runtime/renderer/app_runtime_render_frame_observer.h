@@ -52,6 +52,7 @@ class AppRuntimeRenderFrameObserver : public content::RenderFrameObserver,
   void AddInjectionToLoad(const std::string& injection,
                           const std::string& arguments_json) override;
   void UnloadInjections() override;
+  void SetUseVideoDecodeAccelerator(bool use) override;
 
   void BindPendingReceiver(mojo::PendingAssociatedReceiver<
                            mojom::AppRuntimeWebViewClient> pending_receiver);

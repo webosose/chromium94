@@ -406,6 +406,11 @@ class CONTENT_EXPORT RenderThreadImpl
     video_frame_compositor_task_runner_ = task_runner;
   }
 
+#if defined(USE_NEVA_MEDIA)
+  void SetUseVideoDecodeAccelerator(bool use);
+  bool UseVideoDecodeAccelerator() { return use_video_decode_accelerator_; }
+#endif
+
  private:
   friend class RenderThreadImplBrowserTest;
   friend class AgentSchedulingGroup;
@@ -620,6 +625,10 @@ class CONTENT_EXPORT RenderThreadImpl
 
 #if defined(USE_NEVA_APPRUNTIME)
   unsigned suspension_count_ = 0;
+#endif
+
+#if defined(USE_NEVA_MEDIA)
+  bool use_video_decode_accelerator_ = false;
 #endif
 
   // A mojo connection to the CompositingModeReporter service.

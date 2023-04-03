@@ -184,4 +184,12 @@ void AppRuntimeRenderFrameObserver::UnloadInjections() {
   injection_loader_.Unload();
 }
 
+void AppRuntimeRenderFrameObserver::SetUseVideoDecodeAccelerator(bool use) {
+#if defined(USE_NEVA_MEDIA)
+  auto* renderer_client = static_cast<AppRuntimeContentRendererClient*>(
+      GetAppRuntimeContentClient()->renderer());
+  renderer_client->SetUseVideoDecodeAccelerator(use);
+#endif
+}
+
 }  // namespace neva_app_runtime

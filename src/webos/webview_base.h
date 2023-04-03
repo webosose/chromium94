@@ -202,6 +202,7 @@ class WEBOS_EXPORT WebViewBase
   void SetSearchKeywordForCustomPlayer(bool enabled);
   void SetUseUnlimitedMediaPolicy(bool enabled);
   void SetEnableBackgroundRun(bool enabled);
+  void SetUseVideoDecodeAccelerator(bool enable);
 
   // WebPreferences
   void SetAllowRunningInsecureContent(bool enable);

@@ -1110,6 +1110,10 @@ media::GpuVideoAcceleratorFactories* RenderThreadImpl::GetGpuFactories() {
       enable_video_accelerator, std::move(interface_factory),
       std::move(vea_provider)));
   gpu_factories_.back()->SetRenderingColorSpace(rendering_color_space_);
+#if defined(USE_NEVA_MEDIA)
+  gpu_factories_.back()->SetUseVideoDecodeAccelerator(
+      use_video_decode_accelerator_);
+#endif
   return gpu_factories_.back().get();
 }
 
@@ -2023,5 +2027,16 @@ gfx::ColorSpace RenderThreadImpl::GetRenderingColorSpace() {
   DCHECK(IsMainThread());
   return rendering_color_space_;
 }
+
+#if defined(USE_NEVA_MEDIA)
+void RenderThreadImpl::SetUseVideoDecodeAccelerator(bool use) {
+  DCHECK(IsMainThread());
+  use_video_decode_accelerator_ = use;
+  for (const auto& factories : gpu_factories_) {
+    if (factories)
+      factories->SetUseVideoDecodeAccelerator(use);
+  }
+}
+#endif
 
 }  // namespace content

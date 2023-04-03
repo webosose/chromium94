@@ -240,7 +240,7 @@ std::unique_ptr<webrtc::VideoDecoderFactory> CreateWebrtcVideoDecoderFactory(
 #if defined(USE_NEVA_WEBRTC)
   std::unique_ptr<webrtc::VideoDecoderFactory> decoder_factory_neva;
   const base::CommandLine* cmd_line = base::CommandLine::ForCurrentProcess();
-  if (gpu_factories &&
+  if (gpu_factories && !gpu_factories->UseVideoDecodeAccelerator() &&
       !cmd_line->HasSwitch(switches::kDisableWebMediaPlayerNeva) &&
       cmd_line->HasSwitch(switches::kEnableWebRTCPlatformVideoDecoder)) {
     decoder_factory_neva =

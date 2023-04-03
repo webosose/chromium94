@@ -300,6 +300,7 @@ class APP_RUNTIME_EXPORT WebViewBase : public WebViewDelegate,
   void SetSearchKeywordForCustomPlayer(bool enabled);
   void SetUseUnlimitedMediaPolicy(bool enabled);
   void SetEnableBackgroundRun(bool enabled);
+  void SetUseVideoDecodeAccelerator(bool enable);
 
   // WebPreferences
   void SetAllowRunningInsecureContent(bool enable);

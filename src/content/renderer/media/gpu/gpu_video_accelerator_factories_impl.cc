@@ -173,6 +173,13 @@ void GpuVideoAcceleratorFactoriesImpl::BindOnTaskRunner(
     OnEncoderSupportFailed();
   }
 
+#if defined(USE_NEVA_MEDIA)
+  if (!use_video_decode_accelerator_) {
+    OnDecoderSupportFailed();
+    return;
+  }
+#endif
+
 #if BUILDFLAG(ENABLE_MOJO_VIDEO_DECODER)
   // Note: This is a bit of a hack, since we don't specify the implementation
   // before asking for the map of supported configs.  We do this because it
@@ -514,6 +521,16 @@ const gfx::ColorSpace&
 GpuVideoAcceleratorFactoriesImpl::GetRenderingColorSpace() const {
   return rendering_color_space_;
 }
+
+#if defined(USE_NEVA_MEDIA)
+void GpuVideoAcceleratorFactoriesImpl::SetUseVideoDecodeAccelerator(bool use) {
+  use_video_decode_accelerator_ = use;
+}
+
+bool GpuVideoAcceleratorFactoriesImpl::UseVideoDecodeAccelerator() const {
+  return use_video_decode_accelerator_;
+}
+#endif
 
 bool GpuVideoAcceleratorFactoriesImpl::CheckContextProviderLostOnMainThread() {
   DCHECK(main_thread_task_runner_->RunsTasksInCurrentSequence());

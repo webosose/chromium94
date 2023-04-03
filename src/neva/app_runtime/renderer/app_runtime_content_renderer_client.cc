@@ -43,6 +43,7 @@
 
 #if defined(USE_NEVA_MEDIA)
 #include "components/cdm/renderer/neva/key_systems_util.h"
+#include "content/renderer/render_thread_impl.h"
 #include "media/neva/media_preferences.h"
 #endif
 
@@ -171,6 +172,11 @@ void AppRuntimeContentRendererClient::SetWebViewInfo(
 }
 
 #if defined(USE_NEVA_MEDIA)
+void AppRuntimeContentRendererClient::SetUseVideoDecodeAccelerator(bool use) {
+  if (content::RenderThreadImpl::current())
+    content::RenderThreadImpl::current()->SetUseVideoDecodeAccelerator(use);
+}
+
 void AppRuntimeContentRendererClient::AddSupportedKeySystems(
     std::vector<std::unique_ptr<media::KeySystemProperties>>* key_systems) {
   if (key_systems)

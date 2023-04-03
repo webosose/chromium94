@@ -59,6 +59,7 @@ class AppRuntimeContentRendererClient : public content::ContentRendererClient {
                       const std::string& trust_level);
 
 #if defined(USE_NEVA_MEDIA)
+  void SetUseVideoDecodeAccelerator(bool use);
   void AddSupportedKeySystems(
       std::vector<std::unique_ptr<media::KeySystemProperties>>* key_systems)
       override;

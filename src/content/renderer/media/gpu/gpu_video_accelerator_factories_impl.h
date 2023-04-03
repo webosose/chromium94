@@ -124,6 +124,11 @@ class CONTENT_EXPORT GpuVideoAcceleratorFactoriesImpl
   void SetRenderingColorSpace(const gfx::ColorSpace& color_space) override;
   const gfx::ColorSpace& GetRenderingColorSpace() const override;
 
+#if defined(USE_NEVA_MEDIA)
+  void SetUseVideoDecodeAccelerator(bool use) override;
+  bool UseVideoDecodeAccelerator() const override;
+#endif
+
   // Called on the main thread. Returns whether the media thread has seen the
   // ContextProvider become lost, in which case this class should be replaced
   // with a new ContextProvider.
@@ -208,6 +213,10 @@ class CONTENT_EXPORT GpuVideoAcceleratorFactoriesImpl
 
   mojo::Remote<media::mojom::InterfaceFactory> interface_factory_;
   mojo::Remote<media::mojom::VideoEncodeAcceleratorProvider> vea_provider_;
+
+#if defined(USE_NEVA_MEDIA)
+  bool use_video_decode_accelerator_ = false;
+#endif
 
   // SupportedDecoderConfigs state.
   mojo::Remote<media::mojom::VideoDecoder> video_decoder_;
