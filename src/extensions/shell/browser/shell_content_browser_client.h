@@ -194,6 +194,8 @@ class ShellContentBrowserClient : public content::ContentBrowserClient {
       const base::RepeatingCallback<content::WebContents*()>& wc_getter,
       content::NavigationUIData* navigation_ui_data,
       int frame_tree_node_id) override;
+  scoped_refptr<network::SharedURLLoaderFactory>
+  GetSystemSharedURLLoaderFactory() override;
 #endif
 #if defined(USE_NEVA_APPRUNTIME)
   blink::UserAgentMetadata GetUserAgentMetadata() override;

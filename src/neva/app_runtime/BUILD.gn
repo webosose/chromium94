@@ -90,6 +90,8 @@ static_library("app_runtime") {
     "browser/gcm/gcm_profile_service_factory.h",
     "browser/gcm/instance_id/instance_id_profile_service_factory.cc",
     "browser/gcm/instance_id/instance_id_profile_service_factory.h",
+    "browser/geolocation/geolocation_permission_context.cc",
+    "browser/geolocation/geolocation_permission_context.h",
     "browser/host_content_settings_map_factory.cc",
     "browser/host_content_settings_map_factory.h",
     "browser/media/media_access_handler.cc",

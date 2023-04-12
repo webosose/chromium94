@@ -130,6 +130,9 @@ declare_args() {
 
   # flag for using libstdc++ instead of libc++ for clang
   clang_use_stdlib = false
+
+  # Use geoplugin service to get geolocation
+  use_geoplugin = true
 }
 
 declare_args() {

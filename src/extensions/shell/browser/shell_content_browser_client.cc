@@ -691,6 +691,13 @@ ShellContentBrowserClient::CreateURLLoaderThrottles(
   }
   return result;
 }
+
+scoped_refptr<network::SharedURLLoaderFactory>
+ShellContentBrowserClient::GetSystemSharedURLLoaderFactory() {
+  return GetBrowserContext()
+      ->GetDefaultStoragePartition()
+      ->GetURLLoaderFactoryForBrowserProcess();
+}
 #endif
 
 }  // namespace extensions
