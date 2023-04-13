@@ -104,6 +104,15 @@ void EmptyBufferAudioDecoder::DecodeBuffer(
       int frame_count = buffer->duration().InMicroseconds() *
                         config_.samples_per_second() /
                         base::Time::kMicrosecondsPerSecond;
+#if defined(OS_WEBOS)
+      // FFmpeg returns some audio frames as 0 or 1 duration for some mp4-dash
+      // files and frame_count becomes zero. Since AudioBuffer cannot be created
+      // with 0 frames so, we need to ignore that frame and proceed.
+      if (!frame_count) {
+        std::move(decode_cb).Run(DecodeStatus::OK);
+        return;
+      }
+#endif
 
       audio_buffer = AudioBuffer::CreateEmptyBuffer(
           config_.channel_layout(),

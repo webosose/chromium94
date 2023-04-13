@@ -115,8 +115,9 @@ void MediaPlatformAPIWebOSGmp::Callback(const gint type,
                                         const gint64 num_value,
                                         const gchar* str_value,
                                         void* user_data) {
+  std::string string_value(str_value ? str_value : std::string());
   VLOG(1) << " type=" << GmpNotifyTypeToString(type)
-          << " num_value=" << num_value << " str_value=" << str_value
+          << " num_value=" << num_value << " string_value=" << string_value
           << " data=" << user_data;
   MediaPlatformAPIWebOSGmp* that =
       static_cast<MediaPlatformAPIWebOSGmp*>(user_data);
@@ -131,7 +132,6 @@ void MediaPlatformAPIWebOSGmp::Callback(const gint type,
     }
   }
 
-  std::string string_value(str_value ? str_value : std::string());
   that->media_task_runner_->PostTask(
       FROM_HERE,
       base::BindOnce(&MediaPlatformAPIWebOSGmp::DispatchCallback,
