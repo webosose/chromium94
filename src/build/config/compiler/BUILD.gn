@@ -2050,8 +2050,12 @@ if (is_win) {
       # See http://lwn.net/Articles/192624/ .
       # -O2 enables string tail merge optimization in gold and lld.
       "-Wl,-O2",
-      "-Wl,--gc-sections",
     ]
+    # RP: clang build conflicts to lttng symbols resolving,
+    # removing --gc-sections to restore lttng tracing
+    if(!is_clang || !is_webos || !use_lttng) {
+      common_optimize_on_ldflags += [ "-Wl,--gc-sections", ]
+    }
   }
 }
 
@@ -2158,6 +2162,7 @@ config("no_optimize") {
 # optimization and link-time code generation which is very expensive and should
 # be used sparingly.
 config("optimize_max") {
+  ldflags = []
   if (is_nacl && is_nacl_irt) {
     # The NaCl IRT is a special case and always wants its own config.
     # Various components do:
@@ -2169,7 +2174,7 @@ config("optimize_max") {
     # "default_optimization", below.
     configs = [ "//build/config/nacl:irt_optimize" ]
   } else {
-    ldflags = common_optimize_on_ldflags
+    ldflags += common_optimize_on_ldflags
     if (is_win) {
       # Favor speed over size, /O2 must be before the common flags.
       # /O2 implies /Ot, /Oi, and /GF.
@@ -2179,6 +2184,10 @@ config("optimize_max") {
     } else {
       cflags = [ "-O2" ] + common_optimize_on_cflags
     }
+  }
+
+  if(is_clang && is_webos && use_lttng) {
+    ldflags += [ "-Wl,--gc-sections", ]
   }
 }
 
