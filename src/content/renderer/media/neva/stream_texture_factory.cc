@@ -69,7 +69,9 @@ void StreamTextureProxy::BindToLoop(
 }
 
 void StreamTextureProxy::BindOnThread(int32_t stream_id) {
+#if defined(USE_VIDEO_TEXTURE)
   host_->BindToCurrentThread(stream_id, this);
+#endif
 }
 
 void StreamTextureProxy::OnFrameAvailable() {
@@ -93,7 +95,11 @@ StreamTextureFactory::StreamTextureFactory(
 StreamTextureFactory::~StreamTextureFactory() {}
 
 blink::StreamTextureProxyInterface* StreamTextureFactory::CreateProxy() {
+#if defined(USE_VIDEO_TEXTURE)
   return new StreamTextureProxy(std::make_unique<StreamTextureHost>(channel_));
+#else
+  return nullptr;
+#endif
 }
 
 unsigned StreamTextureFactory::CreateStreamTexture(

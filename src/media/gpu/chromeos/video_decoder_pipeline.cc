@@ -83,6 +83,7 @@ std::unique_ptr<VideoDecoder> VideoDecoderPipeline::Create(
   DCHECK(frame_pool);
   DCHECK(frame_converter);
 
+#if !defined(USE_NEVA_V4L2_CODEC)
   CreateDecoderFunctionCB create_decoder_function_cb =
 #if BUILDFLAG(USE_VAAPI)
       base::BindOnce(&VaapiVideoDecoder::Create);
@@ -96,6 +97,9 @@ std::unique_ptr<VideoDecoder> VideoDecoderPipeline::Create(
       std::move(create_decoder_function_cb));
   return std::make_unique<AsyncDestroyVideoDecoder<VideoDecoderPipeline>>(
       base::WrapUnique(pipeline));
+#else
+  return nullptr;
+#endif
 }
 
 // static
@@ -103,7 +107,9 @@ absl::optional<SupportedVideoDecoderConfigs>
 VideoDecoderPipeline::GetSupportedConfigs(
     const gpu::GpuDriverBugWorkarounds& workarounds) {
   absl::optional<SupportedVideoDecoderConfigs> configs =
-#if BUILDFLAG(USE_VAAPI)
+#if defined(USE_NEVA_V4L2_CODEC)
+      absl::nullopt;
+#elif BUILDFLAG(USE_VAAPI)
       VaapiVideoDecoder::GetSupportedConfigs();
 #elif BUILDFLAG(USE_V4L2_CODEC)
       V4L2VideoDecoder::GetSupportedConfigs();
