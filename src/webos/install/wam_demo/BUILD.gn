@@ -14,6 +14,7 @@
 #
 # SPDX-License-Identifier: Apache-2.0
 
+import("//webos/install/install.gni")
 import("//webos/install/paths.gni")
 import("//webos/install/sysbus.gni")
 
@@ -39,22 +40,28 @@ install_manifest("wam_demo_manifest") {
   ]
 }
 
-install_legacy_roles("wam_demo_roles") {
+install_legacy_roles("wam_demo_legacy_roles") {
   app = "$wam_demo_app"
   exename = "$wam_demo_exe"
-  sources = [ "//webos/install/services/role.json.in" ]
+  sources = [ "legacy/com.webos.app.wam-demo.json" ]
 }
 
-install_legacy_services("wam_demo_services") {
+install_legacy_services("wam_demo_legacy_services") {
   app = "$wam_demo_app"
   exename = "$wam_demo_exe"
 }
 
+install_services("wam_demo_services") {
+  app = "$wam_demo_app"
+  exename = "$wam_demo_exe"
+}
 install_client_permissions("wam_demo_manual_perm") {
   sources = [ "com.webos.app.neva.wam.demo.manual.perm.json" ]
 }
 
-install_roles("wam_demo_manual_role") {
+install_contemporary_roles("wam_demo_manual_role") {
+  app = "$wam_demo_app"
+  exename = "$wam_demo_exe"
   sources = [ "com.webos.app.neva.wam.demo.manual.role.json" ]
 }
 
@@ -72,12 +79,19 @@ copy("wam_demo") {
   deps = [
     "//neva/wam_demo:wam_demo",
     ":wam_demo_scripts",
-    ":wam_demo_manual_perm",
-    ":wam_demo_manual_role",
-    ":wam_demo_container",
     ":wam_demo_cursor",
-    ":wam_demo_manifest",
-    ":wam_demo_roles",
-    ":wam_demo_services"
   ]
+
+  if (can_use_legacy_luna_role_files) {
+    deps += [
+      ":wam_demo_legacy_roles",
+      ":wam_demo_legacy_services",
+    ]
+  } else {
+    deps += [
+      ":wam_demo_manual_perm",
+      ":wam_demo_manual_role",
+      ":wam_demo_services",
+    ]
+  }
 }

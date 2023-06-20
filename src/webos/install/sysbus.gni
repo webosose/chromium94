@@ -109,3 +109,15 @@ template("install_contemporary_roles") {
     args = [ "@@EXENAME@@=${invoker.exename}" ] + rebase_path(sources) + [ rebase_path(rolefile) ]
   }
 }
+
+template("install_services") {
+    action(target_name) {
+      servicefile = "$image_path/$webos_sysbus_servicesdir/${invoker.app}.service"
+      script = "//webos/install/subst.py"
+      sources = [ "//webos/install/services/service.ini.in" ]
+      outputs = [ servicefile ]
+
+      args = [ "@@EXENAME@@=${invoker.exename}:@@NAME@@=${invoker.app}" ] +
+                rebase_path(sources) + [ rebase_path(servicefile) ]
+    }
+}

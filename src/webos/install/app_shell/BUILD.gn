@@ -35,7 +35,7 @@ install_cbe_data("app_shell_cbe") {
   deps = [ "//extensions:shell_and_test_pak" ]
 }
 
-install_legacy_services("app_shell_services") {
+install_legacy_services("app_shell_legacy_services") {
   app = "$app_shell_app"
   exename = "$app_shell_exe"
 }
@@ -47,7 +47,7 @@ install_containers("app_shell_container") {
 }
 
 install_legacy_roles("app_shell_legacy_roles") {
-  sources = [ "legacy/app-shell.role.json.in" ]
+  sources = [ "legacy/app-shell.json" ]
   exename = "$app_shell_exe"
   app = "$app_shell_app"
 }
@@ -60,6 +60,11 @@ install_contemporary_roles("app_shell_roles") {
   sources = [ "app-shell.role.json.in" ]
   exename = "$app_shell_exe"
   app = "$app_shell_app"
+}
+
+install_services("app_shell_services") {
+  app = "$app_shell_app"
+  exename = "$app_shell_exe"
 }
 
 install_scripts("app_shell_scripts") {
@@ -80,19 +85,20 @@ copy("app_shell") {
   deps = [
     "//extensions/shell:app_shell",
     "//v8:v8", # for snapshot_blob.bin
-    ":app_shell_manifest",
     ":app_shell_scripts",
     ":app_shell_cbe",
-    ":app_shell_services",
-    ":app_shell_container",
   ]
 
   if (can_use_legacy_luna_role_files) {
-    deps += [":app_shell_legacy_roles"]
+    deps += [
+      ":app_shell_legacy_roles",
+      ":app_shell_legacy_services",
+    ]
   } else {
     deps += [
       ":app_shell_permissions",
       ":app_shell_roles",
+      ":app_shell_services",
     ]
   }
 }

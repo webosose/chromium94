@@ -35,14 +35,17 @@ declare_args() {
 
   unittests_dir = "/usr/bin/neva_unittests"
 
+  webos_sysbus_permissionsdir = "/usr/share/luna-service2/client-permissions.d"
+  webos_sysbus_rolesdir = "/usr/share/luna-service2/roles.d/"
+  webos_sysbus_servicesdir = "/usr/share/luna-service2/services.d"
   webos_sysbus_manifestsdir = "/usr/share/luna-service2/manifests.d/"
+  webos_sysbus_containersdir = "/usr/share/luna-service2/containers.d/"
+
+  # legacy sysbus locations
   webos_sysbus_pubservicesdir = "/usr/share/dbus-1/services/"
   webos_sysbus_prvservicesdir = "/usr/share/dbus-1/system-services/"
   webos_sysbus_pubrolesdir = "/usr/share/ls2/roles/pub/"
   webos_sysbus_prvrolesdir = "/usr/share/ls2/roles/prv/"
-  webos_sysbus_permissionsdir = "/usr/share/luna-service2/client-permissions.d"
-  webos_sysbus_rolesdir = "/usr/share/luna-service2/roles.d/"
-  webos_sysbus_containersdir = "/usr/share/luna-service2/containers.d/"
 
   includedir = "/usr/include"
   libdir = "/usr/lib"

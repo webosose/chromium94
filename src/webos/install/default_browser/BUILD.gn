@@ -17,6 +17,7 @@
 import("//build/config/locales.gni")
 import("//neva/neva.gni")
 import("//webos/install/cbe.gni")
+import("//webos/install/install.gni")
 import("//webos/install/paths.gni")
 import("//webos/install/sysbus.gni")
 
@@ -24,15 +25,36 @@ install_manifest("browser_manifest") {
   sources = [ "com.webos.app.browser.manifest.json" ]
 }
 
-install_legacy_roles("browser_roles") {
+install_legacy_roles("browser_legacy_roles") {
+  app = "$browser_app"
+  exename = "$browser_exe"
+  sources = [ "legacy/com.webos.app.browser.json" ]
+}
+
+install_legacy_services("browser_legacy_services") {
+  app = "$browser_app"
+  exename = "$browser_exe"
+}
+
+install_containers("browser_container") {
+  sources = [ "//webos/install/services/app.container.json.in" ]
+  exename = "$browser_exe"
+  app = "$browser_app"
+}
+
+install_services("browser_services") {
+  app = "$browser_app"
+  exename = "$browser_exe"
+}
+
+install_contemporary_roles("browser_roles") {
   app = "$browser_app"
   exename = "$browser_exe"
   sources = [ "//webos/install/services/role.json.in" ]
 }
 
-install_legacy_services("browser_services") {
-  app = "$browser_app"
-  exename = "$browser_exe"
+install_client_permissions("browser_permissions") {
+  sources = [ "com.webos.app.browser.perm.json" ]
 }
 
 install_scripts("browser_scripts") {
@@ -41,7 +63,6 @@ install_scripts("browser_scripts") {
               "mem_webbrowser" ]
   outputs = [ "$image_path/$browser_dir/" ]
 }
-
 
 copy("default_browser") {
   sources = [ "$root_out_dir/chrome",
@@ -64,12 +85,17 @@ copy("default_browser") {
     "//third_party/icu:icudata",            # for icudtl.dat
     "//headless:pak",                       # for headless_lib.pak
     ":browser_scripts",
-    ":locales"
+    ":locales",
   ]
 
-  if (is_webos) {
+  if (can_use_legacy_luna_role_files) {
     deps += [
-      ":browser_manifest",
+      ":browser_legacy_roles",
+      ":browser_legacy_services",
+    ]
+  } else {
+    deps += [
+      ":browser_permissions",
       ":browser_roles",
       ":browser_services",
     ]
