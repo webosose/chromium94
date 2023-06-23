@@ -28,7 +28,7 @@
 #include "net/http/http_status_code.h"
 #include "net/url_request/redirect_info.h"
 #include "neva/browser_service/browser/webrisk/core/webrisk.pb.h"
-#include "neva/browser_service/browser/webrisk/core/webrisk_store.h"
+#include "neva/browser_service/browser/webrisk/core/webrisk_data_store.h"
 #include "services/network/public/cpp/resource_request.h"
 #include "services/network/public/cpp/shared_url_loader_factory.h"
 #include "services/network/public/cpp/simple_url_loader.h"
@@ -48,11 +48,11 @@ const char kApiKeyInvalidResp[] = "API_KEY_INVALID";
 
 WebRiskFetchHashes::WebRiskFetchHashes(
     const std::string& webrisk_key,
-    scoped_refptr<WebRiskStore> webrisk_store,
+    scoped_refptr<WebRiskDataStore> webrisk_data_store,
     network::SharedURLLoaderFactory* url_loader_factory,
     FetchHashStatusCallback callback)
     : webrisk_key_(webrisk_key),
-      webrisk_store_(std::move(webrisk_store)),
+      webrisk_data_store_(webrisk_data_store),
       url_loader_factory_(url_loader_factory),
       fetch_status_callback_(std::move(callback)) {}
 
@@ -65,7 +65,7 @@ void WebRiskFetchHashes::ComputeDiffRequest() {
   std::string api_endpoint_url =
       "https://webrisk.googleapis.com/v1/threatLists:computeDiff?";
   api_endpoint_url += "threatType=";
-  api_endpoint_url += WebRiskStore::kThreatTypeMalware;
+  api_endpoint_url += WebRiskDataStore::kThreatTypeMalware;
   api_endpoint_url += "&constraints.supportedCompressions=";
   api_endpoint_url += kCompressionTypeRAW;
   api_endpoint_url += "&key=";
@@ -84,7 +84,7 @@ void WebRiskFetchHashes::ComputeDiffRequest() {
       url_loader_factory_,
       base::BindOnce(&WebRiskFetchHashes::OnComputeDiffResponse,
                      base::Unretained(this), api_endpoint_url),
-      WebRiskStore::kMaxWebRiskStoreSize);
+      WebRiskDataStore::kMaxWebRiskStoreSize);
 }
 
 void WebRiskFetchHashes::OnComputeDiffResponse(
@@ -147,7 +147,7 @@ void WebRiskFetchHashes::OnComputeDiffResponse(
     return;
   }
 
-  bool status = webrisk_store_->WriteToDisk(file_format);
+  bool status = webrisk_data_store_->WriteDataToDisk(file_format);
   if (!status) {
     VLOG(1) << __func__ << ", Failed to write to store !!";
     if (!fetch_status_callback_.is_null()) {
@@ -156,8 +156,8 @@ void WebRiskFetchHashes::OnComputeDiffResponse(
     return;
   }
 
-  base::TimeDelta next_update_time =
-      webrisk_store_->GetNextUpdateTime(file_format.recommended_next_diff());
+  base::TimeDelta next_update_time = webrisk_data_store_->GetNextUpdateTime(
+      file_format.recommended_next_diff());
   if (next_update_time > base::TimeDelta()) {
     VLOG(2) << __func__ << ", next_update_time= " << next_update_time;
     ScheduleComputeDiffRequestInternal(next_update_time);

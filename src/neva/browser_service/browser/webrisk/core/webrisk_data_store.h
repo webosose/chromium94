@@ -1,4 +1,4 @@
-// Copyright 2022 LG Electronics, Inc.
+// Copyright 2023 LG Electronics, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,23 +14,24 @@
 //
 // SPDX-License-Identifier: Apache-2.0
 
-#ifndef NEVA_BROWSER_SERVICE_BROWSER_WEBRISK_CORE_WEBRISK_STORE_H_
-#define NEVA_BROWSER_SERVICE_BROWSER_WEBRISK_CORE_WEBRISK_STORE_H_
+#ifndef NEVA_BROWSER_SERVICE_BROWSER_WEBRISK_CORE_WEBRISK_DATA_STORE_H_
+#define NEVA_BROWSER_SERVICE_BROWSER_WEBRISK_CORE_WEBRISK_DATA_STORE_H_
 
 #include "base/callback.h"
-#include "base/files/file_path.h"
 #include "base/memory/ref_counted.h"
 #include "base/time/time.h"
 #include "neva/browser_service/browser/webrisk/core/webrisk.pb.h"
 
 namespace webrisk {
 
-class WebRiskStore : public base::RefCounted<WebRiskStore> {
+class WebRiskDataStore : public base::RefCounted<WebRiskDataStore> {
  public:
   // Threat type string to be sent with the request
   static constexpr char kThreatTypeMalware[] = "MALWARE";
 
   // Size of hash prefix to be used
+  // FIXME: Most hash prefixes are 4 bytes long but
+  // some hash prefixes could have any length between 4 and 32 bytes
   static constexpr size_t kHashPrefixSize = 4;
 
   // The maximum size of webrisk store file size
@@ -38,27 +39,29 @@ class WebRiskStore : public base::RefCounted<WebRiskStore> {
 
   typedef base::OnceCallback<void(bool status)> CheckUrlCallback;
 
-  WebRiskStore(base::FilePath file_path);
-  virtual ~WebRiskStore();
+  static scoped_refptr<WebRiskDataStore> Create();
 
-  bool WriteToDisk(const ComputeThreatListDiffResponse& file_format);
-  bool IsHashPrefixListEmptyOrExpired();
-  bool IsHashPrefixAvailable(const std::string& hash_prefix);
+  virtual bool Initialize() = 0;
+  virtual bool WriteDataToDisk(
+      const ComputeThreatListDiffResponse& file_format) = 0;
+  virtual bool IsHashPrefixAvailable(const std::string& hash_prefix) = 0;
+  virtual bool IsHashPrefixExpired() = 0;
   base::TimeDelta GetFirstUpdateTime();
   base::TimeDelta GetNextUpdateTime(const std::string& recommended_time);
 
- protected:
-  friend class RefCounted<WebRiskStore>;
+  // Currently, version token is not use. We could use it to improve the update
+  // database process.
+  void SetNewVersionToken(const std::string& version_token);
 
- private:
-  bool ReadFromDisk();
-  void FillHashPrefixListFromRawHashes(const std::string& raw_hashes);
-
-  base::FilePath file_path_;
-  std::vector<std::string> hash_prefix_list_;
   base::TimeDelta update_time_;
+  std::string version_token_;
+
+ protected:
+  friend class RefCounted<WebRiskDataStore>;
+  WebRiskDataStore() = default;
+  virtual ~WebRiskDataStore() = default;
 };
 
 }  // namespace webrisk
 
-#endif  // NEVA_BROWSER_SERVICE_BROWSER_WEBRISK_CORE_WEBRISK_STORE_H_
+#endif  // NEVA_BROWSER_SERVICE_BROWSER_WEBRISK_CORE_WEBRISK_DATA_STORE_H_

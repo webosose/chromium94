@@ -28,7 +28,7 @@ class SimpleURLLoader;
 
 namespace webrisk {
 
-class WebRiskStore;
+class WebRiskDataStore;
 
 class WebRiskFetchHashes {
  public:
@@ -41,7 +41,7 @@ class WebRiskFetchHashes {
   typedef base::OnceCallback<void(Status status)> FetchHashStatusCallback;
 
   WebRiskFetchHashes(const std::string& webrisk_key,
-                     scoped_refptr<WebRiskStore> webrisk_store,
+                     scoped_refptr<WebRiskDataStore> webrisk_data_store,
                      network::SharedURLLoaderFactory* url_loader_factory,
                      FetchHashStatusCallback callback);
   ~WebRiskFetchHashes();
@@ -66,7 +66,7 @@ class WebRiskFetchHashes {
   FetchHashStatusCallback fetch_status_callback_;
 
   std::string webrisk_key_;
-  scoped_refptr<WebRiskStore> webrisk_store_;
+  scoped_refptr<WebRiskDataStore> webrisk_data_store_;
   network::SharedURLLoaderFactory* url_loader_factory_ = nullptr;
 };
 

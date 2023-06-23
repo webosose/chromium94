@@ -74,6 +74,9 @@ declare_args() {
   # Use webrisk service
   use_webrisk_service = true
 
+  # Use webrisk database
+  use_webrisk_database = false
+
   # Use memory trace feature
   use_memory_trace = false
 

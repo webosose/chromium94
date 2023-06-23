@@ -20,7 +20,7 @@
 #include "net/http/http_status_code.h"
 #include "net/traffic_annotation/network_traffic_annotation.h"
 #include "net/url_request/redirect_info.h"
-#include "neva/browser_service/browser/webrisk/core/webrisk_store.h"
+#include "neva/browser_service/browser/webrisk/core/webrisk_data_store.h"
 #include "services/network/public/cpp/resource_request.h"
 #include "services/network/public/cpp/shared_url_loader_factory.h"
 #include "services/network/public/cpp/simple_url_loader.h"
@@ -49,7 +49,7 @@ void WebRiskSearchHashes::SearchHashPrefix(const std::string& hash_prefix,
   api_endpoint_url += (!webrisk_key_.empty() ? ("?key=" + webrisk_key_) : "?");
 
   std::string get_req_schema =
-      "&threatTypes=" + std::string(WebRiskStore::kThreatTypeMalware);
+      "&threatTypes=" + std::string(WebRiskDataStore::kThreatTypeMalware);
   api_endpoint_url += get_req_schema;
   api_endpoint_url += "&hash_prefix=" + hash_prefix;
 
@@ -68,7 +68,7 @@ void WebRiskSearchHashes::SearchHashPrefix(const std::string& hash_prefix,
       base::BindOnce(&WebRiskSearchHashes::OnSearchHashResponse,
                      base::Unretained(this), api_endpoint_url,
                      std::move(callback)),
-      WebRiskStore::kMaxWebRiskStoreSize);
+      WebRiskDataStore::kMaxWebRiskStoreSize);
 }
 
 void WebRiskSearchHashes::OnSearchHashResponse(
