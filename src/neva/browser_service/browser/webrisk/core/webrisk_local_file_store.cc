@@ -17,6 +17,7 @@
 #include "neva/browser_service/browser/webrisk/core/webrisk_local_file_store.h"
 
 #include "base/base64.h"
+#include "base/command_line.h"
 #include "base/files/file_util.h"
 #include "base/hash/hash.h"
 #include "base/rand_util.h"
@@ -24,6 +25,7 @@
 #include "base/strings/stringprintf.h"
 #include "base/values.h"
 #include "content/public/browser/storage_partition.h"
+#include "content/shell/common/shell_neva_switches.h"
 #include "net/base/net_errors.h"
 
 namespace webrisk {
