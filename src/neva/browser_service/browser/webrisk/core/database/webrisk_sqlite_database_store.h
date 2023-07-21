@@ -46,6 +46,7 @@ class WebRiskSQLiteDatabaseStore : public webrisk::WebRiskDataStore {
       const ComputeThreatListDiffResponse& file_format) override;
   bool IsHashPrefixExpired() override;
   bool IsHashPrefixAvailable(const std::string& hash_prefix) override;
+  bool MigrateDataFromLocalFile() override;
 
  private:
   void CreateEntryListFromRawHashes(

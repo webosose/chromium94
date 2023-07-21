@@ -24,6 +24,12 @@
 
 namespace webrisk {
 
+namespace {
+
+const char kWebRiskStoreFileName[] = "webrisk.store";
+
+}  // namespace
+
 class WebRiskDataStore : public base::RefCounted<WebRiskDataStore> {
  public:
   // Threat type string to be sent with the request
@@ -37,6 +43,10 @@ class WebRiskDataStore : public base::RefCounted<WebRiskDataStore> {
   // The maximum size of webrisk store file size
   static constexpr size_t kMaxWebRiskStoreSize = 1 * 1024 * 1024;  // 1MB
 
+  // The update interval for data store
+  static constexpr base::TimeDelta kDefaultUpdateInterval =
+      base::TimeDelta::FromHours(1);
+
   typedef base::OnceCallback<void(bool status)> CheckUrlCallback;
 
   static scoped_refptr<WebRiskDataStore> Create();
@@ -46,6 +56,11 @@ class WebRiskDataStore : public base::RefCounted<WebRiskDataStore> {
       const ComputeThreatListDiffResponse& file_format) = 0;
   virtual bool IsHashPrefixAvailable(const std::string& hash_prefix) = 0;
   virtual bool IsHashPrefixExpired() = 0;
+
+#if defined(USE_WEBRISK_DATABASE)
+  virtual bool MigrateDataFromLocalFile() = 0;
+#endif
+
   base::TimeDelta GetFirstUpdateTime();
   base::TimeDelta GetNextUpdateTime(const std::string& recommended_time);
 

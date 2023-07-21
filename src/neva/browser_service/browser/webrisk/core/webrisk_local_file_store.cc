@@ -17,7 +17,6 @@
 #include "neva/browser_service/browser/webrisk/core/webrisk_local_file_store.h"
 
 #include "base/base64.h"
-#include "base/command_line.h"
 #include "base/files/file_util.h"
 #include "base/hash/hash.h"
 #include "base/rand_util.h"
@@ -25,22 +24,14 @@
 #include "base/strings/stringprintf.h"
 #include "base/values.h"
 #include "content/public/browser/storage_partition.h"
-#include "content/shell/common/shell_neva_switches.h"
 #include "net/base/net_errors.h"
+#include "neva/browser_service/browser/webrisk/core/webrisk_utils.h"
 
 namespace webrisk {
 
-namespace {
-
-const char kWebRiskStoreFileName[] = "webrisk.store";
-
-}  // namespace
-
 scoped_refptr<WebRiskDataStore> WebRiskDataStore::Create() {
-  base::CommandLine* cmd_line = base::CommandLine::ForCurrentProcess();
-  base::FilePath file_path(cmd_line->GetSwitchValuePath(switches::kUserDataDir)
-                               .AppendASCII(kWebRiskStoreFileName));
-  return base::MakeRefCounted<WebRiskLocalFileStore>(file_path);
+  return base::MakeRefCounted<WebRiskLocalFileStore>(
+      GetFilePath(kWebRiskStoreFileName));
 }
 
 WebRiskLocalFileStore::WebRiskLocalFileStore(const base::FilePath& file_path)
@@ -49,8 +40,11 @@ WebRiskLocalFileStore::WebRiskLocalFileStore(const base::FilePath& file_path)
 WebRiskLocalFileStore::~WebRiskLocalFileStore() = default;
 
 bool WebRiskLocalFileStore::Initialize() {
-  return ReadFromDisk();
+  if (base::PathExists(file_path_))
+    return ReadFromDisk();
+  return true;
 }
+
 bool WebRiskLocalFileStore::ReadFromDisk() {
   VLOG(2) << __func__;
 

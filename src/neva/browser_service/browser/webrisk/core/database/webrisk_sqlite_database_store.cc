@@ -17,10 +17,11 @@
 #include "neva/browser_service/browser/webrisk/core/database/webrisk_sqlite_database_store.h"
 
 #include "base/base64.h"
-#include "base/command_line.h"
+#include "base/files/file_util.h"
 #include "base/sequenced_task_runner.h"
 #include "base/task/thread_pool.h"
 #include "neva/browser_service/browser/webrisk/core/database/webrisk_database.h"
+#include "neva/browser_service/browser/webrisk/core/webrisk_utils.h"
 
 namespace webrisk {
 
@@ -118,6 +119,30 @@ bool WebRiskSQLiteDatabaseStore::IsHashPrefixAvailable(
     return false;
   }
   return webrisk_db_.IsHashPrefixAvailable(hash_prefix);
+}
+
+bool WebRiskSQLiteDatabaseStore::MigrateDataFromLocalFile() {
+  const base::FilePath file_path = GetFilePath(kWebRiskStoreFileName);
+  if (base::PathExists(file_path)) {
+    std::string compute_diff;
+    if (!base::ReadFileToStringWithMaxSize(file_path, &compute_diff,
+                                           kMaxWebRiskStoreSize)) {
+      return false;
+    }
+
+    if (compute_diff.empty())
+      return false;
+
+    ComputeThreatListDiffResponse file_format;
+    if (!file_format.ParseFromString(compute_diff))
+      return false;
+
+    bool is_data_migrated = WriteDataToDisk(file_format);
+    update_time_ = GetNextUpdateTime(file_format.recommended_next_diff());
+    is_data_migrated &= base::DeleteFile(file_path);
+    return is_data_migrated;
+  }
+  return false;
 }
 
 }  // namespace webrisk

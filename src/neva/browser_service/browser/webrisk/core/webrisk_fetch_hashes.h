@@ -52,9 +52,15 @@ class WebRiskFetchHashes {
   WebRiskFetchHashes() = delete;
 
   void ComputeDiffRequest();
-  void OnComputeDiffResponse(const std::string& url,
-                             std::unique_ptr<std::string> response_body);
+  void OnRequestResponse(const std::string& url,
+                         std::unique_ptr<std::string> response_body);
+  bool ComputeDiffResponse(std::unique_ptr<std::string> response_body,
+                           ComputeThreatListDiffResponse& file_format);
+  bool UpdateDiffResponse(const ComputeThreatListDiffResponse& file_format,
+                          base::TimeDelta& next_update_time);
+  void RunFetchStatusCallback(const WebRiskFetchHashes::Status& status);
   void ScheduleComputeDiffRequestInternal(base::TimeDelta update_interval_diff);
+  void ScheduleNextRequest(const base::TimeDelta& interval);
   bool IsUpdateScheduled() const;
   bool ParseJSONToUpdateResponse(const std::string& response_body,
                                  ComputeThreatListDiffResponse& file_format);

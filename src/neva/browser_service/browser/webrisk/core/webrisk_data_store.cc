@@ -18,16 +18,10 @@
 
 namespace webrisk {
 
-namespace {
-
-constexpr base::TimeDelta kDefaultUpdateInterval =
-    base::TimeDelta::FromHours(1);
-
-}  // namespace
-
 constexpr char WebRiskDataStore::kThreatTypeMalware[];
 constexpr size_t WebRiskDataStore::kHashPrefixSize;
 constexpr size_t WebRiskDataStore::kMaxWebRiskStoreSize;
+constexpr base::TimeDelta WebRiskDataStore::kDefaultUpdateInterval;
 
 base::TimeDelta WebRiskDataStore::GetFirstUpdateTime() {
   if (IsHashPrefixExpired())

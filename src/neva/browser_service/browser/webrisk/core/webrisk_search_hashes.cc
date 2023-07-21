@@ -29,6 +29,14 @@
 
 namespace webrisk {
 
+namespace {
+
+#if defined(USE_WEBRISK_DATABASE)
+constexpr base::TimeDelta kSearchTimeout = base::TimeDelta::FromSeconds(3);
+#endif
+
+}  // namespace
+
 WebRiskSearchHashes::WebRiskSearchHashes(
     const std::string& webrisk_key,
     network::SharedURLLoaderFactory* url_loader_factory)
@@ -63,6 +71,9 @@ void WebRiskSearchHashes::SearchHashPrefix(const std::string& hash_prefix,
                                                  MISSING_TRAFFIC_ANNOTATION);
   url_loader_->SetAllowHttpErrorResults(true);
   url_loader_->SetRetryOptions(kMaxRetries, kRetryMode);
+#if defined(USE_WEBRISK_DATABASE)
+  url_loader_->SetTimeoutDuration(kSearchTimeout);
+#endif
   url_loader_->DownloadToString(
       url_loader_factory_,
       base::BindOnce(&WebRiskSearchHashes::OnSearchHashResponse,

@@ -24,6 +24,8 @@ webrisk_sources = [
     "//neva/browser_service/browser/webrisk/core/webrisk_fetch_hashes.h",
     "//neva/browser_service/browser/webrisk/core/webrisk_search_hashes.cc",
     "//neva/browser_service/browser/webrisk/core/webrisk_search_hashes.h",
+    "//neva/browser_service/browser/webrisk/core/webrisk_utils.cc",
+    "//neva/browser_service/browser/webrisk/core/webrisk_utils.h",
     "//neva/browser_service/browser/webrisk/malware_detection_service_impl.cc",
     "//neva/browser_service/browser/webrisk/malware_detection_service_impl.h",
 ]

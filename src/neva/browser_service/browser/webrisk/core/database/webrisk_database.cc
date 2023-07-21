@@ -16,10 +16,9 @@
 
 #include "neva/browser_service/browser/webrisk/core/database/webrisk_database.h"
 
-#include "base/command_line.h"
 #include "base/logging.h"
 #include "base/strings/stringprintf.h"
-#include "neva/app_runtime/browser/app_runtime_browser_switches.h"
+#include "neva/browser_service/browser/webrisk/core/webrisk_utils.h"
 #include "sql/statement.h"
 #include "third_party/sqlite/sqlite3.h"
 
@@ -39,15 +38,12 @@ WebriskThreatEntry::WebriskThreatEntry(const WebriskThreatEntry& other) =
 
 WebriskThreatEntry::~WebriskThreatEntry() = default;
 
-WebRiskDatabase::WebRiskDatabase() {}
+WebRiskDatabase::WebRiskDatabase() : db_({.cache_size = 8}) {}
 
 WebRiskDatabase::~WebRiskDatabase() = default;
 
 bool WebRiskDatabase::Init() {
-  base::CommandLine* cmd_line = base::CommandLine::ForCurrentProcess();
-  db_file_path_ =
-      cmd_line->GetSwitchValuePath(kUserDataDir).AppendASCII(kDatabaseFileName);
-
+  db_file_path_ = GetFilePath(kDatabaseFileName);
   if (!db_.Open(db_file_path_)) {
     LOG(ERROR) << __func__ << " WebRiskDatabase open operation failed";
     return false;
