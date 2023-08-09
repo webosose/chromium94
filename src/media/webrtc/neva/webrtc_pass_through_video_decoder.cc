@@ -56,9 +56,31 @@ constexpr int32_t kMaxConsecutiveErrors = 5;
 // Maximum number seconds to wait for initialization to complete
 constexpr int32_t kTimeoutSeconds = 10;
 
-// Maximum number of HW decoder instances that can be used
-// -1 allows unlimited instances till platform resources exhausted
-constexpr int32_t kMaxDecodersSupported = 4;
+// Number of Decoder instances right now that have started decoding.
+class DecoderCounter {
+ public:
+  int Count() { return count_.load(); }
+
+  void IncrementCount() {
+    int c = ++count_;
+    DCHECK_GT(c, 0);
+  }
+
+  void DecrementCount() {
+    int c = --count_;
+    DCHECK_GE(c, 0);
+  }
+
+ private:
+  std::atomic_int count_{0};
+};
+
+DecoderCounter* GetDecoderCounter() {
+  static DecoderCounter s_counter;
+  // Note that this will init only in the first call in the ctor, so it's still
+  // single threaded.
+  return &s_counter;
+}
 
 // Map webrtc::VideoCodecType to media::VideoCodec.
 media::VideoCodec ToVideoCodec(webrtc::VideoCodecType webrtc_codec) {
@@ -117,8 +139,9 @@ void FinishWait(base::WaitableEvent* waiter, bool* result_out, bool result) {
   base::BindPostTask(main_task_runner_, \
                      base::BindRepeating(function, weak_this_), FROM_HERE)
 
-// static
-int32_t WebRtcPassThroughVideoDecoder::current_decoder_count_ = 0;
+#define BIND_TO_MEDIA_TASK(function)     \
+  base::BindPostTask(media_task_runner_, \
+                     base::BindRepeating(function, weak_this_), FROM_HERE)
 
 // static
 std::unique_ptr<WebRtcPassThroughVideoDecoder>
@@ -145,11 +168,6 @@ WebRtcPassThroughVideoDecoder::Create(
     return nullptr;
   }
 
-  if (kMaxDecodersSupported != -1 &&
-      current_decoder_count_ >= kMaxDecodersSupported) {
-    return nullptr;
-  }
-
   return base::WrapUnique(new WebRtcPassThroughVideoDecoder(
       main_task_runner, media_task_runner, video_codec));
 }
@@ -166,13 +184,17 @@ WebRtcPassThroughVideoDecoder::WebRtcPassThroughVideoDecoder(
           << " codec: " << GetCodecName(video_codec);
   weak_this_ = weak_this_factory_.GetWeakPtr();
 
-  current_decoder_count_++;
+  media_player_init_cb_ =
+      BIND_TO_MEDIA_TASK(&WebRtcPassThroughVideoDecoder::OnMediaPlayerInitCb);
+  media_player_suspend_cb_ = BIND_TO_MEDIA_TASK(
+      &WebRtcPassThroughVideoDecoder::OnMediaPlayerSuspendCb);
 }
 
 WebRtcPassThroughVideoDecoder::~WebRtcPassThroughVideoDecoder() {
-  VLOG(1) << __func__ << "[" << this << "] ";
+  VLOG(1) << __func__ << "[" << this << "]";
 
-  current_decoder_count_--;
+  if (have_started_decoding_)
+    GetDecoderCounter()->DecrementCount();
 
   if (media_platform_api_)
     media_platform_api_->Finalize();
@@ -188,6 +210,10 @@ int32_t WebRtcPassThroughVideoDecoder::InitDecode(
   video_codec_type_ = codec_settings->codecType;
 
   base::AutoLock auto_lock(lock_);
+  // Save the initial resolution so that we can fall back later, if needed.
+  current_resolution_ =
+      static_cast<int32_t>(codec_settings->width) * codec_settings->height;
+
   return has_error_ ? WEBRTC_VIDEO_CODEC_UNINITIALIZED : WEBRTC_VIDEO_CODEC_OK;
 }
 
@@ -195,6 +221,29 @@ int32_t WebRtcPassThroughVideoDecoder::Decode(
     const webrtc::EncodedImage& input_image,
     bool missing_frames,
     int64_t render_time_ms) {
+  // If this is the first decode, then increment the count of working decoders.
+  if (!have_started_decoding_) {
+    have_started_decoding_ = true;
+    GetDecoderCounter()->IncrementCount();
+  }
+
+  VLOG(2) << __func__ << " total decoder=" << GetDecoderCounter()->Count();
+
+  // Don't allow hardware decode for small videos if there are too many
+  // decoder instances. This includes the case where our resolution drops while
+  // too many decoders exist.
+  {
+    base::AutoLock auto_lock(lock_);
+    if (current_resolution_ < kMinResolution &&
+        GetDecoderCounter()->Count() > kMaxDecoderInstances) {
+      // Decrement the count and clear the flag, so that other decoders don't
+      // fall back also.
+      have_started_decoding_ = false;
+      GetDecoderCounter()->DecrementCount();
+      return WEBRTC_VIDEO_CODEC_FALLBACK_SOFTWARE;
+    }
+  }
+
   // Hardware VP9 decoders don't handle more than one spatial layer. Fall back
   // to software decoding. See https://crbug.com/webrtc/9304.
   if (video_codec_type_ == webrtc::kVideoCodecVP9 &&
@@ -303,13 +352,13 @@ int32_t WebRtcPassThroughVideoDecoder::RegisterDecodeCompleteCallback(
     webrtc::DecodedImageCallback* callback) {
   base::AutoLock auto_lock(lock_);
   decode_complete_callback_ = callback;
-  VLOG(1) << __func__ << " decoder available: " << !has_error_;
+  VLOG(1) << __func__ << "[" << this << "] has_error: " << has_error_;
   return has_error_ ? WEBRTC_VIDEO_CODEC_FALLBACK_SOFTWARE
                     : WEBRTC_VIDEO_CODEC_OK;
 }
 
 int32_t WebRtcPassThroughVideoDecoder::Release() {
-  VLOG(1) << __func__ << " decoder available: " << !has_error_;
+  VLOG(1) << __func__ << "[" << this << "] has_error: " << has_error_;
 
   base::AutoLock auto_lock(lock_);
 
@@ -320,8 +369,12 @@ int32_t WebRtcPassThroughVideoDecoder::Release() {
                     : WEBRTC_VIDEO_CODEC_OK;
 }
 
-const char* WebRtcPassThroughVideoDecoder::ImplementationName() const {
-  return kImplementationName;
+webrtc::VideoDecoder::DecoderInfo
+WebRtcPassThroughVideoDecoder::GetDecoderInfo() const {
+  DecoderInfo info;
+  info.implementation_name = kImplementationName;
+  info.is_hardware_accelerated = true;
+  return info;
 }
 
 void WebRtcPassThroughVideoDecoder::OnMediaPlayerInitCb(
@@ -344,7 +397,11 @@ void WebRtcPassThroughVideoDecoder::OnMediaPlayerInitCb(
   active_region_cb_ = active_region_cb;
 
   if (app_id_.empty() || window_id_.empty()) {
-    // We have fallen back to SW decoding.
+    pending_buffers_.clear();
+    decode_timestamps_.clear();
+
+    player_load_notified_ = false;
+
     main_task_runner_->PostTask(
         FROM_HERE,
         base::BindOnce(&WebRtcPassThroughVideoDecoder::ReleaseMediaPlatformAPI,
@@ -406,19 +463,11 @@ void WebRtcPassThroughVideoDecoder::DecodeOnMediaThread() {
     // Submit for decoding.
     outstanding_decode_requests_++;
     const base::TimeDelta incoming_timestamp = buffer->timestamp();
-
     if (media_platform_api_->Feed(std::move(buffer), FeedType::kVideo)) {
       DVLOG(2) << __func__ << " Feed Success! ts=" << buffer->timestamp();
-      media_task_runner_->PostTask(
-          FROM_HERE,
-          base::BindOnce(&WebRtcPassThroughVideoDecoder::ReturnEmptyOutputFrame,
-                         weak_this_, incoming_timestamp));
+      ReturnEmptyOutputFrame(incoming_timestamp);
     } else {
       LOG(WARNING) << __func__ << " Feed Failed! ts=" << buffer->timestamp();
-      base::AutoLock auto_lock(lock_);
-      has_error_ = true;
-      pending_buffers_.clear();
-      decode_timestamps_.clear();
     }
   }
 }
@@ -442,13 +491,8 @@ void WebRtcPassThroughVideoDecoder::ReturnEmptyOutputFrame(
   video_frame->metadata().is_transparent_frame = true;
 
   if (!player_load_notified_) {
-    video_frame->metadata().media_player_init_cb =
-        BindToCurrentLoop(base::BindRepeating(
-            &WebRtcPassThroughVideoDecoder::OnMediaPlayerInitCb, weak_this_));
-    video_frame->metadata().media_player_suspend_cb =
-        BindToCurrentLoop(base::BindRepeating(
-            &WebRtcPassThroughVideoDecoder::OnMediaPlayerSuspendCb,
-            weak_this_));
+    video_frame->metadata().media_player_init_cb = media_player_init_cb_;
+    video_frame->metadata().media_player_suspend_cb = media_player_suspend_cb_;
     player_load_notified_ = true;
   }
 
@@ -458,6 +502,8 @@ void WebRtcPassThroughVideoDecoder::ReturnEmptyOutputFrame(
 void WebRtcPassThroughVideoDecoder::SendEmptyRtcFrame(
     scoped_refptr<media::VideoFrame> video_frame) {
   DCHECK(media_task_runner_->BelongsToCurrentThread());
+
+  VLOG(2) << __func__ << "[" << this << "]";
 
   const base::TimeDelta timestamp = video_frame->timestamp();
   webrtc::VideoFrame rtc_frame =
@@ -471,6 +517,11 @@ void WebRtcPassThroughVideoDecoder::SendEmptyRtcFrame(
           .build();
 
   base::AutoLock auto_lock(lock_);
+
+  // Update `current_resolution_`, in case it's changed.  This lets us fall back
+  // to software, or avoid doing so, if we're over the decoder limit.
+  current_resolution_ =
+      static_cast<int32_t>(rtc_frame.width()) * rtc_frame.height();
 
   if (!base::Contains(decode_timestamps_, timestamp)) {
     LOG(WARNING) << __func__
@@ -513,8 +564,8 @@ void WebRtcPassThroughVideoDecoder::CreateMediaPlatformAPI() {
 
   if (!media_platform_api_) {
     LOG(ERROR) << __func__ << " Could not create media_platform_api";
-    if (!player_loaded_cb_.is_null())
-      std::move(player_loaded_cb_).Run(false);
+    if (!pipeline_init_cb_.is_null())
+      std::move(pipeline_init_cb_).Run(false);
     return;
   }
 
@@ -559,9 +610,6 @@ void WebRtcPassThroughVideoDecoder::InitMediaPlatformAPI() {
 void WebRtcPassThroughVideoDecoder::ReleaseMediaPlatformAPI() {
   VLOG(1) << __func__;
 
-  is_destroying_ = true;
-  player_load_notified_ = false;
-
   DestroyMediaPlatformAPI();
 }
 
@@ -569,8 +617,8 @@ void WebRtcPassThroughVideoDecoder::OnMediaPlatformAPIInitialized(
     media::PipelineStatus status) {
   VLOG(1) << __func__ << " status : " << status;
 
-  if (is_destroying_ || !media_platform_api_) {
-    LOG(ERROR) << __func__ << " Is destroying";
+  if (!media_platform_api_) {
+    LOG(ERROR) << __func__ << " media platform api not available";
     return;
   }
 
@@ -581,17 +629,14 @@ void WebRtcPassThroughVideoDecoder::OnMediaPlatformAPIInitialized(
 
   media_platform_api_->SetPlaybackRate(1.0f);
 
-  if (!player_loaded_cb_.is_null())
-    std::move(player_loaded_cb_).Run(status == media::PIPELINE_OK);
+  if (!pipeline_init_cb_.is_null())
+    std::move(pipeline_init_cb_).Run(status == media::PIPELINE_OK);
 }
 
 void WebRtcPassThroughVideoDecoder::OnPipelineError(
     media::PipelineStatus status) {
   LOG(ERROR) << __func__ << "[" << this << "] "
              << " status : " << status;
-
-  if (is_destroying_)
-    return;
 
   {
     base::AutoLock auto_lock(lock_);
@@ -601,6 +646,9 @@ void WebRtcPassThroughVideoDecoder::OnPipelineError(
 
     has_error_ = (status != media::PIPELINE_OK);
   }
+
+  if (!pipeline_init_cb_.is_null())
+    std::move(pipeline_init_cb_).Run(false);
 }
 
 bool WebRtcPassThroughVideoDecoder::InitializeMediaPlayer(
@@ -613,10 +661,10 @@ bool WebRtcPassThroughVideoDecoder::InitializeMediaPlayer(
   bool result = false;
   base::WaitableEvent waiter(base::WaitableEvent::ResetPolicy::AUTOMATIC,
                              base::WaitableEvent::InitialState::NOT_SIGNALED);
-  auto player_loaded_cb = base::BindOnce(&FinishWait, base::Unretained(&waiter),
+  auto pipeline_init_cb = base::BindOnce(&FinishWait, base::Unretained(&waiter),
                                          base::Unretained(&result));
 
-  player_loaded_cb_ = std::move(player_loaded_cb);
+  pipeline_init_cb_ = std::move(pipeline_init_cb);
   media_task_runner_->PostTask(
       FROM_HERE,
       base::BindOnce(&WebRtcPassThroughVideoDecoder::ReturnEmptyOutputFrame,

@@ -42,6 +42,15 @@ class VideoFrame;
 
 class MEDIA_EXPORT WebRtcPassThroughVideoDecoder : public webrtc::VideoDecoder {
  public:
+  // Minimum resolution that we'll consider "not low resolution" for the purpose
+  // of falling back to software.
+  static constexpr int32_t kMinResolution = 320 * 240;
+
+  // Maximum number of decoder instances we'll allow before fallback to software
+  // if the resolution is too low.  We'll allow more than this for high
+  // resolution streams, but they'll fall back if they adapt below the limit.
+  static constexpr int32_t kMaxDecoderInstances = 8;
+
   // Creates and initializes an WebRtcPassThroughVideoDecoder.
   static std::unique_ptr<WebRtcPassThroughVideoDecoder> Create(
       scoped_refptr<base::SequencedTaskRunner> main_task_runner,
@@ -63,7 +72,7 @@ class MEDIA_EXPORT WebRtcPassThroughVideoDecoder : public webrtc::VideoDecoder {
   int32_t RegisterDecodeCompleteCallback(
       webrtc::DecodedImageCallback* callback) override;
   int32_t Release() override;
-  const char* ImplementationName() const override;
+  DecoderInfo GetDecoderInfo() const override;
 
   // Callback to get pipeline data from WebMediaPlayerWebRTC
   void OnMediaPlayerInitCb(const std::string& app_id,
@@ -106,7 +115,6 @@ class MEDIA_EXPORT WebRtcPassThroughVideoDecoder : public webrtc::VideoDecoder {
   scoped_refptr<base::SequencedTaskRunner> main_task_runner_ = nullptr;
   scoped_refptr<base::SingleThreadTaskRunner> media_task_runner_ = nullptr;
 
-  webrtc::VideoCodecType video_codec_type_ = webrtc::kVideoCodecGeneric;
   webrtc::DecodedImageCallback* decode_complete_callback_ = nullptr;
 
   std::string app_id_;
@@ -116,15 +124,28 @@ class MEDIA_EXPORT WebRtcPassThroughVideoDecoder : public webrtc::VideoDecoder {
   bool is_suspended_ = false;
 
   bool player_load_notified_ = false;
+
+  int32_t outstanding_decode_requests_ = 0;
   bool key_frame_required_ = true;
 
+  bool have_started_decoding_ = false;
+
+  // Shared members.
+  base::Lock lock_;
+  webrtc::VideoCodecType video_codec_type_ = webrtc::kVideoCodecGeneric;
+  int32_t consecutive_error_count_ = 0;
   bool has_error_ = false;
 
-  base::OnceCallback<void(bool)> player_loaded_cb_;
+  base::OnceCallback<void(bool)> pipeline_init_cb_;
 
-  base::Lock lock_;
-  int32_t consecutive_error_count_ = 0;
-  int32_t outstanding_decode_requests_ = 1;
+  base::RepeatingCallback<void(const std::string&,
+                               const std::string&,
+                               const base::RepeatingClosure&,
+                               const base::RepeatingClosure&,
+                               const MediaPlatformAPI::VideoSizeChangedCB&,
+                               const MediaPlatformAPI::ActiveRegionCB&)>
+      media_player_init_cb_;
+  base::RepeatingCallback<void(bool)> media_player_suspend_cb_;
 
   scoped_refptr<media::MediaPlatformAPI> media_platform_api_ = nullptr;
 
@@ -135,12 +156,12 @@ class MEDIA_EXPORT WebRtcPassThroughVideoDecoder : public webrtc::VideoDecoder {
   // timestamp will cause the frame to be dropped when it is output.
   std::deque<base::TimeDelta> decode_timestamps_;
 
+  int32_t current_resolution_ = 0;
+
   base::RepeatingClosure suspend_done_cb_;
   base::RepeatingClosure resume_done_cb_;
   MediaPlatformAPI::VideoSizeChangedCB video_size_changed_cb_;
   MediaPlatformAPI::ActiveRegionCB active_region_cb_;
-
-  static int32_t current_decoder_count_;
 
   base::WeakPtr<WebRtcPassThroughVideoDecoder> weak_this_;
   base::WeakPtrFactory<WebRtcPassThroughVideoDecoder> weak_this_factory_{this};

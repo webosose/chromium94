@@ -168,6 +168,11 @@ class MediaStreamVideoTrack::FrameDeliverer
   // This should only be accessed on the IO thread.
   bool is_refreshing_for_min_frame_rate_ = false;
 
+#if defined(USE_NEVA_WEBRTC)
+  base::TimeTicks pending_capture_time_;
+  scoped_refptr<media::VideoFrame> pending_video_frame_ = nullptr;
+#endif
+
   DISALLOW_COPY_AND_ASSIGN(FrameDeliverer);
 };
 
@@ -209,6 +214,20 @@ void MediaStreamVideoTrack::FrameDeliverer::AddCallbackOnIO(
     VideoCaptureDeliverFrameInternalCallback callback) {
   DCHECK(io_task_runner_->BelongsToCurrentThread());
   callbacks_.push_back(std::make_pair(id, std::move(callback)));
+
+#if defined(USE_NEVA_WEBRTC)
+  if (pending_video_frame_) {
+    VLOG(1) << __func__ << " Deliver the pending frame";
+    // scaled_video_frames is empty always
+    std::vector<scoped_refptr<media::VideoFrame>> empty_scaled_frames;
+    io_task_runner_->PostTask(
+        FROM_HERE,
+        base::BindOnce(&FrameDeliverer::DeliverFrameOnIO,
+                       base::Unretained(this), std::move(pending_video_frame_),
+                       empty_scaled_frames, pending_capture_time_));
+    pending_video_frame_ = nullptr;
+  }
+#endif
 }
 
 void MediaStreamVideoTrack::FrameDeliverer::AddEncodedCallback(
@@ -350,6 +369,19 @@ void MediaStreamVideoTrack::FrameDeliverer::DeliverFrameOnIO(
     video_frame = GetBlackFrame(*frame);
     scaled_video_frames.clear();
   }
+
+#if defined(USE_NEVA_WEBRTC)
+  if (callbacks_.IsEmpty() && video_frame->metadata().is_transparent_frame) {
+    // Since callbacks_ is empty, that means WebMediaPlayer is not created yet.
+    // So, store the frame in order to pass to web media player webrtc after it
+    // is created and AddCallbackOnIO is received.
+    VLOG(1) << __func__ << " callback not registered. Store the frame";
+    pending_video_frame_ = std::move(video_frame);
+    pending_capture_time_ = estimated_capture_time;
+    return;
+  }
+#endif
+
   for (const auto& entry : callbacks_)
     entry.second.Run(video_frame, scaled_video_frames, estimated_capture_time);
 

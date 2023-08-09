@@ -187,7 +187,7 @@ class WebMediaPlayerMS::FrameDeliverer {
     DCHECK_CALLED_ON_VALID_THREAD(io_thread_checker_);
 
 #if defined(USE_NEVA_WEBRTC)
-    if (!player_->HandleVideoFrame(frame) &&
+    if (player_ && !player_->HandleVideoFrame(frame) &&
         frame->metadata().is_transparent_frame) {
       return;
     }

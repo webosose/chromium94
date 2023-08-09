@@ -88,6 +88,11 @@ WebMediaPlayerWebRTC::~WebMediaPlayerWebRTC() {
   NEVA_VLOGTF(1) << "[" << this << "] "
                  << "delegate_id_: " << delegate_id_;
 
+  if (!media_player_init_cb_.is_null()) {
+    ResetForDecoderChange();
+    return;
+  }
+
   if (video_frame_provider_impl_) {
     compositor_task_runner_->DeleteSoon(FROM_HERE,
                                         std::move(video_frame_provider_impl_));
@@ -179,48 +184,49 @@ bool WebMediaPlayerWebRTC::HandleVideoFrame(
     return true;
   }
 
-  if (!media_player_init_cb_.is_null()) {
-    if (!video_play_started_) {
-      // This is second frame from pass through decoder after buffer feed.
-      // We can render punch hole now, as buffer feed has started already.
-      video_play_started_ = true;
-      main_task_runner_->PostTask(
-          FROM_HERE,
-          base::BindOnce(&WebMediaPlayerWebRTC::SetRenderMode, weak_ptr_this_,
-                         get_client()->RenderMode()));
-    }
-    return true;
-  }
-
-  // This is first frame from pass through decoder.
-  if (media_player_init_cb_.is_null() &&
-      !video_frame->metadata().media_player_init_cb.is_null()) {
-    media_player_init_cb_ = video_frame->metadata().media_player_init_cb;
-    video_frame->metadata().media_player_init_cb.Reset();
-  }
-
-  if (media_player_suspend_cb_.is_null() &&
-      !video_frame->metadata().media_player_suspend_cb.is_null()) {
-    media_player_suspend_cb_ = video_frame->metadata().media_player_suspend_cb;
-    video_frame->metadata().media_player_suspend_cb.Reset();
-  }
-
-  VLOG(1) << __func__ << "[" << this << "] "
+  VLOG(2) << __func__ << "[" << this << "] "
           << " storage_type=" << video_frame->storage_type()
           << " frame_size=" << video_frame->natural_size().ToString()
           << " delegate_id_: " << delegate_id_;
 
-  // We are holding the video frame, so that we can return later using
-  // WebMediaPlayerMS::EnqueueFrame after video window is created.
-  // This ensures that OnFirstFrameReceived is called after video window is
-  // created, in order to create video layer with video_frame_provider_impl.
-  current_frame_ = std::move(video_frame);
+  // This is first frame from new instance of pass through decoder.
+  if (!video_frame->metadata().media_player_suspend_cb.is_null()) {
+    if (!media_player_suspend_cb_.is_null())
+      media_player_suspend_cb_.Reset();
 
-  main_task_runner_->PostTask(
-      FROM_HERE,
-      base::BindOnce(&WebMediaPlayerWebRTC::CreateVideoWindow, weak_ptr_this_));
+    media_player_suspend_cb_ = video_frame->metadata().media_player_suspend_cb;
+    video_frame->metadata().media_player_suspend_cb.Reset();
+  }
 
-  return false;
+  if (!video_frame->metadata().media_player_init_cb.is_null()) {
+    if (!media_player_init_cb_.is_null())
+      media_player_init_cb_.Reset();
+
+    media_player_init_cb_ = video_frame->metadata().media_player_init_cb;
+    video_frame->metadata().media_player_init_cb.Reset();
+
+    // We are holding the video frame, so that we can return later using
+    // WebMediaPlayerMS::EnqueueFrame after video window is created.
+    // This ensures that OnFirstFrameReceived is called after video window is
+    // created, in order to create video layer with video_frame_provider_impl.
+    current_frame_ = std::move(video_frame);
+
+    main_task_runner_->PostTask(
+        FROM_HERE, base::BindOnce(&WebMediaPlayerWebRTC::CreateVideoWindow,
+                                  weak_ptr_this_));
+    return false;
+  }
+
+  if (!video_play_started_) {
+    // This is second frame from pass through decoder after buffer feed.
+    // We can render punch hole now, as buffer feed has started already.
+    video_play_started_ = true;
+    main_task_runner_->PostTask(
+        FROM_HERE, base::BindOnce(&WebMediaPlayerWebRTC::SetRenderMode,
+                                  weak_ptr_this_, get_client()->RenderMode()));
+  }
+
+  return true;
 }
 
 void WebMediaPlayerWebRTC::TriggerResize() {
@@ -398,7 +404,7 @@ void WebMediaPlayerWebRTC::OnSuspended() {
 }
 
 void WebMediaPlayerWebRTC::CreateVideoWindow() {
-  VLOG(1) << __func__;
+  NEVA_VLOGTF(1);
 
   if (!video_frame_provider_impl_) {
     video_frame_provider_impl_ = std::make_unique<VideoFrameProviderImpl>(
